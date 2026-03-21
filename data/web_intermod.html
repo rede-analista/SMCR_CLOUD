@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMCR - Inter-Módulos</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f0f0f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #007bff;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .config-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .config-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        }
+
+        .modules-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .modules-table th,
+        .modules-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .modules-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .modules-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-unknown {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 0.85em;
+            margin-right: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        #loadingIndicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        #pageLoadTime {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                flex-direction: column;
+            }
+
+            .dropdown-content {
+                position: static;
+                box-shadow: none;
+            }
+
+            .modules-table {
+                font-size: 0.9em;
+            }
+
+            .modules-table th,
+            .modules-table td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Configuracao de Inter-Módulos</h1>
+        <!-- Menu de Navegação -->
+        <nav class="navbar" style="background:#f8f9fa;border-bottom:1px solid #e9ecef;padding:10px 14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <a href="/" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Status</a>
+            <a href="/configuracao" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Configurações</a>
+            <a href="/pinos" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Pinos</a>
+            <a href="/acoes" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Ações</a>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Serviços</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/mqtt" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">MQTT</a>
+                    <a href="/intermod" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Inter-Módulos</a>
+                    <a href="/assistentes" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Assistentes</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Arquivos</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/arquivos/firmware" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Firmware</a>
+                    <a href="/arquivos/preferencias" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Preferências</a>
+                    <a href="/arquivos/littlefs" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">LittleFS</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Util</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/serial" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Web Serial</a>
+                    <a href="/reset" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Reset</a>
+                </div>
+            </details>
+        </nav>
+
+        <div class="content">
+           
+            <div id="messageArea"></div>
+
+            <!-- Seção de Configurações Gerais -->
+            <div class="config-section">
+                <h2>Configurações Gerais</h2>
+                <form id="configForm">
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="interModEnabled" name="interModEnabled">
+                            <span>Habilitar comunicação inter-módulos</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="healthCheckInterval">Intervalo de Healthcheck (segundos):</label>
+                        <input type="number" id="healthCheckInterval" name="healthCheckInterval" 
+                               min="5" max="300" value="30" required>
+                        <small style="color: #666; display: block; margin-top: 5px;">
+                            Intervalo entre verificações de saúde dos módulos (recomendado: 30s)
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="maxFailures">Máximo de falhas antes de marcar offline:</label>
+                        <input type="number" id="maxFailures" name="maxFailures" 
+                               min="1" max="10" value="3" required>
+                        <small style="color: #666; display: block; margin-top: 5px;">
+                            Quantidade de falhas consecutivas antes de marcar módulo como offline (recomendado: 3)
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="autoDiscovery" name="autoDiscovery" checked>
+                            <span>Habilitar descoberta automática via mDNS</span>
+                        </label>
+                        <small style="color: #666; display: block; margin-top: 5px; margin-left: 30px;">
+                            Quando habilitado, o sistema busca automaticamente outros módulos SMCR na rede
+                        </small>
+                    </div>
+
+                    <button type="submit" class="btn">💾 Salvar Configurações</button>
+                </form>
+            </div>
+
+            <!-- Seção de Módulos Cadastrados -->
+            <div class="config-section">
+                <h2>📡 Módulos Cadastrados</h2>
+                
+                <button class="btn btn-success" onclick="showAddModuleForm()">➕ Adicionar Módulo Manual</button>
+                <button class="btn btn-secondary" onclick="runDiscovery()">🔍 Buscar Módulos (mDNS)</button>
+                <button class="btn btn-secondary" onclick="refreshModules()">🔄 Atualizar Lista</button>
+
+                <!-- Formulário de adição (inicialmente oculto) -->
+                <div id="addModuleForm" style="display: none; margin-top: 20px; padding: 20px; background: white; border-radius: 8px; border: 2px solid #667eea;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Adicionar Novo Módulo</h3>
+                    <form id="moduleForm">
+                        <div class="form-group">
+                            <label for="moduleId">ID do Módulo:</label>
+                            <input type="text" id="moduleId" name="moduleId" required 
+                                   placeholder="Ex: esp32-sala">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="moduleHostname">Hostname:</label>
+                            <input type="text" id="moduleHostname" name="moduleHostname" required 
+                                   placeholder="Ex: esp32modular-sala">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="moduleIp">Endereço IP:</label>
+                            <input type="text" id="moduleIp" name="moduleIp" required 
+                                   placeholder="Ex: 192.168.1.100">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="modulePort">Porta:</label>
+                            <input type="number" id="modulePort" name="modulePort" 
+                                   min="1" max="65535" value="8080" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-success">✔️ Adicionar</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideAddModuleForm()">✖️ Cancelar</button>
+                    </form>
+                </div>
+
+                <div id="modulesTableContainer">
+                    <div class="loading">Carregando módulos...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingIndicator">Processando...</div>
+    <div id="pageLoadTime"></div>
+
+    <script>
+        const pageStartTime = performance.now();
+
+        // Carrega configurações ao iniciar
+        window.onload = function() {
+            console.log('[INTERMOD] Página carregada, iniciando...');
+            loadConfig();
+            loadModules();
+            
+            const pageEndTime = performance.now();
+            const loadTime = (pageEndTime - pageStartTime).toFixed(2);
+            const indicator = document.getElementById('pageLoadTime');
+            if (indicator) {
+                indicator.textContent = `Carregado em ${loadTime}ms`;
+                indicator.style.display = 'block';
+                
+                setTimeout(() => {
+                    indicator.style.display = 'none';
+                }, 5000);
+            }
+            
+            console.log(`[INTERMOD] Página carregada em ${loadTime}ms`);
+        };
+
+        // Carrega configurações do servidor
+        async function loadConfig() {
+            console.log('[INTERMOD] Iniciando loadConfig()...');
+            try {
+                console.log('[INTERMOD] Fazendo fetch para /api/intermod/config');
+                const response = await fetch('/api/intermod/config');
+                console.log('[INTERMOD] Response recebido:', response.status, response.ok);
+                
+                const data = await response.json();
+                console.log('[INTERMOD] Config carregada:', JSON.stringify(data));
+                
+                // Usa comparação explícita para evitar problemas com false
+                const enabledCheckbox = document.getElementById('interModEnabled');
+                const autoDiscoveryCheckbox = document.getElementById('autoDiscovery');
+                
+                if (enabledCheckbox) {
+                    enabledCheckbox.checked = (data.enabled === true);
+                    console.log('[INTERMOD] Checkbox interModEnabled:', enabledCheckbox.checked);
+                }
+                
+                document.getElementById('healthCheckInterval').value = data.healthCheckInterval || 30;
+                document.getElementById('maxFailures').value = data.maxFailures || 3;
+                
+                if (autoDiscoveryCheckbox) {
+                    autoDiscoveryCheckbox.checked = (data.autoDiscovery !== false);
+                    console.log('[INTERMOD] Checkbox autoDiscovery:', autoDiscoveryCheckbox.checked);
+                }
+                
+            } catch (error) {
+                console.error('[INTERMOD] ERRO ao carregar configurações:', error);
+                showMessage('Erro ao carregar configurações', 'error');
+            }
+        }
+
+        // Salva configurações
+        document.getElementById('configForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            showLoading(true);
+
+            const formData = new FormData();
+            formData.append('enabled', document.getElementById('interModEnabled').checked ? '1' : '0');
+            formData.append('healthCheckInterval', document.getElementById('healthCheckInterval').value);
+            formData.append('maxFailures', document.getElementById('maxFailures').value);
+            formData.append('autoDiscovery', document.getElementById('autoDiscovery').checked ? '1' : '0');
+
+            try {
+                const response = await fetch('/api/intermod/config', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showMessage('Configurações salvas com sucesso!', 'success');
+                    // Recarrega configurações do servidor para confirmar salvamento
+                    setTimeout(() => loadConfig(), 500);
+                } else {
+                    showMessage('Erro ao salvar configurações', 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro de comunicação com o servidor', 'error');
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        // Carrega lista de módulos
+        async function loadModules() {
+            console.log('[INTERMOD] Iniciando loadModules()...');
+            try {
+                // Adiciona timeout de 10 segundos
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                console.log('[INTERMOD] Fazendo fetch para /api/intermod/modules');
+                const response = await fetch('/api/intermod/modules', {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                
+                console.log('[INTERMOD] Response modules recebido:', response.status, response.ok);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('[INTERMOD] Modules data:', JSON.stringify(data));
+                
+                const container = document.getElementById('modulesTableContainer');
+                if (!container) {
+                    console.error('[INTERMOD] ERRO: elemento modulesTableContainer não encontrado!');
+                    return;
+                }
+                
+                if (!data.modules || data.modules.length === 0) {
+                    console.log('[INTERMOD] Nenhum módulo cadastrado');
+                    container.innerHTML = '<div class="alert alert-info">Nenhum módulo cadastrado. Use o botão "Adicionar Módulo" ou "Buscar Módulos" para começar.</div>';
+                    return;
+                }
+
+                console.log('[INTERMOD] Montando tabela com', data.modules.length, 'módulos');
+
+                let html = '<table class="modules-table">';
+                html += '<thead><tr>';
+                html += '<th>ID</th>';
+                html += '<th>Hostname</th>';
+                html += '<th>IP:Porta</th>';
+                html += '<th>Status</th>';
+                html += '<th>Último Check</th>';
+                html += '<th>Origem</th>';
+                html += '<th>Ações</th>';
+                html += '</tr></thead><tbody>';
+
+                data.modules.forEach(module => {
+                    const statusClass = module.online ? 'status-online' : 
+                                      (module.online === false ? 'status-offline' : 'status-unknown');
+                    const statusText = module.online ? '🟢 Online' : 
+                                     (module.online === false ? '🔴 Offline' : '⚪ Desconhecido');
+                    const lastCheck = module.ultimo_healthcheck > 0 ? 
+                                    new Date(module.ultimo_healthcheck).toLocaleString('pt-BR') : 
+                                    'Nunca';
+                    const origem = module.auto_descoberto ? '🔍 Auto' : '✍️ Manual';
+
+                    html += '<tr>';
+                    html += `<td>${escapeHtml(module.id)}</td>`;
+                    html += `<td>${escapeHtml(module.hostname)}</td>`;
+                    html += `<td>${escapeHtml(module.ip)}:${module.porta}</td>`;
+                    html += `<td><span class="status-badge ${statusClass}">${statusText}</span></td>`;
+                    html += `<td>${lastCheck}</td>`;
+                    html += `<td>${origem}</td>`;
+                    html += `<td>
+                        <button class="btn action-btn btn-secondary" onclick="testModule('${escapeHtml(module.id)}')">🔍 Testar</button>
+                        <button class="btn action-btn btn-success" onclick="syncModule('${escapeHtml(module.id)}')">🔄 Sincronizar</button>
+                        <button class="btn action-btn btn-danger" onclick="deleteModule('${escapeHtml(module.id)}')">🗑️ Remover</button>
+                    </td>`;
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                container.innerHTML = html;
+                console.log('[INTERMOD] Tabela de módulos renderizada com sucesso');
+            } catch (error) {
+                console.error('[INTERMOD] ERRO ao carregar módulos:', error);
+                const errorMsg = error.name === 'AbortError' ? 
+                    'Timeout: O ESP32 não respondeu em 10 segundos. Verifique se o sistema está sobrecarregado.' :
+                    'Erro ao carregar módulos: ' + error.message;
+                const container = document.getElementById('modulesTableContainer');
+                if (container) {
+                    container.innerHTML = `<div class="alert alert-error">${errorMsg}</div>`;
+                }
+            }
+        }
+
+        // Mostra formulário de adicionar módulo
+        function showAddModuleForm() {
+            document.getElementById('addModuleForm').style.display = 'block';
+            document.getElementById('moduleForm').reset();
+        }
+
+        // Esconde formulário de adicionar módulo
+        function hideAddModuleForm() {
+            document.getElementById('addModuleForm').style.display = 'none';
+        }
+
+        // Adiciona novo módulo
+        document.getElementById('moduleForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            showLoading(true);
+
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/api/intermod/modules/add', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showMessage('Módulo adicionado com sucesso!', 'success');
+                    hideAddModuleForm();
+                    loadModules();
+                } else {
+                    const error = await response.text();
+                    showMessage('Erro ao adicionar módulo: ' + error, 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro de comunicação com o servidor', 'error');
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        // Remove módulo
+        async function deleteModule(moduleId) {
+            if (!confirm(`Deseja realmente remover o módulo "${moduleId}"?`)) {
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const response = await fetch(`/api/intermod/modules/delete?id=${encodeURIComponent(moduleId)}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showMessage('Módulo removido com sucesso!', 'success');
+                    loadModules();
+                } else {
+                    showMessage('Erro ao remover módulo', 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro de comunicação com o servidor', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Testa conectividade com módulo
+        async function testModule(moduleId) {
+            showLoading(true);
+
+            try {
+                const response = await fetch(`/api/intermod/modules/test?id=${encodeURIComponent(moduleId)}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(`Módulo "${moduleId}" respondeu: ${data.message}`, 'success');
+                } else {
+                    showMessage(`Módulo "${moduleId}" não respondeu: ${data.message}`, 'error');
+                }
+
+                loadModules(); // Atualiza lista com novo status
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro ao testar módulo', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Solicita sincronização de pinos de um módulo
+        async function syncModule(moduleId) {
+            showLoading(true);
+
+            try {
+                const response = await fetch(`/api/intermod/modules/sync?id=${encodeURIComponent(moduleId)}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(`Sincronização solicitada para módulo "${moduleId}": ${data.message}`, 'success');
+                } else {
+                    showMessage(`Erro ao sincronizar módulo "${moduleId}": ${data.message}`, 'error');
+                }
+
+                loadModules(); // Atualiza lista com novo status
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro ao solicitar sincronização', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Executa descoberta mDNS
+        async function runDiscovery() {
+            showLoading(true);
+            showMessage('Buscando módulos na rede via mDNS... Aguarde.', 'info');
+
+            try {
+                const response = await fetch('/api/intermod/discovery', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.found > 0) {
+                    showMessage(`Descoberta concluída! ${data.found} módulo(s) encontrado(s) e adicionado(s).`, 'success');
+                } else {
+                    showMessage('Nenhum novo módulo encontrado na rede.', 'info');
+                }
+
+                loadModules();
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro ao executar descoberta', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Atualiza lista de módulos
+        function refreshModules() {
+            loadModules();
+            showMessage('Lista atualizada!', 'info');
+        }
+
+        // Funções auxiliares
+        function showMessage(message, type) {
+            const messageArea = document.getElementById('messageArea');
+            const alertClass = type === 'success' ? 'alert-success' : 
+                             (type === 'error' ? 'alert-error' : 'alert-info');
+            
+            messageArea.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+            
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 5000);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Performance indicator (usa pageStartTime já declarado no topo)
+        window.addEventListener('load', function() {
+            const loadTime = (performance.now() - pageStartTime).toFixed(2);
+            const perfDiv = document.createElement('div');
+            perfDiv.style.cssText = 'position:fixed;bottom:10px;right:10px;background:rgba(0,0,0,0.7);color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;z-index:9999;';
+            perfDiv.textContent = `Carregamento: ${loadTime}ms`;
+            document.body.appendChild(perfDiv);
+            console.log(`Página carregada em ${loadTime}ms`);
+        });
+    </script>
+</body>
+</html>

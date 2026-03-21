@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMCR - Configuracoes</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f0f0f0; 
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        h1 { 
+            text-align: center; 
+            color: #333; 
+            margin-bottom: 10px; 
+            border-bottom: 2px solid #007bff; 
+            padding-bottom: 10px; 
+        }
+        .menu { 
+            text-align: center; 
+            margin: 20px 0; 
+            padding: 10px; 
+            background: #f8f9fa; 
+            border-radius: 4px; 
+        }
+        .menu a { 
+            margin: 0 15px; 
+            text-decoration: none; 
+            color: #007bff; 
+            font-weight: bold; 
+        }
+        .menu a:hover { 
+            text-decoration: underline; 
+        }
+        .section { 
+            margin: 30px 0; 
+        }
+        .section-title { 
+            font-size: 18px; 
+            font-weight: bold; 
+            color: #444; 
+            margin-bottom: 15px; 
+            padding: 8px 0; 
+            border-bottom: 1px solid #ddd; 
+        }
+        .config-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 20px; 
+        }
+        .config-table td { 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            vertical-align: middle; 
+        }
+        .config-table td:first-child { 
+            font-weight: bold; 
+            color: #555; 
+            width: 35%; 
+            background: #f8f9fa; 
+        }
+        .config-table input, .config-table select { 
+            width: 100%; 
+            padding: 8px 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            box-sizing: border-box; 
+        }
+        .config-table input:focus, .config-table select:focus { 
+            outline: none; 
+            border-color: #007bff; 
+            box-shadow: 0 0 5px rgba(0,123,255,0.3); 
+        }
+        .action-menu { 
+            text-align: center; 
+            margin: 20px 0; 
+            padding: 15px; 
+            background: #f8f9fa; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+        }
+        .btn { 
+            margin: 5px; 
+            padding: 10px 15px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            font-weight: bold; 
+            text-decoration: none; 
+            display: inline-block; 
+        }
+        .btn-primary { 
+            background: #007bff; 
+            color: white; 
+        }
+        .btn-primary:hover { 
+            background: #0056b3; 
+        }
+        .btn-success { 
+            background: #28a745; 
+            color: white; 
+        }
+        .btn-success:hover { 
+            background: #1e7e34; 
+        }
+        .btn-warning { 
+            background: #ffc107; 
+            color: #212529; 
+        }
+        .btn-warning:hover { 
+            background: #e0a800; 
+        }
+        .status-message { 
+            margin-top: 15px; 
+            padding: 10px; 
+            border-radius: 4px; 
+            text-align: center; 
+            display: none; 
+        }
+        .status-success { 
+            background: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .status-error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            margin-left: 15px;
+            font-size: 16px;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Carregando configurações...</div>
+    </div>
+
+    <div class="container">
+        <h1>SMCR - Configuracoes</h1>
+        
+        <nav class="navbar" style="background:#f8f9fa;border-bottom:1px solid #e9ecef;padding:10px 14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <a href="/" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Status</a>
+            <a href="/configuracao" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Configurações</a>
+            <a href="/pinos" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Pinos</a>
+            <a href="/acoes" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Ações</a>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Serviços</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/mqtt" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">MQTT</a>
+                    <a href="/intermod" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Inter-Módulos</a>
+                    <a href="/assistentes" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Assistentes</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Arquivos</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/arquivos/firmware" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Firmware</a>
+                    <a href="/arquivos/preferencias" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Preferências</a>
+                    <a href="/arquivos/littlefs" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">LittleFS</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Util</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/serial" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Web Serial</a>
+                    <a href="/reset" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Reset</a>
+                </div>
+            </details>
+        </nav>
+        <div class="action-menu">
+            <a href="#" onclick="saveConfig()" class="btn btn-success">Aplicar e Reiniciar</a>
+        </div>
+
+        <form id="configForm">
+            <div class="section">
+                <div class="section-title">Configuracoes de Rede</div>
+                <table class="config-table">
+                    <tr><td>Hostname:</td><td><input type="text" name="hostname" id="hostname" maxlength="32"></td></tr>
+                    <tr><td>SSID da Rede WiFi:</td><td><input type="text" name="wifi_ssid" id="wifi_ssid" maxlength="32"></td></tr>
+                    <tr><td>Senha WiFi:</td><td><input type="password" name="wifi_pass" id="wifi_pass" maxlength="64" placeholder="Deixe em branco para manter atual"></td></tr>
+                    <tr><td>Tentativas de Conexao:</td><td><input type="number" name="wifi_attempts" id="wifi_attempts" min="5" max="50" value="15"></td></tr>
+                    <tr><td>Intervalo de Checagem (ms):</td><td><input type="number" name="wifi_check_interval" id="wifi_check_interval" min="10000" max="60000" value="15000"></td></tr>
+                </table>
+
+                <div class="section-title">Configuracoes de NTP (Sincronizacao de Tempo)</div>
+                <table class="config-table">
+                    <tr><td>Servidor NTP Primario:</td><td><input type="text" name="ntp_server1" id="ntp_server1" value="pool.ntp.br"></td></tr>
+                    <tr><td>Fuso Horario GMT (segundos):</td><td><input type="number" name="gmt_offset" id="gmt_offset" value="-10800"></td></tr>
+                    <tr><td>Horario de Verao (segundos):</td><td><input type="number" name="daylight_offset" id="daylight_offset" value="0"></td></tr>
+                </table>
+
+                <div class="section-title">Configuracoes da Interface Web</div>
+                <table class="config-table">
+                    <tr><td>Mostrar Status de Pinos:</td><td><select name="status_pinos_enabled" id="status_pinos_enabled"><option value="1">Habilitado</option><option value="0">Desabilitado</option></select></td></tr>
+                    <tr><td>Mostrar Info Inter-Modulos:</td><td><select name="inter_modulos_enabled" id="inter_modulos_enabled"><option value="1">Habilitado</option><option value="0">Desabilitado</option></select></td></tr>
+                    <tr><td>Cor Status com Alerta:</td><td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="color" name="cor_com_alerta" id="cor_com_alerta" value="#ff0000" style="width: 60px;">
+                            <span id="cor_com_alerta_name" style="font-size: 12px; color: #666;">Vermelho</span>
+                        </div>
+                    </td></tr>
+                    <tr><td>Cor Status sem Alerta:</td><td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="color" name="cor_sem_alerta" id="cor_sem_alerta" value="#00ff00" style="width: 60px;">
+                            <span id="cor_sem_alerta_name" style="font-size: 12px; color: #666;">Verde</span>
+                        </div>
+                    </td></tr>
+                    <tr><td>Tempo de Refresh (segundos):</td><td><input type="number" name="tempo_refresh" id="tempo_refresh" min="5" max="300" value="15"></td></tr>
+                    <tr><td>Mostrar Histórico Analógico:</td><td><select name="show_analog_history" id="show_analog_history"><option value="1">Habilitado</option><option value="0">Desabilitado</option></select></td></tr>
+                    <tr><td>Mostrar Histórico Digital:</td><td><select name="show_digital_history" id="show_digital_history"><option value="1">Habilitado</option><option value="0">Desabilitado</option></select></td></tr>
+                </table>
+
+                <div class="section-title">Configuracoes de Sistema</div>
+                <table class="config-table">
+                    <tr><td>Quantidade de Pinos:</td><td><input type="number" name="qtd_pinos" id="qtd_pinos" min="1" max="50" value="10"></td></tr>
+                    <tr><td>Debug Serial:</td><td>
+                        <select name="serial_debug_enabled" id="serial_debug_enabled">
+                            <option value="0">Desabilitado</option>
+                            <option value="1">Habilitado - Logs Basicos</option>
+                            <option value="511">Habilitado - Logs Completos</option>
+                        </select>
+                    </td></tr>
+                    <tr><td>Categorias de Debug:</td><td>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 12px;">
+                            <label><input type="checkbox" id="log_init" value="1"> Inicializacao</label>
+                            <label><input type="checkbox" id="log_network" value="2"> Rede/WiFi</label>
+                            <label><input type="checkbox" id="log_pins" value="4"> Pinos/GPIO</label>
+                            <label><input type="checkbox" id="log_flash" value="8"> Flash/Storage</label>
+                            <label><input type="checkbox" id="log_web" value="16"> Interface Web</label>
+                            <label><input type="checkbox" id="log_sensor" value="32"> Sensores</label>
+                            <label><input type="checkbox" id="log_actions" value="64"> Acoes</label>
+                            <label><input type="checkbox" id="log_intermod" value="128"> Inter-Modulos</label>
+                            <label><input type="checkbox" id="log_watchdog" value="256"> Watchdog</label>
+                            <label><input type="checkbox" id="log_mqtt" value="512"> MQTT</label>
+                        </div>
+                    </td></tr>
+                    <tr><td>Watchdog Habilitado:</td><td><select name="watchdog_enabled" id="watchdog_enabled"><option value="1">Habilitado</option><option value="0">Desabilitado</option></select></td></tr>
+                    <tr><td>Tempo Watchdog (microseg):</td><td><input type="number" name="tempo_watchdog_us" id="tempo_watchdog_us" min="1000000" max="8000000" value="2000000"></td></tr>
+                    <tr><td>Clock ESP32 (MHz):</td><td>
+                        <select name="clock_esp32_mhz" id="clock_esp32_mhz">
+                            <option value="80">80 MHz</option>
+                            <option value="160">160 MHz</option>
+                            <option value="240">240 MHz (Padrao)</option>
+                        </select>
+                    </td></tr>
+                </table>
+
+                <div class="section-title">Configuracoes do Servidor Web</div>
+                <table class="config-table">
+                    <tr><td>Porta do Servidor:</td><td><input type="number" name="web_server_port" id="web_server_port" min="80" max="65535" value="8080"></td></tr>
+                    <tr><td>Autenticacao Habilitada:</td><td><select name="auth_enabled" id="auth_enabled"><option value="1">Habilitado</option><option value="0">Desabilitado</option></select></td></tr>
+                    <tr><td>Dashboard Requer Auth:</td><td><select name="dashboard_auth_required" id="dashboard_auth_required"><option value="1">Sim</option><option value="0">Nao</option></select></td></tr>
+                </table>
+
+                <div class="section-title">Configuracoes do Access Point (Fallback)</div>
+                <table class="config-table">
+                    <tr><td>SSID do Access Point:</td><td><input type="text" name="ap_ssid" id="ap_ssid" maxlength="32" value="esp32modularx Ponto de Acesso"></td></tr>
+                    <tr><td>Senha do Access Point:</td><td><input type="password" name="ap_pass" id="ap_pass" maxlength="64" placeholder="Deixe em branco para manter atual"></td></tr>
+                    <tr><td>Fallback AP Habilitado:</td><td><select name="ap_fallback_enabled" id="ap_fallback_enabled"><option value="1">Habilitado</option><option value="0">Desabilitado</option></select></td></tr>
+                </table>
+
+                <div class="section-title">Autenticacao Web</div>
+                <table class="config-table">
+                    <tr><td>Usuario Web:</td><td><input type="text" name="web_username" id="web_username" maxlength="32"></td></tr>
+                    <tr><td>Senha Web:</td><td><input type="password" name="web_password" id="web_password" maxlength="64" placeholder="Deixe em branco para manter atual"></td></tr>
+                </table>
+            </div>
+        </form>
+
+        <div id="status" class="status-message"></div>
+    </div>
+
+    <script>
+        // Função para obter nome da cor baseado no valor hexadecimal
+        function getColorName(hex) {
+            const colors = {
+                '#000000': 'Preto', '#ffffff': 'Branco', '#ff0000': 'Vermelho', '#00ff00': 'Verde', 
+                '#0000ff': 'Azul', '#ffff00': 'Amarelo', '#ff00ff': 'Magenta', '#00ffff': 'Ciano',
+                '#800000': 'Vermelho Escuro', '#008000': 'Verde Escuro', '#000080': 'Azul Escuro',
+                '#808000': 'Amarelo Escuro', '#800080': 'Roxo', '#008080': 'Verde Azulado',
+                '#c0c0c0': 'Cinza Claro', '#808080': 'Cinza', '#404040': 'Cinza Escuro',
+                '#ffa500': 'Laranja', '#ffc0cb': 'Rosa', '#a52a2a': 'Marrom', '#90ee90': 'Verde Claro',
+                '#add8e6': 'Azul Claro', '#f0e68c': 'Cáqui', '#dda0dd': 'Ameixa', '#98fb98': 'Verde Menta'
+            };
+            
+            hex = hex.toLowerCase();
+            return colors[hex] || `Personalizada (${hex.toUpperCase()})`;
+        }
+        
+        // Função para atualizar nome da cor
+        function updateColorName(inputId, spanId) {
+            const colorInput = document.getElementById(inputId);
+            const colorSpan = document.getElementById(spanId);
+            colorSpan.textContent = getColorName(colorInput.value);
+        }
+
+        // Sanitização de Hostname: remove acentos, espaços e caracteres especiais; converte para MAIÚSCULO
+        function sanitizeHostname(value) {
+            if (!value) return '';
+            // Remove diacríticos (acentos)
+            let s = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            // Remove tudo que não for A-Z ou 0-9 e converte para maiúsculas
+            s = s.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            return s;
+        }
+
+        // Controle do loading
+        function showLoading(text = 'Carregando...') {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.querySelector('.loading-text').textContent = text;
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
+        // Esconder loading quando página carregar completamente e carregar configuração atual
+        window.addEventListener('load', function() {
+            // Carregar configuração atual automaticamente
+            fetch('/config/json')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('hostname').value = data.hostname || '';
+                    document.getElementById('wifi_ssid').value = data.wifi_ssid || '';
+                    document.getElementById('wifi_attempts').value = data.wifi_attempts || 15;
+                    document.getElementById('wifi_check_interval').value = data.wifi_check_interval || 15000;
+                    document.getElementById('ntp_server1').value = data.ntp_server1 || 'pool.ntp.br';
+                    document.getElementById('gmt_offset').value = data.gmt_offset || -10800;
+                    document.getElementById('daylight_offset').value = data.daylight_offset || 0;
+                    document.getElementById('status_pinos_enabled').value = data.status_pinos_enabled ? '1' : '0';
+                    document.getElementById('inter_modulos_enabled').value = data.inter_modulos_enabled ? '1' : '0';
+                    document.getElementById('cor_com_alerta').value = data.cor_com_alerta || '#ff0000';
+                    document.getElementById('cor_sem_alerta').value = data.cor_sem_alerta || '#00ff00';
+                    
+                    // Atualizar nomes das cores
+                    updateColorName('cor_com_alerta', 'cor_com_alerta_name');
+                    updateColorName('cor_sem_alerta', 'cor_sem_alerta_name');
+                    document.getElementById('tempo_refresh').value = data.tempo_refresh || 15;
+                    document.getElementById('show_analog_history').value = data.show_analog_history !== undefined ? (data.show_analog_history ? '1' : '0') : '1';
+                    document.getElementById('show_digital_history').value = data.show_digital_history !== undefined ? (data.show_digital_history ? '1' : '0') : '0';
+                    document.getElementById('qtd_pinos').value = data.qtd_pinos || 10;
+                    document.getElementById('serial_debug_enabled').value = data.serial_debug_enabled ? (data.active_log_flags == 511 ? '511' : '1') : '0';
+                    
+                    // Configurar checkboxes de debug
+                    updateLogCheckboxes(data.active_log_flags || 0);
+                    
+                    document.getElementById('watchdog_enabled').value = data.watchdog_enabled ? '1' : '0';
+                    document.getElementById('tempo_watchdog_us').value = data.tempo_watchdog_us || 2000000;
+                    document.getElementById('clock_esp32_mhz').value = data.clock_esp32_mhz || 240;
+                    document.getElementById('web_server_port').value = data.web_server_port || 8080;
+                    document.getElementById('auth_enabled').value = data.auth_enabled ? '1' : '0';
+                    document.getElementById('dashboard_auth_required').value = data.dashboard_auth_required ? '1' : '0';
+                    document.getElementById('ap_ssid').value = data.ap_ssid || 'esp32modularx Ponto de Acesso';
+                    document.getElementById('ap_fallback_enabled').value = data.ap_fallback_enabled ? '1' : '0';
+                    document.getElementById('web_username').value = data.web_username || '';
+                    
+                    hideLoading();
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Erro ao carregar configuração:', error);
+                    showStatus('Erro ao carregar configuração atual.', 'error');
+                });
+        });
+
+        function updateLogCheckboxes(logFlags) {
+            const checkboxes = [
+                { id: 'log_init', value: 1 },
+                { id: 'log_network', value: 2 },
+                { id: 'log_pins', value: 4 },
+                { id: 'log_flash', value: 8 },
+                { id: 'log_web', value: 16 },
+                { id: 'log_sensor', value: 32 },
+                { id: 'log_actions', value: 64 },
+                { id: 'log_intermod', value: 128 },
+                { id: 'log_watchdog', value: 256 },
+                { id: 'log_mqtt', value: 512 }
+            ];
+            
+            checkboxes.forEach(cb => {
+                document.getElementById(cb.id).checked = (logFlags & cb.value) !== 0;
+            });
+        }
+
+        function getLogFlags() {
+            let flags = 0;
+            const checkboxes = [
+                { id: 'log_init', value: 1 },
+                { id: 'log_network', value: 2 },
+                { id: 'log_pins', value: 4 },
+                { id: 'log_flash', value: 8 },
+                { id: 'log_web', value: 16 },
+                { id: 'log_sensor', value: 32 },
+                { id: 'log_actions', value: 64 },
+                { id: 'log_intermod', value: 128 },
+                { id: 'log_watchdog', value: 256 },
+                { id: 'log_mqtt', value: 512 }
+            ];
+            
+            checkboxes.forEach(cb => {
+                if (document.getElementById(cb.id).checked) {
+                    flags |= cb.value;
+                }
+            });
+            
+            return flags;
+        }
+
+        function saveConfig() {
+            if (confirm('Aplicar configurações gerais? O ESP será reiniciado.')) {
+                showLoading('Aplicando configurações e reiniciando...');
+                
+                // Sanitiza hostname antes de montar o form
+                const hostnameInput = document.getElementById('hostname');
+                hostnameInput.value = sanitizeHostname(hostnameInput.value);
+                
+                const formData = new FormData(document.getElementById('configForm'));
+                
+                // Adicionar flags de debug calculadas
+                const logFlags = getLogFlags();
+                formData.append('active_log_flags', logFlags);
+                
+                fetch('/save_config', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.text())
+                .then(result => {
+                    if (result === 'Configurações salvas! O sistema será reiniciado...' || result.includes('salvas')) {
+                        showStatus('Configurações aplicadas! Reiniciando ESP...', 'success');
+                        
+                        // Aguardar 3 segundos e redirecionar para página inicial
+                        setTimeout(() => {
+                            showLoading('Redirecionando para página inicial...');
+                            window.location.href = '/';
+                        }, 3000);
+                    } else {
+                        hideLoading();
+                        showStatus('Erro ao aplicar configurações.', 'error');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Erro:', error);
+                    showStatus('Erro de comunicação.', 'error');
+                });
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status-message status-' + type;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Sincronizar dropdown de debug com checkboxes
+        document.getElementById('serial_debug_enabled').addEventListener('change', function() {
+            const value = this.value;
+            if (value === '0') {
+                // Desabilitar todos
+                updateLogCheckboxes(0);
+            } else if (value === '1') {
+                // Habilitar basicos (INIT + NETWORK + WEB)
+                updateLogCheckboxes(1 + 2 + 16);
+            } else if (value === '511') {
+                // Habilitar todos
+                updateLogCheckboxes(511);
+            }
+        });
+
+        // Atualizar dropdown quando checkboxes mudarem
+        document.querySelectorAll('input[type="checkbox"][id^="log_"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const flags = getLogFlags();
+                const dropdown = document.getElementById('serial_debug_enabled');
+                if (flags === 0) {
+                    dropdown.value = '0';
+                } else if (flags === 511) {
+                    dropdown.value = '511';
+                } else {
+                    dropdown.value = '1';
+                }
+            });
+        });
+    </script>
+
+    <!-- Indicador de Performance -->
+    <div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-family: monospace; display: none;" id="performance-indicator">
+        Tempo de Carregamento: <span id="load-time">-</span>
+    </div>
+
+    <script>
+        // === SISTEMA DE MONITORAMENTO DE PERFORMANCE ===
+        const pageStartTime = performance.now();
+        
+        // Função para mostrar indicador de performance
+        function showPerformanceIndicator() {
+            const loadTime = performance.now() - pageStartTime;
+            document.getElementById('load-time').textContent = loadTime.toFixed(2) + 'ms';
+            document.getElementById('performance-indicator').style.display = 'block';
+            
+            console.log(`[PERFORMANCE] Configurações carregadas em ${loadTime.toFixed(2)}ms`);
+        }
+        
+        // Mostrar indicador após carregamento
+        window.addEventListener('load', function() {
+            setTimeout(showPerformanceIndicator, 100);
+        });
+        
+        // Adicionar listeners para atualizar nomes das cores em tempo real
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sanitização live do hostname conforme digita
+            const hostnameInput = document.getElementById('hostname');
+            if (hostnameInput) {
+                hostnameInput.addEventListener('input', function() {
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    const sanitized = sanitizeHostname(this.value);
+                    this.value = sanitized;
+                    // Mantém posição de cursor aproximada
+                    this.setSelectionRange(start, end);
+                });
+            }
+            document.getElementById('cor_com_alerta').addEventListener('input', function() {
+                updateColorName('cor_com_alerta', 'cor_com_alerta_name');
+            });
+            
+            document.getElementById('cor_sem_alerta').addEventListener('input', function() {
+                updateColorName('cor_sem_alerta', 'cor_sem_alerta_name');
+            });
+        });
+    </script>
+</body>
+</html>

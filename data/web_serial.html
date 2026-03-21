@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMCR - Web Serial</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f0f0; }
+    .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #333; margin-bottom: 10px; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+    .menu { text-align: center; margin: 20px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+    .menu a { margin: 0 15px; text-decoration: none; color: #007bff; font-weight: bold; }
+    .menu a:hover { text-decoration: underline; }
+    #log { height: 60vh; overflow-y: auto; background: #0b0c10; color: #c5c6c7; padding: 12px; border-radius: 6px; font-family: monospace; white-space: pre-wrap; }
+    .controls { display: flex; gap: 8px; margin-top: 10px; }
+    .btn { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn-primary { background: #007bff; color: #fff; }
+    .btn-warning { background: #ffc107; color: #212529; }
+    .badge { background: #e3f2fd; padding: 2px 6px; border-radius: 3px; font-size: 12px; color: #333; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SMCR - Web Serial</h1>
+        <nav class="navbar" style="background:#f8f9fa;border-bottom:1px solid #e9ecef;padding:10px 14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+          <a href="/" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Status</a>
+          <a href="/configuracao" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Configurações</a>
+          <a href="/pinos" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Pinos</a>
+          <a href="/acoes" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Ações</a>
+          <details style="position:relative;">
+            <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Serviços</summary>
+            <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+              <a href="/mqtt" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">MQTT</a>
+              <a href="/intermod" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Inter-Módulos</a>
+              <a href="/assistentes" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Assistentes</a>
+            </div>
+          </details>
+            <details style="position:relative;">
+            <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Arquivos</summary>
+            <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                <a href="/arquivos/firmware" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Firmware</a>
+                <a href="/arquivos/preferencias" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Preferências</a>
+                <a href="/arquivos/littlefs" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">LittleFS</a>
+            </div>
+        </details>
+          <details style="position:relative;">
+            <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Util</summary>
+            <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+              <a href="/serial" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Web Serial</a>
+              <a href="/reset" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Reset</a>
+            </div>
+          </details>
+        </nav>
+        <div class="controls">
+      <button class="btn btn-primary" onclick="connectWS()">Conectar</button>
+      <button class="btn btn-warning" onclick="clearLog()">Limpar</button>
+      <button class="btn btn-primary" id="btn-scroll" onclick="toggleAutoScroll()">⏸️ Pausar Scroll</button>
+      <button class="btn btn-warning" onclick="disconnect()">Desconectar</button>
+      <span id="status" class="badge">Desconectado</span>
+    </div>
+    <div style="margin: 10px 0; font-size: 13px;">
+      <strong>Filtros:</strong>
+      <label style="margin-left:8px;"><input type="checkbox" checked onchange="toggleFilter('INIT')"> INIT</label>
+      <label style="margin-left:8px;"><input type="checkbox" checked onchange="toggleFilter('NET')"> NET</label>
+      <label style="margin-left:8px;"><input type="checkbox" checked onchange="toggleFilter('PINS')"> PINS</label>
+      <label style="margin-left:8px;"><input type="checkbox" checked onchange="toggleFilter('FLASH')"> FLASH</label>
+      <label style="margin-left:8px;"><input type="checkbox" checked onchange="toggleFilter('WEB')"> WEB</label>
+      <label style="margin-left:8px;"><input type="checkbox" checked onchange="toggleFilter('SENSOR')"> SENSOR</label>
+      <label style="margin-left:8px;"><input type="checkbox" checked onchange="toggleFilter('ACTIONS')"> ACTIONS</label>
+      <label style="margin-left:8px;"><input type="checkbox" checked onchange="toggleFilter('INTERMOD')"> INTERMOD</label>
+      <label style="margin-left:8px;"><input type="checkbox" checked onchange="toggleFilter('WDOG')"> WDOG</label>
+      <label style="margin-left:8px;"><input type="checkbox" checked onchange="toggleFilter('MQTT')"> MQTT</label>
+    </div>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    let lastCounter = 0;
+    let autoScroll = true;
+    let pollInterval;
+    let activeFilters = {
+      'INIT': true, 'NET': true, 'PINS': true, 'FLASH': true,
+      'WEB': true, 'SENSOR': true, 'ACTIONS': true, 'INTERMOD': true, 'WDOG': true, 'MQTT': true
+    };
+
+    function connectWS(){
+      if(pollInterval) clearInterval(pollInterval);
+      setStatus('Conectado');
+      fetchLogs(0); // Busca todo buffer inicial
+      pollInterval = setInterval(() => fetchLogs(lastCounter), 1500);
+    }
+    
+    function fetchLogs(since){
+      fetch('/api/serial/logs?since=' + since)
+        .then(r => r.json())
+        .then(data => {
+          if(data.logs && data.logs.length > 0){
+            data.logs.forEach(line => appendLog(line));
+            lastCounter = data.counter;
+          }
+        })
+        .catch(() => setStatus('Erro'));
+    }
+    
+    function setStatus(s){ document.getElementById('status').textContent = s; }
+    
+    function appendLog(line){
+      // Filtro: verifica se alguma tag ativa está na linha
+      let show = false;
+      for(let tag in activeFilters){
+        if(activeFilters[tag] && line.includes('[' + tag + ']')){
+          show = true;
+          break;
+        }
+      }
+      if(!show) return;
+      
+      const log = document.getElementById('log');
+      log.textContent += (line + '\n');
+      if(autoScroll) log.scrollTop = log.scrollHeight;
+    }
+    
+    function clearLog(){ 
+      document.getElementById('log').textContent = '';
+      lastCounter = 0;
+    }
+    
+    function toggleAutoScroll(){
+      autoScroll = !autoScroll;
+      document.getElementById('btn-scroll').textContent = autoScroll ? '⏸️ Pausar Scroll' : '▶️ Retomar Scroll';
+    }
+    
+    function toggleFilter(tag){
+      activeFilters[tag] = !activeFilters[tag];
+    }
+    
+    function disconnect(){
+      if(pollInterval) clearInterval(pollInterval);
+      setStatus('Desconectado');
+    }
+
+    window.addEventListener('load', connectWS);
+
+    // === SISTEMA DE MONITORAMENTO DE PERFORMANCE ===
+    const pageStartTime = performance.now();
+    
+    // Função para mostrar indicador de performance
+    function showPerformanceIndicator() {
+        const loadTime = performance.now() - pageStartTime;
+        const indicator = document.createElement('div');
+        indicator.style.cssText = 'position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-family: monospace;';
+        indicator.innerHTML = `Tempo de Carregamento: ${loadTime.toFixed(2)}ms`;
+        document.body.appendChild(indicator);
+        
+        console.log(`[PERFORMANCE] Web Serial carregado em ${loadTime.toFixed(2)}ms`);
+    }
+    
+    // Mostrar indicador após carregamento
+    window.addEventListener('load', function() {
+        setTimeout(showPerformanceIndicator, 100);
+    });
+  </script>
+</body>
+</html>

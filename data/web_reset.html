@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMCR - Reset do Sistema</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f0f0f0; 
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        h1 { 
+            text-align: center; 
+            color: #333; 
+            margin-bottom: 10px; 
+            border-bottom: 2px solid #007bff; 
+            padding-bottom: 10px; 
+        }
+        .menu { 
+            text-align: center; 
+            margin: 20px 0; 
+            padding: 10px; 
+            background: #f8f9fa; 
+            border-radius: 4px; 
+        }
+        .menu a { 
+            margin: 0 15px; 
+            text-decoration: none; 
+            color: #007bff; 
+            font-weight: bold; 
+        }
+        .menu a:hover { 
+            text-decoration: underline; 
+        }
+        .section { 
+            margin: 30px 0; 
+        }
+        .section-title { 
+            font-size: 18px; 
+            font-weight: bold; 
+            color: #444; 
+            margin-bottom: 15px; 
+            padding: 8px 0; 
+            border-bottom: 1px solid #ddd; 
+        }
+        .warning-box { 
+            background: #fff3cd; 
+            border: 1px solid #ffeeba; 
+            color: #856404; 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin: 20px 0; 
+        }
+        .reset-option { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            padding: 20px; 
+            margin: 15px 0; 
+            border-radius: 4px; 
+        }
+        .reset-option h3 { 
+            margin-top: 0; 
+            color: #495057; 
+        }
+        .reset-option p { 
+            margin: 10px 0; 
+            color: #6c757d; 
+        }
+        .btn { 
+            margin: 5px; 
+            padding: 10px 15px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            font-weight: bold; 
+            text-decoration: none; 
+            display: inline-block; 
+        }
+        .btn-danger { 
+            background: #dc3545; 
+            color: white; 
+        }
+        .btn-danger:hover { 
+            background: #c82333; 
+        }
+        .btn-warning { 
+            background: #ffc107; 
+            color: #212529; 
+        }
+        .btn-warning:hover { 
+            background: #e0a800; 
+        }
+        .btn-secondary { 
+            background: #6c757d; 
+            color: white; 
+        }
+        .btn-secondary:hover { 
+            background: #545b62; 
+        }
+        .status-message { 
+            margin-top: 15px; 
+            padding: 10px; 
+            border-radius: 4px; 
+            text-align: center; 
+            display: none; 
+        }
+        .status-success { 
+            background: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .status-error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            margin-left: 15px;
+            font-size: 16px;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Carregando informações...</div>
+    </div>
+    <div class="container">
+        <h1>SMCR - Reset do Sistema</h1>
+        
+        <nav class="navbar" style="background:#f8f9fa;border-bottom:1px solid #e9ecef;padding:10px 14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <a href="/" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Status</a>
+            <a href="/configuracao" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Configurações</a>
+            <a href="/pinos" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Pinos</a>
+            <a href="/acoes" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Ações</a>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Serviços</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/mqtt" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">MQTT</a>
+                    <a href="/intermod" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Inter-Módulos</a>
+                    <a href="/assistentes" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Assistentes</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Arquivos</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/arquivos/firmware" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Firmware</a>
+                    <a href="/arquivos/preferencias" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Preferências</a>
+                    <a href="/arquivos/littlefs" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">LittleFS</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Util</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/serial" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Web Serial</a>
+                    <a href="/reset" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Reset</a>
+                </div>
+            </details>
+        </nav>
+
+        <div class="section">
+            <div class="section-title">Operacoes de Reset e Limpeza do Sistema</div>
+            
+            <div class="warning-box">
+                <strong>Atencao!</strong> As operacoes desta pagina sao irreversiveis. Use com cuidado!
+            </div>
+
+            <div class="reset-option">
+                <h3>🔄 Reinicializar Sistema</h3>
+                <p>Reinicia o ESP32 mantendo todas as configuracoes salvas. Util para resolver problemas temporarios.</p>
+                <button onclick="restartSystem()" class="btn btn-secondary">Reiniciar Sistema</button>
+            </div>
+
+            <div class="reset-option">
+                <h3>🔧 Reset de Configuracoes (Preservando Rede)</h3>
+                <p>Limpa todas as configuracoes EXCETO as informacoes de rede (hostname, SSID e senha WiFi). O sistema continuara conectado na mesma rede.</p>
+                <button onclick="resetConfigPreservingNetwork()" class="btn btn-warning">Reset Preservando Rede</button>
+            </div>
+
+            <div class="reset-option">
+                <h3>📌 Limpar Configuracoes de Pinos</h3>
+                <p>Remove todas as configuracoes de pinos/reles. As configuracoes gerais do sistema serao mantidas.</p>
+                <button onclick="resetPinsOnly()" class="btn btn-warning">Limpar Apenas Pinos</button>
+            </div>
+
+            <div class="reset-option">
+                <h3>⚠️ Reset Completo (Factory Reset)</h3>
+                <p>APAGA TUDO! Remove todas as configuracoes, inclusive rede. O sistema voltara ao modo Access Point para nova configuracao.</p>
+                <button onclick="factoryReset()" class="btn btn-danger">Reset Completo (Factory)</button>
+            </div>
+
+            <div class="reset-option">
+                <h3>💾 Informacoes do Sistema</h3>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                    <tr><td style="padding: 5px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">Firmware:</td><td style="padding: 5px; border: 1px solid #ddd;" id="firmware-info">Carregando...</td></tr>
+                    <tr><td style="padding: 5px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">Uptime:</td><td style="padding: 5px; border: 1px solid #ddd;" id="uptime-info">Carregando...</td></tr>
+                    <tr><td style="padding: 5px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">Memoria Livre:</td><td style="padding: 5px; border: 1px solid #ddd;" id="memory-info">Carregando...</td></tr>
+                    <tr><td style="padding: 5px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">Uso CPU (Media): <span style="font-size:9px;color:#888;" title="Valor aproximado baseado em métricas do sistema">ⓘ</span></td><td style="padding: 5px; border: 1px solid #ddd;" id="cpu-usage-avg">Carregando...</td></tr>
+                    <tr><td style="padding: 5px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">CPU Cores:</td><td style="padding: 5px; border: 1px solid #ddd; font-size: 12px;" id="cpu-cores-detail">Carregando...</td></tr>
+                    <tr><td style="padding: 5px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">Chip Model:</td><td style="padding: 5px; border: 1px solid #ddd;" id="chip-model">Carregando...</td></tr>
+                    <tr><td style="padding: 5px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">Chip Revision:</td><td style="padding: 5px; border: 1px solid #ddd;" id="chip-revision">Carregando...</td></tr>
+                    <tr><td style="padding: 5px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">CPU Frequencia:</td><td style="padding: 5px; border: 1px solid #ddd;" id="cpu-freq">Carregando...</td></tr>
+                    <tr><td style="padding: 5px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">MAC Address:</td><td style="padding: 5px; border: 1px solid #ddd;" id="mac-address">Carregando...</td></tr>
+                    <tr><td style="padding: 5px; border: 1px solid #ddd; background: #f8f9fa; font-weight: bold;">Flash Size:</td><td style="padding: 5px; border: 1px solid #ddd;" id="flash-size">Carregando...</td></tr>
+                </table>
+                <div style="font-size:10px;color:#888;margin-top:8px;font-style:italic;">* Valores de CPU são aproximados (baseados em tasks, WiFi e atividade do sistema)</div>
+            </div>
+        </div>
+
+        <div id="status" class="status-message"></div>
+    </div>
+
+    <script>
+        // Controle do loading
+        function showLoading(text = 'Carregando...') {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.querySelector('.loading-text').textContent = text;
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
+        // Esconder loading quando página carregar completamente
+        window.addEventListener('load', function() {
+            hideLoading();
+        });
+
+        function restartSystem() {
+            if (confirm('Tem certeza que deseja reiniciar o sistema? O processo levara alguns segundos.')) {
+                showStatus('Reiniciando sistema...', 'success');
+                
+                fetch('/restart', { method: 'POST' })
+                    .then(() => {
+                        showStatus('Sistema reiniciando. Aguarde 30 segundos...', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 30000);
+                    })
+                    .catch(error => {
+                        showStatus('Erro ao reiniciar sistema.', 'error');
+                    });
+            }
+        }
+
+        function resetConfigPreservingNetwork() {
+            if (confirm('Tem certeza que deseja limpar todas as configuracoes EXCETO as de rede? Esta operacao nao pode ser desfeita.')) {
+                showStatus('Executando reset preservando rede...', 'success');
+                
+                fetch('/reset/config', { method: 'POST' })
+                    .then(response => response.text())
+                    .then(result => {
+                        if (result === 'OK') {
+                            showStatus('Reset concluido! Sistema sera reiniciado mantendo a conectividade.', 'success');
+                            setTimeout(() => {
+                                window.location.href = '/';
+                            }, 5000);
+                        } else {
+                            showStatus('Erro ao executar reset.', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        showStatus('Erro de comunicacao.', 'error');
+                    });
+            }
+        }
+
+        function resetPinsOnly() {
+            if (confirm('Tem certeza que deseja limpar apenas as configuracoes de pinos? Esta operacao nao pode ser desfeita.')) {
+                showStatus('Limpando configuracoes de pinos...', 'success');
+                
+                fetch('/reset/pins', { method: 'POST' })
+                    .then(response => response.text())
+                    .then(result => {
+                        if (result === 'OK') {
+                            showStatus('Configuracoes de pinos removidas com sucesso!', 'success');
+                            setTimeout(() => {
+                                window.location.href = '/pins';
+                            }, 3000);
+                        } else {
+                            showStatus('Erro ao limpar pinos.', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        showStatus('Erro de comunicacao.', 'error');
+                    });
+            }
+        }
+
+        function factoryReset() {
+            if (confirm('ATENCAO: Esta operacao ira APAGAR TUDO! O sistema voltara as configuracoes de fabrica e entrara em modo Access Point. Confirma?')) {
+                if (confirm('Ultima confirmacao: TEM CERTEZA ABSOLUTA? Todas as configuracoes serao perdidas!')) {
+                    showStatus('Executando Factory Reset...', 'success');
+                    
+                    fetch('/reset/factory', { method: 'POST' })
+                        .then(() => {
+                            showStatus('Factory Reset executado! Sistema reiniciando em modo Access Point...', 'success');
+                            setTimeout(() => {
+                                alert('Sistema sera reiniciado em modo Access Point. Conecte-se na rede "esp32modularx Ponto de Acesso" com senha "senha12345678"');
+                            }, 3000);
+                        })
+                        .catch(error => {
+                            showStatus('Erro ao executar factory reset.', 'error');
+                        });
+                }
+            }
+        }
+
+        function loadSystemInfo() {
+            fetch('/status/json')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('firmware-info').textContent = 'SMCR v' + (data.system.fw_version || 'N/D');
+                    document.getElementById('uptime-info').textContent = data.system.uptime || '-';
+                    document.getElementById('memory-info').textContent = formatBytes(data.system.free_heap || 0);
+                    
+                    // Uso de CPU com cores dinâmicos
+                    const cpuAvg = data.system.cpu_usage_avg || 0;
+                    const cpuColor = cpuAvg > 80 ? '#dc3545' : cpuAvg > 50 ? '#ffc107' : '#28a745';
+                    document.getElementById('cpu-usage-avg').innerHTML = `<strong style="color:${cpuColor}">${cpuAvg.toFixed(1)}%</strong>`;
+                    
+                    // Renderiza todos os cores detectados
+                    const cpuCores = data.system.cpu_cores || [];
+                    if (cpuCores.length > 0) {
+                        const coresHtml = cpuCores.map(core => {
+                            const coreColor = core.usage > 80 ? '#dc3545' : core.usage > 50 ? '#ffc107' : '#28a745';
+                            return `Core ${core.core}: <span style="color:${coreColor}">${core.usage.toFixed(1)}%</span>`;
+                        }).join(' | ');
+                        document.getElementById('cpu-cores-detail').innerHTML = coresHtml;
+                    } else {
+                        document.getElementById('cpu-cores-detail').textContent = '-';
+                    }
+                    
+                    document.getElementById('chip-model').textContent = data.system.chip_model || 'N/D';
+                    document.getElementById('chip-revision').textContent = data.system.chip_revision || 'N/D';
+                    document.getElementById('cpu-freq').textContent = (data.system.cpu_freq || 'N/D') + ' MHz';
+                    document.getElementById('mac-address').textContent = data.system.mac_address || 'N/D';
+                    document.getElementById('flash-size').textContent = formatBytes(data.system.flash_size || 0);
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar info do sistema:', error);
+                });
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status-message status-' + type;
+            statusDiv.style.display = 'block';
+            
+            if (type !== 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // === SISTEMA DE MONITORAMENTO DE PERFORMANCE ===
+        const pageStartTime = performance.now();
+        
+        // Função para mostrar indicador de performance
+        function showPerformanceIndicator() {
+            const loadTime = performance.now() - pageStartTime;
+            const indicator = document.createElement('div');
+            indicator.style.cssText = 'position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-family: monospace;';
+            indicator.innerHTML = `Tempo de Carregamento: ${loadTime.toFixed(2)}ms`;
+            document.body.appendChild(indicator);
+            
+            console.log(`[PERFORMANCE] Reset carregado em ${loadTime.toFixed(2)}ms`);
+        }
+
+        // Carregar informacoes do sistema ao abrir a pagina
+        loadSystemInfo();
+        setInterval(loadSystemInfo, 30000);
+        
+        // Mostrar indicador após carregamento
+        window.addEventListener('load', function() {
+            setTimeout(showPerformanceIndicator, 100);
+        });
+    </script>
+</body>
+</html>

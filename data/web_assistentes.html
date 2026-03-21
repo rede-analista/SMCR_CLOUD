@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistentes - SMCR</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f0f0f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #2d3748;
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group small {
+            display: block;
+            color: #718096;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .checkbox-group:hover {
+            background: #edf2f7;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0 !important;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .status-message.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #48bb78;
+        }
+
+        .status-message.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #f56565;
+        }
+
+        .info-box {
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            color: #2c5282;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .info-box ul {
+            margin-top: 10px;
+            margin-left: 20px;
+            color: #2c5282;
+            font-size: 13px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-spinner {
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 16px;
+        }
+
+        /* Performance Indicator */
+        #performanceIndicator {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        /* Navigation Menu */
+        .nav-menu {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .nav-menu ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: #4a5568;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-size: 14px;
+            display: block;
+        }
+
+        .nav-menu a:hover {
+            background: #edf2f7;
+            color: #667eea;
+        }
+
+        .nav-menu a.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-radius: 6px;
+            z-index: 1;
+            margin-top: 5px;
+        }
+
+        .dropdown-content a {
+            padding: 10px 16px;
+            display: block;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu ul {
+                flex-direction: column;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <div class="loading-text">Carregando...</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Configuração de Assistentes</h1>        
+        <!-- Navigation Menu -->
+        <nav class="navbar" style="background:#f8f9fa;border-bottom:1px solid #e9ecef;padding:10px 14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <a href="/" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Status</a>
+            <a href="/configuracao" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Configurações</a>
+            <a href="/pinos" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Pinos</a>
+            <a href="/acoes" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Ações</a>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Serviços</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/mqtt" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">MQTT</a>
+                    <a href="/intermod" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Inter-Módulos</a>
+                    <a href="/assistentes" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Assistentes</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Arquivos</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/arquivos/firmware" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Firmware</a>
+                    <a href="/arquivos/preferencias" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Preferências</a>
+                    <a href="/arquivos/littlefs" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">LittleFS</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Util</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/serial" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Web Serial</a>
+                    <a href="/reset" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Reset</a>
+                </div>
+            </details>
+        </nav>
+
+        <!-- Telegram Configuration Card -->
+        <div class="card">
+            <h2>Telegram</h2>
+
+            <div class="info-box">
+                <p><strong>Como configurar:</strong></p>
+                <ul>
+                    <li>Abra o Telegram e procure por <strong>@BotFather</strong></li>
+                    <li>Envie o comando <code>/newbot</code> e siga as instruções</li>
+                    <li>Copie o <strong>Token</strong> fornecido pelo BotFather</li>
+                    <li>Inicie uma conversa com seu novo bot</li>
+                    <li>Para obter o Chat ID, envie uma mensagem para <strong>@userinfobot</strong></li>
+                </ul>
+            </div>
+
+            <form id="telegramForm">
+                <div class="form-group">
+                    <div class="checkbox-group" onclick="document.getElementById('telegram_enabled').click()">
+                        <input type="checkbox" id="telegram_enabled" name="telegram_enabled">
+                        <label for="telegram_enabled">Habilitar notificações por Telegram</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="telegram_token">Token do Bot</label>
+                    <input type="text" id="telegram_token" name="telegram_token" placeholder="Ex: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz">
+                    <small>Token fornecido pelo @BotFather</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="telegram_chatid">Chat ID</label>
+                    <input type="text" id="telegram_chatid" name="telegram_chatid" placeholder="Ex: 123456789">
+                    <small>ID do chat ou grupo que receberá as notificações (use @userinfobot para descobrir)</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="telegram_interval">Intervalo de Verificação (segundos)</label>
+                    <input type="number" id="telegram_interval" name="telegram_interval" min="10" max="300" value="30">
+                    <small>Intervalo para verificar mensagens recebidas (recomendado: 30 segundos)</small>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">💾 Salvar Configurações</button>
+                    <button type="button" class="btn btn-secondary" onclick="testTelegram()">🔔 Testar Notificação</button>
+                </div>
+
+                <div id="status" class="status-message"></div>
+            </form>
+        </div>
+
+    </div>
+
+    <div id="performanceIndicator"></div>
+
+    <script>
+        const pageStartTime = performance.now();
+
+        // Loading overlay functions
+        function showLoading(text = 'Carregando...') {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.querySelector('.loading-text').textContent = text;
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
+        window.addEventListener('load', function() {
+            hideLoading();
+            const pageLoadTime = (performance.now() - pageStartTime).toFixed(2);
+            document.getElementById('performanceIndicator').textContent = `⚡ Carregado em ${pageLoadTime}ms`;
+            console.log(`[PERFORMANCE] Página carregada em ${pageLoadTime}ms`);
+        });
+
+        // Status message functions
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status-message ' + type;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Load current configuration
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/assistentes/config');
+                const data = await response.json();
+                
+                document.getElementById('telegram_enabled').checked = data.telegram_enabled || false;
+                document.getElementById('telegram_token').value = data.telegram_token || '';
+                document.getElementById('telegram_chatid').value = data.telegram_chatid || '';
+                document.getElementById('telegram_interval').value = data.telegram_interval || 30;
+                
+                console.log('[ASSISTENTES] Configuração carregada:', data);
+            } catch (error) {
+                console.error('[ASSISTENTES] Erro ao carregar configuração:', error);
+                showStatus('Erro ao carregar configurações', 'error');
+            }
+        }
+
+        // Save configuration
+        document.getElementById('telegramForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            showLoading('Salvando configurações...');
+            
+            const formData = new FormData();
+            formData.append('telegram_enabled', document.getElementById('telegram_enabled').checked ? '1' : '0');
+            formData.append('telegram_token', document.getElementById('telegram_token').value.trim());
+            formData.append('telegram_chatid', document.getElementById('telegram_chatid').value.trim());
+            formData.append('telegram_interval', document.getElementById('telegram_interval').value);
+            
+            try {
+                const response = await fetch('/api/assistentes/config', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.text();
+                hideLoading();
+                
+                if (response.ok) {
+                    showStatus('Configurações salvas com sucesso!', 'success');
+                } else {
+                    showStatus('Erro ao salvar: ' + result, 'error');
+                }
+            } catch (error) {
+                hideLoading();
+                console.error('[ASSISTENTES] Erro ao salvar:', error);
+                showStatus('Erro ao salvar configurações', 'error');
+            }
+        });
+
+        // Test Telegram notification
+        async function testTelegram() {
+            if (!document.getElementById('telegram_enabled').checked) {
+                showStatus('Habilite o Telegram primeiro!', 'error');
+                return;
+            }
+            
+            const token = document.getElementById('telegram_token').value.trim();
+            const chatid = document.getElementById('telegram_chatid').value.trim();
+            
+            if (!token || !chatid) {
+                showStatus('Preencha o Token e Chat ID primeiro!', 'error');
+                return;
+            }
+            
+            showLoading('Enviando notificação de teste...');
+            
+            try {
+                const response = await fetch('/api/assistentes/telegram/test', {
+                    method: 'POST'
+                });
+                
+                const result = await response.text();
+                hideLoading();
+                
+                if (response.ok) {
+                    showStatus('Notificação de teste enviada! Verifique seu Telegram.', 'success');
+                } else {
+                    showStatus('Erro ao enviar: ' + result, 'error');
+                }
+            } catch (error) {
+                hideLoading();
+                console.error('[ASSISTENTES] Erro no teste:', error);
+                showStatus('Erro ao testar notificação', 'error');
+            }
+        }
+
+        // Load configuration on page load
+        loadConfig();
+    </script>
+</body>
+</html>

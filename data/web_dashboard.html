@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMCR - Central de Controle</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f0f0f0; 
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        h1 { 
+            text-align: center; 
+            color: #333; 
+            margin-bottom: 10px; 
+            border-bottom: 2px solid #007bff; 
+            padding-bottom: 10px; 
+        }
+        .menu { 
+            text-align: center; 
+            margin: 20px 0; 
+            padding: 10px; 
+            background: #f8f9fa; 
+            border-radius: 4px; 
+        }
+        .menu a { 
+            margin: 0 15px; 
+            text-decoration: none; 
+            color: #007bff; 
+            font-weight: bold; 
+        }
+        .menu a:hover { 
+            text-decoration: underline; 
+        }
+        .section { 
+            margin: 30px 0; 
+        }
+        .section-title { 
+            font-size: 18px; 
+            font-weight: bold; 
+            color: #444; 
+            margin-bottom: 15px; 
+            padding: 8px 0; 
+            border-bottom: 1px solid #ddd; 
+        }
+        .info-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 20px; 
+            background: white; 
+        }
+        .info-table td { 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            vertical-align: middle; 
+        }
+        .info-table td:first-child { 
+            font-weight: bold; 
+            color: #555; 
+            width: 35%; 
+            background: #f8f9fa; 
+        }
+        .status-ok { 
+            color: #28a745; 
+            font-weight: bold; 
+        }
+        .status-error { 
+            color: #dc3545; 
+            font-weight: bold; 
+        }
+        .status-warning { 
+            color: #ffc107; 
+            font-weight: bold; 
+        }
+        .pins-summary { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 4px; 
+            border-left: 4px solid #007bff; 
+        }
+        .pins-list { 
+            margin-top: 10px; 
+        }
+        .pin-item { 
+            padding: 8px 12px; 
+            margin: 5px 0; 
+            background: white; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .pin-name { 
+            font-weight: bold; 
+            color: #333; 
+        }
+        .pin-status { 
+            font-size: 12px; 
+            padding: 3px 8px; 
+            border-radius: 3px; 
+            color: white; 
+        }
+        .pin-high { 
+            background: #28a745; 
+        }
+        .pin-low { 
+            background: #6c757d; 
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            margin-left: 15px;
+            font-size: 16px;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Carregando status...</div>
+    </div>
+    <div class="container">
+        <h1>SMCR - [<span id="title-hostname">-</span>]</h1>
+        
+        <nav class="navbar" style="background:#f8f9fa;border-bottom:1px solid #e9ecef;padding:10px 14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <a href="/" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Status</a>
+            <a href="/configuracao" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Configurações</a>
+            <a href="/pinos" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Pinos</a>
+            <a href="/acoes" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Ações</a>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Serviços</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/mqtt" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">MQTT</a>
+                    <a href="/intermod" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Inter-Módulos</a>
+                    <a href="/assistentes" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Assistentes</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Arquivos</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/arquivos/firmware" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Firmware</a>
+                    <a href="/arquivos/preferencias" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Preferências</a>
+                    <a href="/arquivos/littlefs" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">LittleFS</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Util</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/serial" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Web Serial</a>
+                    <a href="/reset" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Reset</a>
+                </div>
+            </details>
+        </nav>
+
+        <div class="section">
+            <div class="section-title">Pinos Cadastrados</div>
+            <div class="pins-summary">
+                <div><strong>Total:</strong> <span id="pins-count">0</span> pinos de <span id="pins-max">-</span></div>
+                <div id="pins-list" class="pins-list"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Status do Modulo</div>
+            
+            <div class="section-title" style="font-size: 16px; margin-top: 20px;">Rede Wi-Fi</div>
+            <table class="info-table">
+                <tr><td>Status:</td><td id="wifi-status" class="status-warning">Carregando...</td></tr>
+                <tr><td>SSID:</td><td id="wifi-ssid">-</td></tr>
+                <tr><td>IP Local:</td><td id="wifi-ip">-</td></tr>
+                <tr><td>IP do Usuario:</td><td id="user-ip">-</td></tr>
+            </table>
+
+            <div class="section-title" style="font-size: 16px;">Sistema</div>
+            <table class="info-table">
+                <tr><td>Hostname:</td><td id="hostname">-</td></tr>
+                <tr><td>Data/Hora Atual:</td><td id="current-time">-</td></tr>
+                <tr><td>Tempo de Atividade (Uptime):</td><td id="uptime">-</td></tr>
+                <tr><td>Memoria Livre (Heap):</td><td id="free-heap">-</td></tr>
+                <tr><td>Uso CPU (Media): <span style="font-size:10px;color:#888;" title="Valor aproximado baseado em métricas do sistema">ⓘ</span></td><td id="cpu-usage-avg">-</td></tr>
+                <tr id="cpu-cores-row"><td colspan="2" id="cpu-cores-detail" style="font-size:11px;color:#666;padding:4px 8px;">-</td></tr>
+                <tr><td>Versao Firmware:</td><td id="fw-version">-</td></tr>
+            </table>
+            <div style="font-size:10px;color:#888;margin-top:5px;font-style:italic;">* Valores de CPU são aproximados (baseados em tasks, WiFi e atividade)</div>
+
+            <div class="section-title" style="font-size: 16px;">Sincronizacao</div>
+            <table class="info-table">
+                <tr><td>NTP Status:</td><td id="ntp-status" class="status-warning">-</td></tr>
+                <tr><td>MQTT Status:</td><td id="mqtt-status" class="status-warning">-</td></tr>
+                <tr><td>Telegram:</td><td id="telegram-status" class="status-warning">-</td></tr>
+                <tr><td>Inter-Módulos:</td><td id="intermod-status" class="status-warning">-</td></tr>
+            </table>
+
+            <!-- Card de Comunicações Inter-Módulos -->
+            <div id="intermod-comm-card" style="display: none;">
+                <div class="section-title" style="font-size: 16px;">Comunicacoes Inter-Modulos</div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="font-weight: bold; color: #007bff; margin-bottom: 8px; font-size: 14px;">📥 Ultimas Recepcoes (5):</div>
+                    <div id="intermod-received" style="font-size: 12px; color: #666; padding-left: 10px;">
+                        <div style="color: #999; font-style: italic;">Nenhuma comunicacao recebida ainda</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div style="font-weight: bold; color: #28a745; margin-bottom: 8px; font-size: 14px;">📤 Ultimos Envios (5):</div>
+                    <div id="intermod-sent" style="font-size: 12px; color: #666; padding-left: 10px;">
+                        <div style="color: #999; font-style: italic;">Nenhuma comunicacao enviada ainda</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicador de Performance -->
+    <div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-family: monospace; display: none;" id="performance-indicator">
+        Tempo de Carregamento: <span id="load-time">-</span>
+    </div>
+
+    <script>
+        // === SISTEMA DE MONITORAMENTO DE PERFORMANCE ===
+        const pageStartTime = performance.now();
+        
+        // Função para mostrar indicador de performance
+        function showPerformanceIndicator() {
+            const loadTime = performance.now() - pageStartTime;
+            document.getElementById('load-time').textContent = loadTime.toFixed(2) + 'ms';
+            document.getElementById('performance-indicator').style.display = 'block';
+            
+            console.log(`[PERFORMANCE] Dashboard carregado em ${loadTime.toFixed(2)}ms`);
+        }
+        
+        // Controle do loading
+        function showLoading(text = 'Carregando...') {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.querySelector('.loading-text').textContent = text;
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
+        // Esconder loading quando página carregar completamente
+        window.addEventListener('load', function() {
+            hideLoading();
+            // Mostrar indicador de performance após carregamento completo
+            setTimeout(showPerformanceIndicator, 100);
+        });
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function updateStatus() {
+            fetch('/status/json')
+                .then(response => response.json())
+                .then(data => {
+                    // Rede Wi-Fi
+                    const wifiStatus = document.getElementById('wifi-status');
+                    if (data.wifi && data.wifi.status === 'Conectado') {
+                        wifiStatus.textContent = data.wifi.status;
+                        wifiStatus.className = 'status-ok';
+                        document.getElementById('wifi-ssid').textContent = data.wifi.ssid || '-';
+                        document.getElementById('wifi-ip').textContent = data.wifi.local_ip || '-';
+                    } else {
+                        wifiStatus.textContent = 'Desconectado';
+                        wifiStatus.className = 'status-error';
+                    }
+                    
+                    document.getElementById('user-ip').textContent = data.system.client_ip || '-';
+
+                    // Sistema
+                    const hostName = data.system.hostname || '-';
+                    document.getElementById('hostname').textContent = hostName;
+                    // Atualiza título da página e cabeçalho com hostname entre colchetes
+                    const titleHost = document.getElementById('title-hostname');
+                    if (titleHost) titleHost.textContent = hostName;
+                    document.title = `SMCR - [${hostName}]`;
+                    document.getElementById('current-time').textContent = data.system.current_time || '-';
+                    document.getElementById('uptime').textContent = data.system.uptime || '-';
+                    document.getElementById('free-heap').textContent = formatBytes(data.system.free_heap || 0);
+                    
+                    // Uso de CPU com cores dinâmicos
+                    const cpuAvg = data.system.cpu_usage_avg || 0;
+                    const cpuColor = cpuAvg > 80 ? '#dc3545' : cpuAvg > 50 ? '#ffc107' : '#28a745';
+                    document.getElementById('cpu-usage-avg').innerHTML = `<strong style="color:${cpuColor}">${cpuAvg.toFixed(1)}%</strong>`;
+                    
+                    // Renderiza todos os cores detectados
+                    const cpuCores = data.system.cpu_cores || [];
+                    const coresCount = data.system.cpu_cores_count || cpuCores.length;
+                    if (cpuCores.length > 0) {
+                        const coresHtml = cpuCores.map(core => {
+                            const coreColor = core.usage > 80 ? '#dc3545' : core.usage > 50 ? '#ffc107' : '#28a745';
+                            return `Core ${core.core}: <span style="color:${coreColor}">${core.usage.toFixed(1)}%</span>`;
+                        }).join(' &nbsp;|&nbsp; ');
+                        document.getElementById('cpu-cores-detail').innerHTML = coresHtml;
+                    } else {
+                        document.getElementById('cpu-cores-detail').textContent = '-';
+                    }
+                    
+                    document.getElementById('fw-version').textContent = data.system.fw_version || '-';
+
+                    // Sincronizacao
+                    const ntpStatus = document.getElementById('ntp-status');
+                    if (data.sync && data.sync.ntp_status === 'Sincronizado') {
+                        ntpStatus.textContent = data.sync.ntp_status;
+                        ntpStatus.className = 'status-ok';
+                    } else {
+                        ntpStatus.textContent = data.sync ? data.sync.ntp_status : 'Aguardando';
+                        ntpStatus.className = 'status-warning';
+                    }
+                    
+                    // MQTT Status
+                    const mqttStatus = document.getElementById('mqtt-status');
+                    if (data.sync && data.sync.mqtt_status) {
+                        mqttStatus.textContent = data.sync.mqtt_status;
+                        if (data.sync.mqtt_status === 'Conectado') {
+                            mqttStatus.className = 'status-ok';
+                        } else if (data.sync.mqtt_status === 'Desabilitado') {
+                            mqttStatus.className = 'status-error';
+                        } else {
+                            mqttStatus.className = 'status-warning';
+                        }
+                    } else {
+                        mqttStatus.textContent = 'Desabilitado';
+                        mqttStatus.className = 'status-error';
+                    }
+
+                    // Telegram Status
+                    const telegramStatus = document.getElementById('telegram-status');
+                    if (data.sync && data.sync.telegram_status) {
+                        telegramStatus.textContent = data.sync.telegram_status;
+                        if (data.sync.telegram_status === 'Ativo') {
+                            telegramStatus.className = 'status-ok';
+                        } else {
+                            telegramStatus.className = 'status-error';
+                        }
+                    } else {
+                        telegramStatus.textContent = 'Inativo';
+                        telegramStatus.className = 'status-error';
+                    }
+
+                    // Inter-Módulos Status
+                    const intermodStatus = document.getElementById('intermod-status');
+                    if (data.intermod) {
+                        const enabled = data.intermod.enabled || false;
+                        const totalModules = data.intermod.total_modules || 0;
+                        const onlineModules = data.intermod.online_modules || 0;
+                        
+                        if (enabled) {
+                            intermodStatus.textContent = `Habilitado (${onlineModules}/${totalModules})`;
+                            if (onlineModules === totalModules && totalModules > 0) {
+                                intermodStatus.className = 'status-ok';
+                            } else if (onlineModules > 0) {
+                                intermodStatus.className = 'status-warning';
+                            } else if (totalModules > 0) {
+                                intermodStatus.className = 'status-error';
+                            } else {
+                                intermodStatus.className = 'status-warning';
+                            }
+                        } else {
+                            intermodStatus.textContent = 'Desabilitado';
+                            intermodStatus.className = 'status-error';
+                        }
+                    } else {
+                        intermodStatus.textContent = 'Desabilitado';
+                        intermodStatus.className = 'status-error';
+                    }
+
+                    // Card de Comunicações Inter-Módulos
+                    const showIntermodInfo = data.system && data.system.inter_modulos_enabled;
+                    const intermodCommCard = document.getElementById('intermod-comm-card');
+                    
+                    if (showIntermodInfo && data.intermod_comm) {
+                        intermodCommCard.style.display = 'block';
+                        
+                        // Processar comunicações recebidas
+                        const receivedDiv = document.getElementById('intermod-received');
+                        if (data.intermod_comm.received && data.intermod_comm.received.length > 0) {
+                            let receivedHTML = '';
+                            data.intermod_comm.received.forEach((comm, index) => {
+                                receivedHTML += `<div style="padding: 5px 0; border-bottom: 1px solid #eee;">`;
+                                receivedHTML += `<span style="color: #007bff;">⏱ ${comm.time}</span> `;
+                                receivedHTML += `<span style="color: #333;">de <strong>${comm.from}</strong></span> `;
+                                receivedHTML += `<span style="color: #666;">→ Pino ${comm.pin} = ${comm.value}</span>`;
+                                receivedHTML += `</div>`;
+                            });
+                            receivedDiv.innerHTML = receivedHTML;
+                        } else {
+                            receivedDiv.innerHTML = '<div style="color: #999; font-style: italic;">Nenhuma comunicacao recebida ainda</div>';
+                        }
+                        
+                        // Processar comunicações enviadas
+                        const sentDiv = document.getElementById('intermod-sent');
+                        if (data.intermod_comm.sent && data.intermod_comm.sent.length > 0) {
+                            let sentHTML = '';
+                            data.intermod_comm.sent.forEach((comm, index) => {
+                                sentHTML += `<div style="padding: 5px 0; border-bottom: 1px solid #eee;">`;
+                                sentHTML += `<span style="color: #28a745;">⏱ ${comm.time}</span> `;
+                                sentHTML += `<span style="color: #333;">para <strong>${comm.to}</strong></span> `;
+                                sentHTML += `<span style="color: #666;">→ Pino ${comm.pin} = ${comm.value}</span>`;
+                                sentHTML += `</div>`;
+                            });
+                            sentDiv.innerHTML = sentHTML;
+                        } else {
+                            sentDiv.innerHTML = '<div style="color: #999; font-style: italic;">Nenhuma comunicacao enviada ainda</div>';
+                        }
+                    } else {
+                        intermodCommCard.style.display = 'none';
+                    }
+
+                    // Pinos
+                    const pinsCount = data.pins ? data.pins.length : 0;
+                    const pinsMax = data.system ? data.system.max_pins || 16 : 16;
+                    const showPinStatus = data.system ? data.system.show_pin_status : true;
+                    const corAlerta = data.system ? data.system.cor_com_alerta || '#dc3545' : '#dc3545';
+                    const corOk = data.system ? data.system.cor_sem_alerta || '#28a745' : '#28a745';
+                    
+                    document.getElementById('pins-count').textContent = pinsCount;
+                    document.getElementById('pins-max').textContent = pinsMax;
+                    
+                    const pinsList = document.getElementById('pins-list');
+                    
+                    // Verificar se deve mostrar status dos pinos
+                    if (!showPinStatus) {
+                        pinsList.innerHTML = '<p style="text-align: center; color: #ff9800; margin: 10px 0; font-style: italic;">📊 Mostrar Status Desativado</p>';
+                    } else if (pinsCount > 0) {
+                        pinsList.innerHTML = '';
+                        data.pins.forEach(pin => {
+                            const pinDiv = document.createElement('div');
+                            pinDiv.className = 'pin-item';
+                            
+                            // Determinar tipo de pino (Entrada/Saída)
+                            let tipoStr = 'Desconhecido';
+                            const modo = pin.modo || 0;
+                            const tipo = pin.tipo || 0;
+                            
+                            // Constantes de modo (devem corresponder ao pin_manager.cpp)
+                            const PIN_MODE_INPUT = 1;
+                            const PIN_MODE_OUTPUT = 3;
+                            const PIN_MODE_INPUT_PULLUP = 5;
+                            const PIN_MODE_INPUT_PULLDOWN = 9;
+                            const PIN_MODE_OUTPUT_OPEN_DRAIN = 12;
+                            const PIN_TYPE_DIGITAL = 1;
+                            const PIN_TYPE_ANALOG = 192;
+                            const PIN_TYPE_PWM = 193;
+                            const PIN_TYPE_REMOTE_ANALOG = 65533;
+                            const PIN_TYPE_REMOTE_DIGITAL = 65534;
+                            
+                            if (tipo === PIN_TYPE_REMOTE_DIGITAL) {
+                                tipoStr = 'Remoto Digital';
+                            } else if (tipo === PIN_TYPE_REMOTE_ANALOG) {
+                                tipoStr = 'Remoto Analógico';
+                            } else if (tipo === PIN_TYPE_ANALOG || tipo === PIN_TYPE_PWM) {
+                                tipoStr = 'Analógico';
+                            } else if (modo === PIN_MODE_OUTPUT || modo === PIN_MODE_OUTPUT_OPEN_DRAIN) {
+                                tipoStr = 'Saída';
+                            } else if (modo === PIN_MODE_INPUT || modo === PIN_MODE_INPUT_PULLUP || modo === PIN_MODE_INPUT_PULLDOWN) {
+                                tipoStr = 'Entrada';
+                            }
+                            
+                            // Valor atual do pino
+                            const valorAtual = pin.status_atual !== undefined ? pin.status_atual : 0;
+                            
+                            // Determinar se está em alerta ou ok baseado no nível de acionamento
+                            let isAlerta = false;
+                            if (tipo === 192 || tipo === 193 || tipo === 65533) {
+                                // Pino analógico (local, PWM ou remoto): verifica se está dentro do range configurado
+                                const nivelMin = pin.nivel_acionamento_min || 0;
+                                const nivelMax = pin.nivel_acionamento_max || 4095;
+                                isAlerta = (valorAtual >= nivelMin && valorAtual <= nivelMax);
+                            } else {
+                                // Pino digital: verifica se corresponde ao nível configurado
+                                const nivelAcionamento = pin.nivel_acionamento_min || 0;
+                                isAlerta = (valorAtual === nivelAcionamento);
+                            }
+                            
+                            const bgColor = isAlerta ? corAlerta : corOk;
+                            
+                            // Prefixo: R para remoto, D para digital/analógico
+                            const prefixo = (tipo === PIN_TYPE_REMOTE_DIGITAL || tipo === PIN_TYPE_REMOTE_ANALOG) ? 'R' : 'D';
+                            
+                            // Mostrar histórico se disponível
+                            let statusDisplay = '';
+                            const history = pin.historico || [];
+                            
+                            if ((tipo === PIN_TYPE_ANALOG || tipo === PIN_TYPE_PWM || tipo === PIN_TYPE_REMOTE_ANALOG) && history.length > 0) {
+                                // Para pinos analógicos (local, PWM ou remoto), mostrar histórico de 8 valores numéricos
+                                const nivelMin = pin.nivel_acionamento_min || 0;
+                                const nivelMax = pin.nivel_acionamento_max || 4095;
+                                
+                                // Criar display com cada valor tendo sua própria cor (últimas 8 leituras)
+                                const historySpans = history.slice(-8).map(valor => {
+                                    const isValorAlerta = (valor >= nivelMin && valor <= nivelMax);
+                                    const valorBgColor = isValorAlerta ? corAlerta : corOk;
+                                    return `<span style="background-color: ${valorBgColor}; color: white; padding: 3px 6px; margin: 0 2px; border-radius: 3px; display: inline-block; min-width: 30px; text-align: center; font-weight: bold;">${valor}</span>`;
+                                }).join('');
+                                statusDisplay = `<div style="display: flex; align-items: center; font-family: monospace; font-size: 12px;">${historySpans}</div>`;
+                                
+                            } else if ((tipo === PIN_TYPE_DIGITAL || tipo === PIN_TYPE_REMOTE_DIGITAL) && history.length > 0) {
+                                // Para pinos digitais (local ou remoto), mostrar histórico de 8 estados (valores 0/1)
+                                const nivelMin = pin.nivel_acionamento_min || 0;
+                                
+                                console.log(`Histórico digital do pino ${pin.gpio}:`, history, `nivelMin=${nivelMin}`);
+                                
+                                // Criar display com cada estado tendo sua própria cor (últimas 8 leituras)
+                                const historySpans = history.slice(-8).map(estado => {
+                                    // Se estado coincide com nivelMin, está ativo/alerta
+                                    const isAtivo = (estado == nivelMin);
+                                    const estadoBgColor = isAtivo ? corAlerta : corOk;
+                                    return `<span style="background-color: ${estadoBgColor}; color: white; padding: 3px 6px; margin: 0 2px; border-radius: 3px; display: inline-block; min-width: 30px; text-align: center; font-weight: bold;">${estado}</span>`;
+                                }).join('');
+                                statusDisplay = `<div style="display: flex; align-items: center; font-family: monospace; font-size: 12px;">${historySpans}</div>`;
+                                
+                            } else {
+                                // Sem histórico ou tipo não suportado - exibe status atual
+                                statusDisplay = `<span class="pin-status" style="background-color: ${bgColor};">${valorAtual}</span>`;
+                            }
+                            
+                            pinDiv.innerHTML = `
+                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                    <div>
+                                        <span class="pin-name">${prefixo}${pin.gpio} - ${pin.description || 'Pino'}</span>
+                                        <span style="font-size: 11px; color: #666; margin-left: 10px;">(${tipoStr})</span>
+                                    </div>
+                                    ${statusDisplay}
+                                </div>
+                            `;
+                            pinsList.appendChild(pinDiv);
+                        });
+                    } else {
+                        pinsList.innerHTML = '<p style="text-align: center; color: #666; margin: 10px 0;">Nenhum pino cadastrado</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar status:', error);
+                });
+        }
+
+        // Atualizar status a cada 15 segundos
+        updateStatus();
+        setInterval(updateStatus, 15000);
+    </script>
+</body>
+</html>

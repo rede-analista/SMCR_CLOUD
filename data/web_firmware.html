@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMCR - Firmware (OTA)</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .menu { text-align: center; margin: 20px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+        .menu a { margin: 0 15px; text-decoration: none; color: #007bff; font-weight: bold; }
+        .menu a:hover { text-decoration: underline; }
+        .section { margin: 30px 0; }
+        .section-title { font-size: 18px; font-weight: bold; color: #444; margin-bottom: 15px; padding: 8px 0; border-bottom: 1px solid #ddd; }
+        .info-box { background: #fffbea; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px; color: #5c4802; }
+        .danger-box { background: #fde8e8; border-left: 4px solid #e02424; padding: 15px; margin: 20px 0; border-radius: 4px; color: #7a0f0f; }
+        .btn { margin: 5px; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; text-decoration: none; display: inline-block; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #1e7e34; }
+        .upload-card { border: 1px solid #ddd; border-radius: 6px; padding: 20px; background: #fafafa; }
+        input[type="file"] { margin: 10px 0; }
+        .progress { width: 100%; background: #eee; border-radius: 4px; overflow: hidden; height: 12px; margin-top: 10px; }
+        .progress-bar { height: 12px; width: 0%; background: #007bff; transition: width 0.2s ease; }
+        .status { margin-top: 10px; font-size: 14px; color: #333; }
+        .status-ok { color: #155724; }
+        .status-err { color: #721c24; }
+    </style>
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <script>
+        function byId(id){ return document.getElementById(id); }
+        function setStatus(msg, ok){
+            const el = byId('status');
+            el.textContent = msg;
+            el.className = 'status ' + (ok ? 'status-ok' : 'status-err');
+        }
+        function updateProgress(p){
+            byId('progressBar').style.width = p + '%';
+            byId('progressText').textContent = p + '%';
+        }
+        function uploadFirmware(e){
+            e.preventDefault();
+            const file = byId('fwfile').files[0];
+            if(!file){ setStatus('Selecione um arquivo .bin do firmware.', false); return; }
+            if(!file.name.toLowerCase().endsWith('.bin')){
+                if(!confirm('O arquivo não parece ser .bin. Deseja continuar?')) return;
+            }
+            setStatus('Enviando firmware...', true);
+            updateProgress(0);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/firmware/upload', true);
+
+            xhr.upload.onprogress = function(evt){
+                if(evt.lengthComputable){
+                    const pct = Math.round((evt.loaded / evt.total) * 100);
+                    updateProgress(pct);
+                }
+            };
+            xhr.onreadystatechange = function(){
+                if(xhr.readyState === 4){
+                    // Alguns browsers retornam status 0 quando a conexão fecha
+                    // porque o dispositivo reinicia logo após concluir o update.
+                    // Se o upload chegou a 100% e status é 0, tratamos como sucesso.
+                    const pctText = byId('progressText').textContent || '0%';
+                    const pctVal = parseInt(pctText.replace('%','')) || 0;
+                    if(xhr.status === 0 && pctVal === 100){
+                        setStatus('Firmware enviado com sucesso. Reiniciando o dispositivo...', true);
+                        setTimeout(function(){ window.location.href = '/'; }, 6000);
+                        return;
+                    }
+                    try{
+                        const res = JSON.parse(xhr.responseText || '{}');
+                        if(xhr.status === 200 && res.success){
+                            setStatus('Firmware enviado com sucesso. Reiniciando o dispositivo...', true);
+                            setTimeout(function(){ window.location.href = '/'; }, 6000);
+                        } else {
+                            setStatus(res.message || ('Falha no update (HTTP ' + xhr.status + ')'), false);
+                        }
+                    }catch(err){
+                        setStatus('Falha no update (resposta inválida).', false);
+                    }
+                }
+            };
+            const form = new FormData();
+            form.append('firmware', file, file.name);
+            xhr.send(form);
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>SMCR - Atualização de Firmware (OTA)</h1>
+        <nav class="navbar" style="background:#f8f9fa;border-bottom:1px solid #e9ecef;padding:10px 14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <a href="/" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Status</a>
+            <a href="/configuracao" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Configurações</a>
+            <a href="/pinos" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Pinos</a>
+            <a href="/acoes" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Ações</a>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Serviços</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/mqtt" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">MQTT</a>
+                    <a href="/intermod" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Inter-Módulos</a>
+                    <a href="/assistentes" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Assistentes</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Arquivos</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/arquivos/firmware" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Firmware</a>
+                    <a href="/arquivos/preferencias" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Preferências</a>
+                    <a href="/arquivos/littlefs" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">LittleFS</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Util</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/serial" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Web Serial</a>
+                    <a href="/reset" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Reset</a>
+                </div>
+            </details>
+        </nav>
+
+        <div class="section">
+            <div class="section-title">⬆️ Upload de Firmware</div>
+            <div class="danger-box">
+                <strong>Aviso:</strong> Não desligue o dispositivo durante a atualização. Use apenas arquivos `.bin` gerados para o SMCR (mesma placa/partições).
+            </div>
+            <div class="upload-card">
+                <form id="fwForm" onsubmit="uploadFirmware(event)">
+                    <input id="fwfile" type="file" accept=".bin,application/octet-stream" required>
+                    <br>
+                    <button type="submit" class="btn btn-success">Enviar e Atualizar</button>
+                </form>
+                <div class="progress" aria-label="Progresso">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+                <div style="margin-top:6px; color:#666; font-size:12px;" id="progressText">0%</div>
+                <div id="status" class="status"></div>
+            </div>
+            <div class="info-box">
+                Dica: Após o envio, o ESP32 reinicia automaticamente. Se a página não recarregar sozinha após alguns segundos, acesse novamente pelo endereço do dispositivo.
+            </div>
+        </div>
+    </div>
+    <script>
+        // === SISTEMA DE MONITORAMENTO DE PERFORMANCE ===
+        const pageStartTime = performance.now();
+        
+        // Função para mostrar indicador de performance
+        function showPerformanceIndicator() {
+            const loadTime = performance.now() - pageStartTime;
+            const indicator = document.createElement('div');
+            indicator.style.cssText = 'position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-family: monospace;';
+            indicator.innerHTML = `Tempo de Carregamento: ${loadTime.toFixed(2)}ms`;
+            document.body.appendChild(indicator);
+            
+            console.log(`[PERFORMANCE] Firmware carregado em ${loadTime.toFixed(2)}ms`);
+        }
+        
+        // Mostrar indicador após carregamento
+        window.addEventListener('load', function() {
+            setTimeout(showPerformanceIndicator, 100);
+        });
+    </script>
+</body>
+</html>

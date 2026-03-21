@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Ações - SMCR</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .menu {
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .menu a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+        
+        .menu a:hover {
+            text-decoration: underline;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 0;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-edit {
+            background: #ffc107;
+            color: #333;
+            padding: 6px 12px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        
+        .btn-edit:hover {
+            background: #e0a800;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+        }
+        
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        td {
+            font-size: 13px;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .badge-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 18px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .notification-icons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .icon {
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        
+        .icon-telegram {
+            background: #0088cc;
+            color: white;
+        }
+        
+        .icon-assistente {
+            background: #4285f4;
+            color: white;
+        }
+        
+        .icon-mqtt {
+            background: #660066;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cadastro de Ações</h1>
+        
+        <nav class="navbar" style="background:#f8f9fa;border-bottom:1px solid #e9ecef;padding:10px 14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <a href="/" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Status</a>
+            <a href="/configuracao" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Configurações</a>
+            <a href="/pinos" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Pinos</a>
+            <a href="/acoes" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Ações</a>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Serviços</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/mqtt" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">MQTT</a>
+                    <a href="/intermod" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Inter-Módulos</a>
+                    <a href="/assistentes" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Assistentes</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Arquivos</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/arquivos/firmware" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Firmware</a>
+                    <a href="/arquivos/preferencias" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Preferências</a>
+                    <a href="/arquivos/littlefs" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">LittleFS</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Util</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/serial" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Web Serial</a>
+                    <a href="/reset" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Reset</a>
+                </div>
+            </details>
+        </nav>
+        
+        <div class="content">
+            <!-- Formulário de Cadastro/Edição -->
+            <div class="section">
+                <h2 class="section-title" id="formTitle">Nova Ação</h2>
+                <form id="actionForm">
+                    <!-- Campos hidden para modo de edição -->
+                    <input type="hidden" id="edit_pino_origem" name="edit_pino_origem" value="">
+                    <input type="hidden" id="edit_numero_acao" name="edit_numero_acao" value="">
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="pino_origem">Pino de Origem *</label>
+                            <select id="pino_origem" name="pino_origem" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="numero_acao">Número da Ação *</label>
+                            <select id="numero_acao" name="numero_acao" required>
+                                <option value="1">Ação 1</option>
+                                <option value="2">Ação 2</option>
+                                <option value="3">Ação 3</option>
+                                <option value="4">Ação 4</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="acao">Tipo de Ação *</label>
+                            <select id="acao" name="acao" required onchange="updateTimingFields()">
+                                <option value="0">NENHUMA</option>
+                                <option value="1">LIGA</option>
+                                <option value="2">LIGA COM DELAY</option>
+                                <option value="3">PISCA</option>
+                                <option value="4">PULSO</option>
+                                <option value="5">PULSO COM DELAY ON</option>
+                                <option value="65534">STATUS</option>
+                                <option value="65535">SINCRONISMO</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pino_destino">Pino de Destino *</label>
+                            <select id="pino_destino" name="pino_destino" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="tempoOnGroup">
+                            <label for="tempo_on">Tempo ON (ms)</label>
+                            <input type="number" id="tempo_on" name="tempo_on" min="0" value="0">
+                        </div>
+                        
+                        <div class="form-group" id="tempoOffGroup">
+                            <label for="tempo_off">Tempo OFF (ms)</label>
+                            <input type="number" id="tempo_off" name="tempo_off" min="0" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pino_remoto">Pino Remoto (Inter-módulo)</label>
+                            <input type="number" id="pino_remoto" name="pino_remoto" min="0" max="65533" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="envia_modulo">Módulo Destino</label>
+                            <select id="envia_modulo" name="envia_modulo">
+                                <option value="">Nenhum (Local)</option>
+                            </select>
+                            <small style="color: #666; font-size: 11px; display: block; margin-top: 4px;">Selecione o módulo para enviar a ação via Inter-Módulos</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="telegram" name="telegram">
+                                <label for="telegram">📱 Notificar Telegram</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="assistente" name="assistente">
+                                <label for="assistente">🎤 Notificar Assistente</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="submit" class="btn-primary">Salvar Ação</button>
+                        <button type="button" class="btn-secondary" onclick="resetForm()">Limpar</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Lista de Ações Cadastradas -->
+            <div class="section">
+                <h2 class="section-title">Ações Cadastradas</h2>
+                <div id="actionsTableContainer">
+                    <div class="loading">Carregando ações...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let actionsData = [];
+        let pinsData = [];
+        let modulesData = [];
+        let editMode = false;
+        let editingOrigin = null;
+        let editingNumber = null;
+        
+        // Mapeamento de tipos de ação
+        const actionTypes = {
+            0: 'NENHUMA',
+            1: 'LIGA',
+            2: 'LIGA COM DELAY',
+            3: 'PISCA',
+            4: 'PULSO',
+            5: 'PULSO COM DELAY ON',
+            65534: 'STATUS',
+            65535: 'SINCRONISMO'
+        };
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPins();
+            loadModules();
+            loadActions();
+            setupFormSubmit();
+        });
+        
+        // Carrega lista de pinos
+        async function loadPins() {
+            try {
+                const response = await fetch('/api/pins');
+                const data = await response.json();
+                pinsData = data.pins || [];
+                populatePinSelects();
+            } catch (error) {
+                console.error('Erro ao carregar pinos:', error);
+            }
+        }
+        
+        // Carrega lista de módulos inter-mod
+        async function loadModules() {
+            try {
+                const response = await fetch('/api/intermod/modules');
+                const data = await response.json();
+                modulesData = data.modules || [];
+                populateModuleSelect();
+            } catch (error) {
+                console.error('Erro ao carregar módulos:', error);
+                // Se falhar, deixa apenas opção "Nenhum"
+            }
+        }
+        
+        // Popula select de módulos
+        function populateModuleSelect() {
+            const moduleSelect = document.getElementById('envia_modulo');
+            moduleSelect.innerHTML = '<option value="">Nenhum (Local)</option>';
+            
+            console.log('Populando select com', modulesData.length, 'módulos');
+            
+            modulesData.forEach(module => {
+                const option = document.createElement('option');
+                option.value = module.id;
+                const statusIcon = module.online ? '🟢' : '🔴';
+                option.textContent = `${statusIcon} ${module.hostname || module.id}`;
+                moduleSelect.appendChild(option);
+            });
+        }
+        
+        // Popula os selects de pino
+        function populatePinSelects() {
+            const pinoOrigemSelect = document.getElementById('pino_origem');
+            const pinoDestinoSelect = document.getElementById('pino_destino');
+            
+            pinoOrigemSelect.innerHTML = '<option value="">Selecione...</option>';
+            pinoDestinoSelect.innerHTML = '<option value="">Selecione...</option>';
+            
+            console.log('Populando selects com', pinsData.length, 'pinos');
+            
+            pinsData.forEach(pin => {
+                const pinNumber = pin.pino || pin.gpio; // Suporta ambos os nomes
+                const pinName = pin.nome || pin.description || 'Sem nome';
+                
+                const origemOption = document.createElement('option');
+                origemOption.value = pinNumber;
+                origemOption.textContent = `GPIO ${pinNumber} - ${pinName}`;
+                pinoOrigemSelect.appendChild(origemOption);
+                
+                const destinoOption = document.createElement('option');
+                destinoOption.value = pinNumber;
+                destinoOption.textContent = `GPIO ${pinNumber} - ${pinName}`;
+                pinoDestinoSelect.appendChild(destinoOption);
+            });
+        }
+        
+        // Carrega ações cadastradas
+        async function loadActions() {
+            try {
+                const response = await fetch('/api/actions');
+                const data = await response.json();
+                actionsData = data.actions || [];
+                renderActionsTable();
+            } catch (error) {
+                console.error('Erro ao carregar ações:', error);
+                document.getElementById('actionsTableContainer').innerHTML = 
+                    '<div class="empty-state">❌ Erro ao carregar ações</div>';
+            }
+        }
+        
+        // Renderiza tabela de ações
+        function renderActionsTable() {
+            const container = document.getElementById('actionsTableContainer');
+            
+            if (actionsData.length === 0) {
+                container.innerHTML = '<div class="empty-state">📭 Nenhuma ação cadastrada</div>';
+                return;
+            }
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Origem</th>
+                            <th>Nº</th>
+                            <th>Tipo</th>
+                            <th>Destino</th>
+                            <th>Tempo ON</th>
+                            <th>Tempo OFF</th>
+                            <th>Notificações</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            actionsData.forEach(action => {
+                const origemPin = pinsData.find(p => (p.pino || p.gpio) == action.pino_origem);
+                const destinoPin = pinsData.find(p => (p.pino || p.gpio) == action.pino_destino);
+                
+                const origemName = origemPin ? (origemPin.nome || origemPin.description || '') : '';
+                const destinoName = destinoPin ? (destinoPin.nome || destinoPin.description || '') : '';
+                
+                html += `
+                    <tr>
+                        <td>GPIO ${action.pino_origem}${origemName ? ' - ' + origemName : ''}</td>
+                        <td>${action.numero_acao}</td>
+                        <td><span class="badge badge-secondary">${actionTypes[action.acao] || action.acao}</span></td>
+                        <td>GPIO ${action.pino_destino}${destinoName ? ' - ' + destinoName : ''}</td>
+                        <td>${action.tempo_on} ms</td>
+                        <td>${action.tempo_off} ms</td>
+                        <td>
+                            <div class="notification-icons">
+                                ${action.telegram ? '<span class="icon icon-telegram" title="Telegram">T</span>' : ''}
+                                ${action.assistente ? '<span class="icon icon-assistente" title="Assistente">A</span>' : ''}
+                                ${action.mqtt ? '<span class="icon icon-mqtt" title="MQTT">M</span>' : ''}
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn-edit" onclick="editAction(${action.pino_origem}, ${action.numero_acao})">✏️ Editar</button>
+                            <button class="btn-danger" onclick="deleteAction(${action.pino_origem}, ${action.numero_acao})">🗑️ Deletar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // Atualiza campos de timing baseado no tipo de ação
+        function updateTimingFields() {
+            const acaoSelect = document.getElementById('acao');
+            const tempoOnGroup = document.getElementById('tempoOnGroup');
+            const tempoOffGroup = document.getElementById('tempoOffGroup');
+            const tempoOnLabel = document.querySelector('label[for="tempo_on"]');
+            const tempoOffLabel = document.querySelector('label[for="tempo_off"]');
+            const acaoValue = parseInt(acaoSelect.value);
+            
+            // Ações que usam tempo_on: LIGA_DELAY(2), PISCA(3), PULSO(4), PULSO_DELAY_ON(5)
+            const usesTempoOn = [2, 3, 4, 5].includes(acaoValue);
+            tempoOnGroup.style.display = usesTempoOn ? 'flex' : 'none';
+            
+            // Ações que usam tempo_off: PISCA(3), PULSO_DELAY_ON(5)
+            const usesTempoOff = [3, 5].includes(acaoValue);
+            tempoOffGroup.style.display = usesTempoOff ? 'flex' : 'none';
+            
+            // Atualiza labels baseado no tipo de ação
+            if (acaoValue === 2) { // LIGA_DELAY
+                tempoOnLabel.textContent = 'Tempo de Delay (ms)';
+            } else if (acaoValue === 3) { // PISCA
+                tempoOnLabel.textContent = 'Tempo ON (ms)';
+                tempoOffLabel.textContent = 'Tempo OFF (ms)';
+            } else if (acaoValue === 4) { // PULSO
+                tempoOnLabel.textContent = 'Duração do Pulso (ms)';
+            } else if (acaoValue === 5) { // PULSO_DELAY_ON
+                tempoOnLabel.textContent = 'Delay para Ligar (ms)';
+                tempoOffLabel.textContent = 'Duração Ligado (ms)';
+            } else {
+                tempoOnLabel.textContent = 'Tempo ON (ms)';
+                tempoOffLabel.textContent = 'Tempo OFF (ms)';
+            }
+        }
+        
+        // Configurar envio do formulário
+        function setupFormSubmit() {
+            document.getElementById('actionForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const params = new URLSearchParams();
+                
+                formData.forEach((value, key) => {
+                    if (key === 'telegram' || key === 'assistente' || key === 'mqtt') {
+                        params.append(key, document.getElementById(key).checked);
+                    } else {
+                        params.append(key, value);
+                    }
+                });
+                
+                // Força inclusão de campos disabled quando em modo de edição
+                const pinoOrigemDisabled = document.getElementById('pino_origem').disabled;
+                const numeroAcaoDisabled = document.getElementById('numero_acao').disabled;
+                
+                if (pinoOrigemDisabled || numeroAcaoDisabled) {
+                    // Modo edição - garante que os valores sejam enviados
+                    params.set('pino_origem', document.getElementById('pino_origem').value);
+                    params.set('numero_acao', document.getElementById('numero_acao').value);
+                }
+                
+                console.log('Enviando dados:', params.toString());
+                
+                try {
+                    const response = await fetch('/api/actions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: params.toString()
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        alert('✅ Ação salva com sucesso!');
+                        resetForm();
+                        loadActions();
+                    } else {
+                        alert('❌ Erro: ' + (result.error || 'Falha ao salvar ação'));
+                    }
+                } catch (error) {
+                    console.error('Erro ao salvar ação:', error);
+                    alert('❌ Erro ao salvar ação');
+                }
+            });
+        }
+        
+        // Editar ação
+        function editAction(pinoOrigem, numeroAcao) {
+            const action = actionsData.find(a => a.pino_origem == pinoOrigem && a.numero_acao == numeroAcao);
+            if (!action) return;
+            
+            editMode = true;
+            editingOrigin = pinoOrigem;
+            editingNumber = numeroAcao;
+            
+            document.getElementById('formTitle').textContent = 'Editar Ação';
+            document.getElementById('edit_pino_origem').value = action.pino_origem;
+            document.getElementById('edit_numero_acao').value = action.numero_acao;
+            document.getElementById('pino_origem').value = action.pino_origem;
+            document.getElementById('numero_acao').value = action.numero_acao;
+            document.getElementById('pino_destino').value = action.pino_destino;
+            document.getElementById('acao').value = action.acao;
+            document.getElementById('tempo_on').value = action.tempo_on;
+            document.getElementById('tempo_off').value = action.tempo_off;
+            document.getElementById('pino_remoto').value = action.pino_remoto;
+            document.getElementById('envia_modulo').value = action.envia_modulo;
+            document.getElementById('telegram').checked = action.telegram;
+            document.getElementById('assistente').checked = action.assistente;
+            
+            // Desabilitar campos de identificação durante edição
+            document.getElementById('pino_origem').disabled = true;
+            document.getElementById('numero_acao').disabled = true;
+            
+            updateTimingFields();
+            
+            // Scroll para o formulário
+            document.getElementById('actionForm').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Deletar ação
+        async function deleteAction(pinoOrigem, numeroAcao) {
+            if (!confirm(`Confirma a exclusão da ação ${numeroAcao} do pino ${pinoOrigem}?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/actions/${pinoOrigem}/${numeroAcao}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ Ação deletada com sucesso!');
+                    loadActions();
+                } else {
+                    alert('❌ Erro: ' + (result.error || 'Falha ao deletar ação'));
+                }
+            } catch (error) {
+                console.error('Erro ao deletar ação:', error);
+                alert('❌ Erro ao deletar ação');
+            }
+        }
+        
+        // Resetar formulário
+        function resetForm() {
+            document.getElementById('actionForm').reset();
+            document.getElementById('formTitle').textContent = 'Nova Ação';
+            document.getElementById('edit_pino_origem').value = '';
+            document.getElementById('edit_numero_acao').value = '';
+            document.getElementById('pino_origem').disabled = false;
+            document.getElementById('numero_acao').disabled = false;
+            editMode = false;
+            editingOrigin = null;
+            editingNumber = null;
+            updateTimingFields();
+        }
+        
+        // Inicializa campos de timing
+        updateTimingFields();
+
+        // === SISTEMA DE MONITORAMENTO DE PERFORMANCE ===
+        const pageStartTime = performance.now();
+        
+        // Função para mostrar indicador de performance
+        function showPerformanceIndicator() {
+            const loadTime = performance.now() - pageStartTime;
+            const indicator = document.createElement('div');
+            indicator.style.cssText = 'position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-family: monospace;';
+            indicator.innerHTML = `Tempo de Carregamento: ${loadTime.toFixed(2)}ms`;
+            document.body.appendChild(indicator);
+            
+            console.log(`[PERFORMANCE] Ações carregadas em ${loadTime.toFixed(2)}ms`);
+        }
+        
+        // Mostrar indicador após carregamento
+        window.addEventListener('load', function() {
+            setTimeout(showPerformanceIndicator, 100);
+        });
+    </script>
+</body>
+</html>

@@ -123,6 +123,10 @@
             background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         }
 
+        .btn-warning {
+            background: linear-gradient(135deg, #f6a623 0%, #d4881a 100%);
+        }
+
         .btn-success {
             background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
         }
@@ -271,6 +275,7 @@
                     <a href="/mqtt" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">MQTT</a>
                     <a href="/intermod" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Inter-Módulos</a>
                     <a href="/assistentes" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Assistentes</a>
+                    <a href="/cloud" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">SMCR Cloud</a>
                 </div>
             </details>
             <details style="position:relative;">
@@ -345,6 +350,58 @@
                 <button class="btn btn-secondary" onclick="runDiscovery()">🔍 Buscar Módulos (mDNS)</button>
                 <button class="btn btn-secondary" onclick="refreshModules()">🔄 Atualizar Lista</button>
 
+                <!-- Formulário de edição (inicialmente oculto) -->
+                <div id="editModuleForm" style="display: none; margin-top: 20px; padding: 20px; background: white; border-radius: 8px; border: 2px solid #f6a623;">
+                    <h3 style="color: #f6a623; margin-bottom: 15px;">✏️ Editar Módulo</h3>
+                    <form id="moduleEditForm">
+                        <div class="form-group">
+                            <label>ID do Módulo:</label>
+                            <input type="text" id="editModuleId" name="moduleId" readonly
+                                   style="background:#f5f5f5; color:#888; cursor:not-allowed;">
+                        </div>
+                        <div class="form-group">
+                            <label for="editModuleHostname">Hostname:</label>
+                            <input type="text" id="editModuleHostname" name="moduleHostname" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editModuleIp">Endereço IP:</label>
+                            <input type="text" id="editModuleIp" name="moduleIp" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editModulePort">Porta:</label>
+                            <input type="number" id="editModulePort" name="modulePort" min="1" max="65535" required>
+                        </div>
+                        <div class="form-group" style="border:1px solid #f6a623;border-radius:6px;padding:12px;margin-top:8px;">
+                            <label style="font-weight:bold;color:#c47a00;">🔴 Alerta de Offline</label>
+                            <label style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+                                <input type="checkbox" id="editOfflineAlertEnabled" name="offlineAlertEnabled" value="1">
+                                Habilitar piscar quando módulo ficar offline
+                            </label>
+                            <label for="editPinsOffline">GPIOs que piscam (offline):</label>
+                            <input type="text" id="editPinsOffline" name="pinsOffline"
+                                   placeholder="Ex: 2,4 (separe por vírgula)">
+                            <label for="editOfflineFlashMs" style="margin-top:6px;">Intervalo de piscada offline (ms):</label>
+                            <input type="number" id="editOfflineFlashMs" name="offlineFlashMs"
+                                   min="50" max="5000" value="500">
+                        </div>
+                        <div class="form-group" style="border:1px solid #667eea;border-radius:6px;padding:12px;margin-top:8px;">
+                            <label style="font-weight:bold;color:#667eea;">🔵 Alerta de HealthCheck</label>
+                            <label style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+                                <input type="checkbox" id="editHealthcheckAlertEnabled" name="healthcheckAlertEnabled" value="1">
+                                Habilitar piscar durante healthcheck
+                            </label>
+                            <label for="editPinsHealthcheck">GPIOs que piscam (healthcheck):</label>
+                            <input type="text" id="editPinsHealthcheck" name="pinsHealthcheck"
+                                   placeholder="Ex: 5 (separe por vírgula)">
+                            <label for="editHealthcheckFlashMs" style="margin-top:6px;">Intervalo de piscada healthcheck (ms):</label>
+                            <input type="number" id="editHealthcheckFlashMs" name="healthcheckFlashMs"
+                                   min="50" max="5000" value="200">
+                        </div>
+                        <button type="submit" class="btn btn-success">💾 Salvar</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideEditModuleForm()">✖️ Cancelar</button>
+                    </form>
+                </div>
+
                 <!-- Formulário de adição (inicialmente oculto) -->
                 <div id="addModuleForm" style="display: none; margin-top: 20px; padding: 20px; background: white; border-radius: 8px; border: 2px solid #667eea;">
                     <h3 style="color: #667eea; margin-bottom: 15px;">Adicionar Novo Módulo</h3>
@@ -369,8 +426,35 @@
 
                         <div class="form-group">
                             <label for="modulePort">Porta:</label>
-                            <input type="number" id="modulePort" name="modulePort" 
+                            <input type="number" id="modulePort" name="modulePort"
                                    min="1" max="65535" value="8080" required>
+                        </div>
+
+                        <div class="form-group" style="border:1px solid #f6a623;border-radius:6px;padding:12px;margin-top:8px;">
+                            <label style="font-weight:bold;color:#c47a00;">🔴 Alerta de Offline</label>
+                            <label style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+                                <input type="checkbox" id="offlineAlertEnabled" name="offlineAlertEnabled" value="1">
+                                Habilitar piscar quando módulo ficar offline
+                            </label>
+                            <label for="pinsOffline">GPIOs que piscam (offline):</label>
+                            <input type="text" id="pinsOffline" name="pinsOffline"
+                                   placeholder="Ex: 2,4 (separe por vírgula)">
+                            <label for="offlineFlashMs" style="margin-top:6px;">Intervalo de piscada offline (ms):</label>
+                            <input type="number" id="offlineFlashMs" name="offlineFlashMs"
+                                   min="50" max="5000" value="500">
+                        </div>
+                        <div class="form-group" style="border:1px solid #667eea;border-radius:6px;padding:12px;margin-top:8px;">
+                            <label style="font-weight:bold;color:#667eea;">🔵 Alerta de HealthCheck</label>
+                            <label style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+                                <input type="checkbox" id="healthcheckAlertEnabled" name="healthcheckAlertEnabled" value="1">
+                                Habilitar piscar durante healthcheck
+                            </label>
+                            <label for="pinsHealthcheck">GPIOs que piscam (healthcheck):</label>
+                            <input type="text" id="pinsHealthcheck" name="pinsHealthcheck"
+                                   placeholder="Ex: 5 (separe por vírgula)">
+                            <label for="healthcheckFlashMs" style="margin-top:6px;">Intervalo de piscada healthcheck (ms):</label>
+                            <input type="number" id="healthcheckFlashMs" name="healthcheckFlashMs"
+                                   min="50" max="5000" value="200">
                         </div>
 
                         <button type="submit" class="btn btn-success">✔️ Adicionar</button>
@@ -500,13 +584,17 @@
                 
                 const data = await response.json();
                 console.log('[INTERMOD] Modules data:', JSON.stringify(data));
-                
+
+                // Armazena dados dos módulos para acesso pelo formulário de edição
+                window._modulesData = {};
+                if (data.modules) data.modules.forEach(m => { window._modulesData[m.id] = m; });
+
                 const container = document.getElementById('modulesTableContainer');
                 if (!container) {
                     console.error('[INTERMOD] ERRO: elemento modulesTableContainer não encontrado!');
                     return;
                 }
-                
+
                 if (!data.modules || data.modules.length === 0) {
                     console.log('[INTERMOD] Nenhum módulo cadastrado');
                     container.innerHTML = '<div class="alert alert-info">Nenhum módulo cadastrado. Use o botão "Adicionar Módulo" ou "Buscar Módulos" para começar.</div>';
@@ -523,6 +611,7 @@
                 html += '<th>Status</th>';
                 html += '<th>Último Check</th>';
                 html += '<th>Origem</th>';
+                html += '<th>GPIOs Alerta</th>';
                 html += '<th>Ações</th>';
                 html += '</tr></thead><tbody>';
 
@@ -543,9 +632,12 @@
                     html += `<td><span class="status-badge ${statusClass}">${statusText}</span></td>`;
                     html += `<td>${lastCheck}</td>`;
                     html += `<td>${origem}</td>`;
+                    const alertPins = module.pins_alerta && module.pins_alerta.length > 0 ? escapeHtml(module.pins_alerta) : '<span style="color:#aaa">—</span>';
+                    html += `<td>${alertPins}</td>`;
                     html += `<td>
                         <button class="btn action-btn btn-secondary" onclick="testModule('${escapeHtml(module.id)}')">🔍 Testar</button>
                         <button class="btn action-btn btn-success" onclick="syncModule('${escapeHtml(module.id)}')">🔄 Sincronizar</button>
+                        <button class="btn action-btn btn-warning" onclick="editModule('${escapeHtml(module.id)}')">✏️ Editar</button>
                         <button class="btn action-btn btn-danger" onclick="deleteModule('${escapeHtml(module.id)}')">🗑️ Remover</button>
                     </td>`;
                     html += '</tr>';
@@ -577,12 +669,74 @@
             document.getElementById('addModuleForm').style.display = 'none';
         }
 
+        // Abre formulário de edição pré-preenchido
+        function editModule(moduleId) {
+            const module = window._modulesData && window._modulesData[moduleId];
+            if (!module) {
+                showMessage('Módulo não encontrado. Atualize a lista e tente novamente.', 'error');
+                return;
+            }
+            document.getElementById('editModuleId').value = module.id;
+            document.getElementById('editModuleHostname').value = module.hostname;
+            document.getElementById('editModuleIp').value = module.ip;
+            document.getElementById('editModulePort').value = module.porta;
+            document.getElementById('editPinsOffline').value = module.pins_offline || '';
+            document.getElementById('editOfflineAlertEnabled').checked = !!module.offline_alert_enabled;
+            document.getElementById('editOfflineFlashMs').value = module.offline_flash_ms || 200;
+            document.getElementById('editPinsHealthcheck').value = module.pins_healthcheck || '';
+            document.getElementById('editHealthcheckAlertEnabled').checked = !!module.healthcheck_alert_enabled;
+            document.getElementById('editHealthcheckFlashMs').value = module.healthcheck_flash_ms || 500;
+            document.getElementById('editModuleForm').style.display = 'block';
+            document.getElementById('addModuleForm').style.display = 'none';
+            document.getElementById('editModuleForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Esconde formulário de edição
+        function hideEditModuleForm() {
+            document.getElementById('editModuleForm').style.display = 'none';
+        }
+
+        // Salva edição do módulo
+        document.getElementById('moduleEditForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            showLoading(true);
+
+            const formData = new FormData(this);
+            // Garante envio explícito dos checkboxes (não enviados pelo FormData quando desmarcados)
+            formData.set('offlineAlertEnabled',     document.getElementById('editOfflineAlertEnabled').checked     ? '1' : '0');
+            formData.set('healthcheckAlertEnabled', document.getElementById('editHealthcheckAlertEnabled').checked ? '1' : '0');
+
+            try {
+                const response = await fetch('/api/intermod/modules/update', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showMessage('Módulo atualizado com sucesso!', 'success');
+                    hideEditModuleForm();
+                    loadModules();
+                } else {
+                    const error = await response.text();
+                    showMessage('Erro ao atualizar módulo: ' + error, 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro de comunicação com o servidor', 'error');
+            } finally {
+                showLoading(false);
+            }
+        });
+
         // Adiciona novo módulo
         document.getElementById('moduleForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             showLoading(true);
 
             const formData = new FormData(this);
+            // Garante envio explícito dos checkboxes
+            formData.set('offlineAlertEnabled',     document.getElementById('offlineAlertEnabled').checked     ? '1' : '0');
+            formData.set('healthcheckAlertEnabled', document.getElementById('healthcheckAlertEnabled').checked ? '1' : '0');
 
             try {
                 const response = await fetch('/api/intermod/modules/add', {

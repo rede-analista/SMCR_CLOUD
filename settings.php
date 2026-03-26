@@ -1,0 +1,260 @@
+<?php
+require_once __DIR__ . '/config/auth.php';
+require_login();
+
+$db = getDB();
+
+// Ensure settings table and default register_token exist
+function ensure_settings(PDO $db): void {
+    $stmt = $db->prepare("SELECT COUNT(*) FROM settings WHERE `key` = 'register_token'");
+    $stmt->execute();
+    if ((int)$stmt->fetchColumn() === 0) {
+        $token = bin2hex(random_bytes(16));
+        $stmt  = $db->prepare("INSERT INTO settings (`key`, value) VALUES ('register_token', ?)");
+        $stmt->execute([$token]);
+    }
+}
+
+ensure_settings($db);
+
+// Handle actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
+    $action = $_POST['action'] ?? '';
+
+    if ($action === 'regenerate_token') {
+        $token = bin2hex(random_bytes(16));
+        $stmt  = $db->prepare("UPDATE settings SET value = ? WHERE `key` = 'register_token'");
+        $stmt->execute([$token]);
+        set_flash('success', 'Token de auto-registro regenerado com sucesso.');
+        header('Location: /settings.php');
+        exit;
+    }
+
+    if ($action === 'change_password') {
+        $current  = $_POST['current_password']  ?? '';
+        $new_pass = $_POST['new_password']       ?? '';
+        $confirm  = $_POST['confirm_password']   ?? '';
+
+        $stmt = $db->prepare('SELECT password_hash FROM users WHERE id = ?');
+        $stmt->execute([$_SESSION['user_id']]);
+        $user = $stmt->fetch();
+
+        if (!$user || !password_verify($current, $user['password_hash'])) {
+            set_flash('danger', 'Senha atual incorreta.');
+        } elseif (strlen($new_pass) < 6) {
+            set_flash('danger', 'A nova senha deve ter pelo menos 6 caracteres.');
+        } elseif ($new_pass !== $confirm) {
+            set_flash('danger', 'A confirmação de senha não coincide.');
+        } else {
+            $hash = password_hash($new_pass, PASSWORD_DEFAULT);
+            $stmt = $db->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+            $stmt->execute([$hash, $_SESSION['user_id']]);
+            set_flash('success', 'Senha alterada com sucesso.');
+        }
+        header('Location: /settings.php');
+        exit;
+    }
+
+    if ($action === 'add_user') {
+        $username = trim($_POST['new_username'] ?? '');
+        $password = $_POST['new_user_password'] ?? '';
+
+        if ($username === '' || strlen($password) < 6) {
+            set_flash('danger', 'Usuário e senha (mín. 6 caracteres) são obrigatórios.');
+        } else {
+            $stmt = $db->prepare('SELECT id FROM users WHERE username = ?');
+            $stmt->execute([$username]);
+            if ($stmt->fetch()) {
+                set_flash('danger', "Usuário \"{$username}\" já existe.");
+            } else {
+                $hash = password_hash($password, PASSWORD_DEFAULT);
+                $stmt = $db->prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)');
+                $stmt->execute([$username, $hash]);
+                set_flash('success', "Usuário \"{$username}\" criado com sucesso.");
+            }
+        }
+        header('Location: /settings.php');
+        exit;
+    }
+
+    if ($action === 'delete_user') {
+        $uid = (int)($_POST['user_id'] ?? 0);
+        if ($uid === (int)$_SESSION['user_id']) {
+            set_flash('danger', 'Você não pode excluir seu próprio usuário.');
+        } else {
+            $stmt = $db->prepare('DELETE FROM users WHERE id = ?');
+            $stmt->execute([$uid]);
+            set_flash('success', 'Usuário excluído.');
+        }
+        header('Location: /settings.php');
+        exit;
+    }
+}
+
+// Load data
+$stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'register_token'");
+$stmt->execute();
+$register_token = $stmt->fetchColumn() ?: '—';
+
+$users = $db->query('SELECT id, username, created_at FROM users ORDER BY id')->fetchAll();
+
+$page_title = 'Configurações do Cloud';
+$breadcrumb = [['label' => 'Configurações']];
+include __DIR__ . '/includes/header.php';
+?>
+
+<div class="row g-4">
+
+    <!-- Auto-registration token -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-key-fill text-warning fs-5"></i>
+                <h5 class="mb-0">Token de Auto-Registro</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Este token deve ser configurado no firmware SMCR de cada ESP32 para que eles possam
+                    se auto-registrar neste cloud ao ligar. Mantenha-o seguro.
+                </p>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control font-monospace" id="reg_token_display"
+                           value="<?= h($register_token) ?>" readonly>
+                    <button class="btn btn-outline-secondary" onclick="copyText(this, '<?= h($register_token) ?>')" title="Copiar">
+                        <i class="bi bi-clipboard"></i>
+                    </button>
+                </div>
+                <form method="POST" onsubmit="return confirm('Regenerar o token vai invalidar todos os ESP32 que usam o token atual. Confirma?')">
+                    <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+                    <input type="hidden" name="action" value="regenerate_token">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Regenerar Token
+                    </button>
+                </form>
+                <hr>
+                <p class="small fw-semibold mb-1">Endpoint de registro:</p>
+                <code class="d-block bg-light rounded p-2 small">POST http://smcr.pensenet.com.br/api/register.php</code>
+                <p class="small text-muted mt-2 mb-0">
+                    <a href="/devices/discover.php">Descobrir dispositivos na rede &rarr;</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change password -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-shield-lock-fill text-primary fs-5"></i>
+                <h5 class="mb-0">Alterar Minha Senha</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+                    <input type="hidden" name="action" value="change_password">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Senha Atual</label>
+                        <input type="password" name="current_password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Nova Senha</label>
+                        <input type="password" name="new_password" class="form-control" minlength="6" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Confirmar Nova Senha</label>
+                        <input type="password" name="confirm_password" class="form-control" minlength="6" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>Alterar Senha
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users management -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-people-fill text-info fs-5"></i>
+                    <h5 class="mb-0">Usuários do Sistema</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-8">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr><th>Usuário</th><th>Criado em</th><th></th></tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ($users as $u): ?>
+                            <tr>
+                                <td>
+                                    <i class="bi bi-person-circle me-1 text-muted"></i>
+                                    <?= h($u['username']) ?>
+                                    <?php if ((int)$u['id'] === (int)$_SESSION['user_id']): ?>
+                                        <span class="badge bg-primary ms-1">você</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-muted small"><?= h($u['created_at']) ?></td>
+                                <td class="text-end">
+                                    <?php if ((int)$u['id'] !== (int)$_SESSION['user_id']): ?>
+                                    <form method="POST" class="d-inline"
+                                          onsubmit="return confirm('Excluir usuário <?= h($u['username']) ?>?')">
+                                        <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+                                        <input type="hidden" name="action" value="delete_user">
+                                        <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="fw-semibold">Adicionar Usuário</h6>
+                        <form method="POST">
+                            <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+                            <input type="hidden" name="action" value="add_user">
+                            <div class="mb-2">
+                                <input type="text" name="new_username" class="form-control form-control-sm"
+                                       placeholder="Usuário" pattern="[a-zA-Z0-9_\-]+" required>
+                            </div>
+                            <div class="mb-2">
+                                <input type="password" name="new_user_password" class="form-control form-control-sm"
+                                       placeholder="Senha (mín. 6 caracteres)" minlength="6" required>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-success w-100">
+                                <i class="bi bi-person-plus me-1"></i>Adicionar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function copyText(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+        btn.classList.replace('btn-outline-secondary', 'btn-success');
+        setTimeout(() => {
+            btn.innerHTML = original;
+            btn.classList.replace('btn-success', 'btn-outline-secondary');
+        }, 1500);
+    });
+}
+</script>
+
+<?php include __DIR__ . '/includes/footer.php'; ?>

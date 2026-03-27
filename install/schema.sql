@@ -92,6 +92,10 @@ CREATE TABLE IF NOT EXISTS device_config (
     telegram_token VARCHAR(128) DEFAULT '',
     telegram_chatid VARCHAR(64) DEFAULT '',
     telegram_interval SMALLINT UNSIGNED DEFAULT 30,
+    cloud_url VARCHAR(128) DEFAULT 'smcr.pensenet.com.br',
+    cloud_port SMALLINT UNSIGNED DEFAULT 8765,
+    cloud_sync_enabled TINYINT(1) DEFAULT 0,
+    cloud_sync_interval_min SMALLINT UNSIGNED DEFAULT 5,
     FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
 );
 

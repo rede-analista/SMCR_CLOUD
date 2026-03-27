@@ -68,6 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'web_password'           => $_POST['web_password'] ?? 'admin1234',
         'dashboard_auth_required'=> isset($_POST['dashboard_auth_required']) ? 1 : 0,
         'cloud_url'              => trim($_POST['cloud_url'] ?? 'smcr.pensenet.com.br'),
+        'cloud_port'             => (int)($_POST['cloud_port'] ?? 8765),
         'cloud_sync_enabled'     => isset($_POST['cloud_sync_enabled']) ? 1 : 0,
         'cloud_sync_interval_min'=> (int)($_POST['cloud_sync_interval_min'] ?? 5),
     ];
@@ -454,11 +455,16 @@ include __DIR__ . '/../includes/header.php';
                     Quando o sync com a cloud estiver habilitado, o ESP32 busca periodicamente as configurações deste painel e aplica automaticamente.
                 </div>
                 <div class="row g-3">
-                    <div class="col-md-8">
+                    <div class="col-md-6">
                         <label class="form-label">URL da Cloud</label>
                         <input type="text" class="form-control" name="cloud_url"
                                value="<?= h($cfg['cloud_url'] ?? 'smcr.pensenet.com.br') ?>" maxlength="128">
                         <div class="form-text">Endereço do servidor SMCR Cloud (sem http://)</div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Porta</label>
+                        <input type="number" class="form-control" name="cloud_port"
+                               value="<?= h($cfg['cloud_port'] ?? 8765) ?>" min="1" max="65535">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Intervalo de Sync (minutos)</label>

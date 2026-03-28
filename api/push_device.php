@@ -32,7 +32,7 @@ $db = getDB();
 
 // Busca IP e porta do dispositivo
 $stmt = $db->prepare('
-    SELECT d.id, d.unique_id, ds.ip,
+    SELECT d.id, d.unique_id, d.api_token, ds.ip,
            COALESCE(dc.web_server_port, 8080) AS port,
            COALESCE(dc.auth_enabled, 0) AS auth_enabled,
            COALESCE(dc.web_username, \'\') AS web_username,
@@ -392,6 +392,7 @@ if ($push_config && !empty($cfg)) {
         'cloud_sync_interval_min'    => (int)($cfg['cloud_sync_interval_min'] ?? 5),
         'cloud_heartbeat_enabled'    => (int)($cfg['cloud_heartbeat_enabled'] ?? 0),
         'cloud_heartbeat_interval_min' => (int)($cfg['cloud_heartbeat_interval_min'] ?? 5),
+        'cloud_api_token'            => $device['api_token'] ?? '',
     ], $use_auth, $user, $pass);
     if ($r['code'] >= 200 && $r['code'] < 300) {
         $pushed[] = 'config_geral (ESP32 reiniciará)';

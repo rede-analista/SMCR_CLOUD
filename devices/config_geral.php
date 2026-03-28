@@ -67,10 +67,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'web_username'           => trim($_POST['web_username'] ?? 'admin'),
         'web_password'           => $_POST['web_password'] ?? 'admin1234',
         'dashboard_auth_required'=> isset($_POST['dashboard_auth_required']) ? 1 : 0,
-        'cloud_url'              => trim($_POST['cloud_url'] ?? 'smcr.pensenet.com.br'),
-        'cloud_port'             => (int)($_POST['cloud_port'] ?? 8765),
-        'cloud_sync_enabled'     => isset($_POST['cloud_sync_enabled']) ? 1 : 0,
-        'cloud_sync_interval_min'=> (int)($_POST['cloud_sync_interval_min'] ?? 5),
+        'cloud_url'                  => trim($_POST['cloud_url'] ?? 'smcr.pensenet.com.br'),
+        'cloud_port'                 => (int)($_POST['cloud_port'] ?? 8765),
+        'cloud_sync_enabled'         => isset($_POST['cloud_sync_enabled']) ? 1 : 0,
+        'cloud_sync_interval_min'    => (int)($_POST['cloud_sync_interval_min'] ?? 5),
+        'cloud_heartbeat_enabled'    => isset($_POST['cloud_heartbeat_enabled']) ? 1 : 0,
+        'cloud_heartbeat_interval_min' => (int)($_POST['cloud_heartbeat_interval_min'] ?? 5),
     ];
 
     $set_parts = [];
@@ -472,7 +474,7 @@ include __DIR__ . '/../includes/header.php';
                                value="<?= h($cfg['cloud_sync_interval_min'] ?? 5) ?>" min="1" max="1440">
                     </div>
                     <div class="col-12">
-                        <div class="form-check form-switch">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" name="cloud_sync_enabled"
                                    id="cloud_sync_enabled" value="1"
                                    <?= ($cfg['cloud_sync_enabled'] ?? 0) ? 'checked' : '' ?>>
@@ -480,6 +482,19 @@ include __DIR__ . '/../includes/header.php';
                                 Habilitar Sync Automático com a Cloud
                             </label>
                         </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="cloud_heartbeat_enabled"
+                                   id="cloud_heartbeat_enabled" value="1"
+                                   <?= ($cfg['cloud_heartbeat_enabled'] ?? 0) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="cloud_heartbeat_enabled">
+                                Heartbeat para Cloud
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Intervalo do Heartbeat (minutos)</label>
+                        <input type="number" class="form-control" name="cloud_heartbeat_interval_min"
+                               value="<?= h($cfg['cloud_heartbeat_interval_min'] ?? 5) ?>" min="1" max="1440">
                     </div>
                 </div>
             </div>

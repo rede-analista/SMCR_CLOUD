@@ -151,10 +151,12 @@ try {
         'telegram_interval'       => (int)$cfg['telegram_interval'],
 
         // SMCR Cloud
-        'cloud_url'               => $cfg['cloud_url'] ?? 'smcr.pensenet.com.br',
-        'cloud_port'              => (int)($cfg['cloud_port'] ?? 8765),
-        'cloud_sync_enabled'      => (bool)($cfg['cloud_sync_enabled'] ?? 0),
-        'cloud_sync_interval_min' => (int)($cfg['cloud_sync_interval_min'] ?? 5),
+        'cloud_url'                  => $cfg['cloud_url'] ?? 'smcr.pensenet.com.br',
+        'cloud_port'                 => (int)($cfg['cloud_port'] ?? 8765),
+        'cloud_sync_enabled'         => (bool)($cfg['cloud_sync_enabled'] ?? 0),
+        'cloud_sync_interval_min'    => (int)($cfg['cloud_sync_interval_min'] ?? 5),
+        'cloud_heartbeat_enabled'    => (bool)($cfg['cloud_heartbeat_enabled'] ?? 0),
+        'cloud_heartbeat_interval_min' => (int)($cfg['cloud_heartbeat_interval_min'] ?? 5),
 
         // Pinos e Ações
         'pins'    => $pins,

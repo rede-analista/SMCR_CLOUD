@@ -141,10 +141,12 @@ try {
                 web_username           = COALESCE(:wuser, web_username),
                 web_password           = COALESCE(:wpass, web_password),
                 dashboard_auth_required= COALESCE(:dash, dashboard_auth_required),
-                cloud_url               = COALESCE(:cloud_url, cloud_url),
-                cloud_port              = COALESCE(:cloud_port, cloud_port),
-                cloud_sync_enabled      = COALESCE(:cloud_sync_en, cloud_sync_enabled),
-                cloud_sync_interval_min = COALESCE(:cloud_sync_int, cloud_sync_interval_min)
+                cloud_url                  = COALESCE(:cloud_url, cloud_url),
+                cloud_port                 = COALESCE(:cloud_port, cloud_port),
+                cloud_sync_enabled         = COALESCE(:cloud_sync_en, cloud_sync_enabled),
+                cloud_sync_interval_min    = COALESCE(:cloud_sync_int, cloud_sync_interval_min),
+                cloud_heartbeat_enabled    = COALESCE(:cloud_hb_en, cloud_heartbeat_enabled),
+                cloud_heartbeat_interval_min = COALESCE(:cloud_hb_int, cloud_heartbeat_interval_min)
             WHERE device_id = :device_id
         ");
         $stmt->execute([
@@ -177,10 +179,12 @@ try {
             ':wuser'          => $c['web_username']          ?? null,
             ':wpass'          => $c['web_password']          ?? null,
             ':dash'           => isset($c['dashboard_auth_required']) ? (int)$c['dashboard_auth_required'] : null,
-            ':cloud_url'      => $c['cloud_url']                    ?? null,
-            ':cloud_port'     => isset($c['cloud_port'])             ? (int)$c['cloud_port']             : null,
-            ':cloud_sync_en'  => isset($c['cloud_sync_enabled'])     ? (int)$c['cloud_sync_enabled']     : null,
-            ':cloud_sync_int' => isset($c['cloud_sync_interval_min'])? (int)$c['cloud_sync_interval_min']: null,
+            ':cloud_url'      => $c['cloud_url']                         ?? null,
+            ':cloud_port'     => isset($c['cloud_port'])                  ? (int)$c['cloud_port']                  : null,
+            ':cloud_sync_en'  => isset($c['cloud_sync_enabled'])          ? (int)$c['cloud_sync_enabled']          : null,
+            ':cloud_sync_int' => isset($c['cloud_sync_interval_min'])     ? (int)$c['cloud_sync_interval_min']     : null,
+            ':cloud_hb_en'    => isset($c['cloud_heartbeat_enabled'])     ? (int)$c['cloud_heartbeat_enabled']     : null,
+            ':cloud_hb_int'   => isset($c['cloud_heartbeat_interval_min'])? (int)$c['cloud_heartbeat_interval_min']: null,
             ':device_id'      => $device_id,
         ]);
         $imported[] = 'config_geral';

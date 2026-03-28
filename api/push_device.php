@@ -386,6 +386,10 @@ if ($push_config && !empty($cfg)) {
         'ap_ssid'                => $cfg['ap_ssid']                ?? '',
         'ap_pass'                => $cfg['ap_pass']                ?? '',
         'ap_fallback_enabled'    => (int)($cfg['ap_fallback_enabled'] ?? 1),
+        'cloud_url'              => $cfg['cloud_url']              ?? 'smcr.pensenet.com.br',
+        'cloud_port'             => (int)($cfg['cloud_port']       ?? 8765),
+        'cloud_sync_enabled'     => (int)($cfg['cloud_sync_enabled'] ?? 0),
+        'cloud_sync_interval_min'=> (int)($cfg['cloud_sync_interval_min'] ?? 5),
     ], $use_auth, $user, $pass);
     if ($r['code'] >= 200 && $r['code'] < 300) {
         $pushed[] = 'config_geral (ESP32 reiniciará)';

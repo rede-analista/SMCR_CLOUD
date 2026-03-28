@@ -48,6 +48,10 @@ function format_uptime(int $ms): string {
     return "{$s}s";
 }
 
+$stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'dashboard_refresh'");
+$stmt->execute();
+$dashboard_refresh = max(10, (int)($stmt->fetchColumn() ?: 30));
+
 $page_title = 'Dashboard';
 $breadcrumb = [['label' => 'Dashboard']];
 include __DIR__ . '/includes/header.php';
@@ -192,11 +196,11 @@ include __DIR__ . '/includes/header.php';
 
 <div class="text-end text-muted small mt-3">
     <i class="bi bi-arrow-clockwise me-1"></i>
-    Atualiza em <span id="refresh_countdown">30</span>s
+    Atualiza em <span id="refresh_countdown"><?= $dashboard_refresh ?></span>s
 </div>
 
 <script>
-let countdown = 30;
+let countdown = <?= $dashboard_refresh ?>;
 const el = document.getElementById('refresh_countdown');
 setInterval(() => {
     countdown--;

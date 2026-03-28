@@ -10,6 +10,26 @@
 define('SMCR_CRON', true);
 require_once __DIR__ . '/../config/db.php';
 
+$db = getDB();
+
+// ─── Throttle por intervalo configurável ───
+$stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'mdns_interval'");
+$stmt->execute();
+$mdns_interval_min = max(1, (int)($stmt->fetchColumn() ?: 5));
+
+$stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'last_mdns_discovery'");
+$stmt->execute();
+$last_run = $stmt->fetchColumn();
+
+if ($last_run) {
+    $elapsed = time() - strtotime($last_run);
+    if ($elapsed < $mdns_interval_min * 60) {
+        $remaining = $mdns_interval_min * 60 - $elapsed;
+        echo '[' . date('Y-m-d H:i:s') . "] Aguardando próximo ciclo ({$remaining}s restantes). Saindo." . PHP_EOL;
+        exit(0);
+    }
+}
+
 echo '[' . date('Y-m-d H:i:s') . '] Iniciando...' . PHP_EOL;
 
 // ─── Descobre dispositivos SMCR via mDNS ───
@@ -54,7 +74,6 @@ if ($mdns_output) {
 echo '[' . date('Y-m-d H:i:s') . '] mDNS: ' . count($mdns_found) . ' dispositivo(s) SMCR.' . PHP_EOL;
 
 // ─── Dispositivos cadastrados no banco ───
-$db   = getDB();
 $rows = $db->query('
     SELECT d.id, d.unique_id, d.online,
            COALESCE(ds.ip, \'\') AS ip,
@@ -198,5 +217,9 @@ foreach ($registered as $uid => $r) {
         }
     }
 }
+
+// ─── Atualiza timestamp da última execução ───
+$db->prepare("INSERT INTO settings (`key`, value) VALUES ('last_mdns_discovery', NOW()) ON DUPLICATE KEY UPDATE value = NOW()")
+   ->execute();
 
 echo '[' . date('Y-m-d H:i:s') . '] Concluído.' . PHP_EOL;

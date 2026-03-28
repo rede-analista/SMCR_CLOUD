@@ -4,14 +4,21 @@ require_login();
 
 $db = getDB();
 
-// Ensure settings table and default register_token exist
+// Ensure settings table and default values exist
 function ensure_settings(PDO $db): void {
-    $stmt = $db->prepare("SELECT COUNT(*) FROM settings WHERE `key` = 'register_token'");
-    $stmt->execute();
-    if ((int)$stmt->fetchColumn() === 0) {
-        $token = bin2hex(random_bytes(16));
-        $stmt  = $db->prepare("INSERT INTO settings (`key`, value) VALUES ('register_token', ?)");
-        $stmt->execute([$token]);
+    $defaults = [
+        'register_token'   => bin2hex(random_bytes(16)),
+        'mdns_interval'    => '5',
+        'dashboard_refresh'=> '30',
+    ];
+    foreach ($defaults as $key => $default) {
+        $stmt = $db->prepare("SELECT COUNT(*) FROM settings WHERE `key` = ?");
+        $stmt->execute([$key]);
+        if ((int)$stmt->fetchColumn() === 0) {
+            $value = ($key === 'register_token') ? $default : $default;
+            $stmt  = $db->prepare("INSERT INTO settings (`key`, value) VALUES (?, ?)");
+            $stmt->execute([$key, $value]);
+        }
     }
 }
 
@@ -90,12 +97,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: /settings.php');
         exit;
     }
+
+    if ($action === 'save_timers') {
+        $mdns_interval     = (int)($_POST['mdns_interval']     ?? 5);
+        $dashboard_refresh = (int)($_POST['dashboard_refresh'] ?? 30);
+
+        if ($mdns_interval < 1)      $mdns_interval     = 1;
+        if ($dashboard_refresh < 10) $dashboard_refresh = 10;
+
+        $db->prepare("INSERT INTO settings (`key`, value) VALUES ('mdns_interval', ?) ON DUPLICATE KEY UPDATE value = ?")
+           ->execute([$mdns_interval, $mdns_interval]);
+        $db->prepare("INSERT INTO settings (`key`, value) VALUES ('dashboard_refresh', ?) ON DUPLICATE KEY UPDATE value = ?")
+           ->execute([$dashboard_refresh, $dashboard_refresh]);
+
+        set_flash('success', 'Configurações de automação salvas.');
+        header('Location: /settings.php');
+        exit;
+    }
 }
 
 // Load data
 $stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'register_token'");
 $stmt->execute();
 $register_token = $stmt->fetchColumn() ?: '—';
+
+$stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'mdns_interval'");
+$stmt->execute();
+$mdns_interval = (int)($stmt->fetchColumn() ?: 5);
+
+$stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'dashboard_refresh'");
+$stmt->execute();
+$dashboard_refresh = (int)($stmt->fetchColumn() ?: 30);
 
 $users = $db->query('SELECT id, username, created_at FROM users ORDER BY id')->fetchAll();
 
@@ -167,6 +199,43 @@ include __DIR__ . '/includes/header.php';
                     </div>
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-lg me-1"></i>Alterar Senha
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Automation timers -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-clock-fill text-success fs-5"></i>
+                <h5 class="mb-0">Automação e Tempos</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+                    <input type="hidden" name="action" value="save_timers">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">
+                                <i class="bi bi-broadcast me-1"></i>Intervalo de descoberta mDNS (minutos)
+                            </label>
+                            <input type="number" name="mdns_interval" class="form-control"
+                                   value="<?= $mdns_interval ?>" min="1" max="60" required>
+                            <div class="form-text">Mínimo: 1 minuto. Padrão: 5 minutos.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh automático do dashboard (segundos)
+                            </label>
+                            <input type="number" name="dashboard_refresh" class="form-control"
+                                   value="<?= $dashboard_refresh ?>" min="10" max="3600" required>
+                            <div class="form-text">Mínimo: 10 segundos. Padrão: 30 segundos.</div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success mt-3">
+                        <i class="bi bi-check-lg me-1"></i>Salvar
                     </button>
                 </form>
             </div>

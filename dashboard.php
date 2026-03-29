@@ -4,8 +4,18 @@ require_login();
 
 $db = getDB();
 
-// Auto-mark devices offline if last_seen > 2 minutes ago
-$db->exec("UPDATE devices SET online = 0 WHERE last_seen < DATE_SUB(NOW(), INTERVAL 2 MINUTE) OR last_seen IS NULL");
+// Auto-mark devices offline usando intervalo de heartbeat configurado por dispositivo
+$db->exec("
+    UPDATE devices d
+    LEFT JOIN device_config dc ON dc.device_id = d.id
+    SET d.online = 0
+    WHERE d.last_seen IS NULL
+       OR d.last_seen < DATE_SUB(NOW(), INTERVAL
+           IF(dc.cloud_heartbeat_enabled = 1 AND dc.cloud_heartbeat_interval_min > 0,
+              dc.cloud_heartbeat_interval_min + 1,
+              2)
+       MINUTE)
+");
 
 // Fetch all devices with status
 $stmt = $db->query("

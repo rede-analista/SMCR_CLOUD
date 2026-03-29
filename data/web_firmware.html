@@ -169,10 +169,10 @@
     <script>
         // === DOWNLOAD DO FIRMWARE ===
         window.addEventListener('load', function() {
-            fetch('/config/json')
+            fetch('/status/json')
                 .then(function(r){ return r.json(); })
                 .then(function(cfg) {
-                    var ver = (cfg.fw_version || '').trim();
+                    var ver = ((cfg.system && cfg.system.fw_version) ? cfg.system.fw_version : '').trim();
                     document.getElementById('dl-version').textContent = ver || '—';
                     if (!ver) return;
                     var fname = 'SMCR_v' + ver + '_firmware.bin';

@@ -267,6 +267,24 @@
             </div>
         </div>
 
+        <!-- Buscar arquivos da Cloud -->
+        <div class="section">
+            <div class="section-title">☁️ Buscar Arquivos da Cloud</div>
+            <div class="info-box">
+                <strong>ℹ️ Informação:</strong> Baixa os arquivos HTML diretamente do servidor SMCR Cloud/HA configurado e os salva no LittleFS do ESP32.
+            </div>
+            <div id="cloud-fetch-url" style="margin-bottom:12px;padding:8px 12px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:4px;font-size:13px;color:#555;">
+                Carregando URL da Cloud...
+            </div>
+            <button id="btn-fetch-cloud" onclick="fetchFromCloud()" class="btn btn-primary">☁️ Buscar arquivos da Cloud</button>
+            <div id="cloud-fetch-status" style="margin-top:12px;display:none;">
+                <div style="height:12px;background:#e9ecef;border-radius:6px;overflow:hidden;margin-bottom:6px;">
+                    <div id="cloud-fetch-bar" style="height:100%;width:0%;background:#007bff;transition:width .3s;"></div>
+                </div>
+                <div id="cloud-fetch-msg" style="font-size:12px;color:#555;"></div>
+            </div>
+        </div>
+
         <div id="status" class="status-message"></div>
     </div>
 
@@ -283,6 +301,7 @@
         window.addEventListener('load', function() {
             hideLoading();
             loadFilesList();
+            loadCloudConfig();
             
             // Adiciona listener para mostrar contador de arquivos selecionados
             const fileInput = document.getElementById('file-input');
@@ -631,6 +650,94 @@
             setTimeout(() => {
                 statusDiv.style.display = 'none';
             }, 5000);
+        }
+
+        // === BUSCAR ARQUIVOS DA CLOUD ===
+        let vS_cloudUrlConfig = '';
+        let fetchCloudPollTimer = null;
+
+        function loadCloudConfig() {
+            fetch('/config/json')
+                .then(r => r.json())
+                .then(function(cfg) {
+                    vS_cloudUrlConfig = cfg.cloud_url || '';
+                    const port = cfg.cloud_port || 80;
+                    const urlBox = document.getElementById('cloud-fetch-url');
+                    if (vS_cloudUrlConfig) {
+                        urlBox.innerHTML = '<strong>Servidor configurado:</strong> ' + escapeHtml(vS_cloudUrlConfig) + ':' + port;
+                        urlBox.style.color = '#333';
+                    } else {
+                        urlBox.innerHTML = '⚠️ URL da Cloud não configurada. Acesse <a href="/cloud">Configurações &gt; SMCR Cloud</a> para definir.';
+                        urlBox.style.color = '#856404';
+                        document.getElementById('btn-fetch-cloud').disabled = true;
+                    }
+                })
+                .catch(function() {
+                    document.getElementById('cloud-fetch-url').textContent = 'Erro ao obter configuração.';
+                });
+        }
+
+        function fetchFromCloud() {
+            if (!vS_cloudUrlConfig) return;
+            const btn = document.getElementById('btn-fetch-cloud');
+            btn.disabled = true;
+            btn.textContent = '⏳ Buscando...';
+            const statusDiv = document.getElementById('cloud-fetch-status');
+            const msgDiv = document.getElementById('cloud-fetch-msg');
+            const bar = document.getElementById('cloud-fetch-bar');
+            statusDiv.style.display = 'block';
+            bar.style.width = '5%';
+            msgDiv.textContent = 'Iniciando download...';
+
+            const fd = new FormData();
+            fd.append('cloud_url', vS_cloudUrlConfig);
+            fetch('/api/fetch_cloud_files', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(function(res) {
+                    if (!res.ok) {
+                        msgDiv.textContent = 'Erro: ' + (res.error || 'desconhecido');
+                        btn.disabled = false;
+                        btn.textContent = '☁️ Buscar arquivos da Cloud';
+                        return;
+                    }
+                    bar.style.width = '15%';
+                    pollFetchStatus(btn, msgDiv, bar);
+                })
+                .catch(function(err) {
+                    msgDiv.textContent = 'Erro de comunicação: ' + err.message;
+                    btn.disabled = false;
+                    btn.textContent = '☁️ Buscar arquivos da Cloud';
+                });
+        }
+
+        function pollFetchStatus(btn, msgDiv, bar) {
+            let progress = 15;
+            clearInterval(fetchCloudPollTimer);
+            fetchCloudPollTimer = setInterval(function() {
+                fetch('/api/fetch_cloud_files_status')
+                    .then(r => r.json())
+                    .then(function(s) {
+                        msgDiv.textContent = s.status || '';
+                        if (!s.done) {
+                            progress = Math.min(progress + 5, 85);
+                            bar.style.width = progress + '%';
+                            return;
+                        }
+                        clearInterval(fetchCloudPollTimer);
+                        bar.style.width = '100%';
+                        if (s.error) {
+                            bar.style.background = '#dc3545';
+                            showStatus('Erro ao buscar arquivos: ' + s.status, 'error');
+                        } else {
+                            bar.style.background = '#28a745';
+                            showStatus('Arquivos baixados com sucesso!', 'success');
+                            loadFilesList();
+                        }
+                        btn.disabled = false;
+                        btn.textContent = '☁️ Buscar arquivos da Cloud';
+                    })
+                    .catch(function() { clearInterval(fetchCloudPollTimer); });
+            }, 1500);
         }
 
         // === SISTEMA DE MONITORAMENTO DE PERFORMANCE ===

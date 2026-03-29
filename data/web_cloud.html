@@ -60,10 +60,14 @@
         <div class="section-title">Status da Conexão</div>
         <table class="info-table">
             <tr><td>URL da Cloud:</td><td id="cloud-url">-</td></tr>
+            <tr><td>Porta:</td><td id="cloud-port">-</td></tr>
             <tr><td>Sync Automático:</td><td id="cloud-sync-enabled">-</td></tr>
-            <tr><td>Intervalo:</td><td id="cloud-sync-interval">-</td></tr>
+            <tr><td>Intervalo de Sync:</td><td id="cloud-sync-interval">-</td></tr>
             <tr><td>Token API:</td><td id="cloud-token-status">-</td></tr>
-            <tr><td>Último Status:</td><td id="cloud-sync-status">-</td></tr>
+            <tr><td>Último Sync:</td><td id="cloud-sync-status">-</td></tr>
+            <tr><td>Heartbeat:</td><td id="cloud-heartbeat-enabled">-</td></tr>
+            <tr><td>Intervalo Heartbeat:</td><td id="cloud-heartbeat-interval">-</td></tr>
+            <tr><td>Último Heartbeat:</td><td id="cloud-heartbeat-status">-</td></tr>
         </table>
 
         <div class="action-area">
@@ -89,6 +93,7 @@
                 .then(r => r.json())
                 .then(data => {
                     document.getElementById('cloud-url').textContent = data.cloud_url || 'Não configurado';
+                    document.getElementById('cloud-port').textContent = (data.cloud_port || 8765);
                     document.getElementById('cloud-sync-enabled').innerHTML = data.cloud_sync_enabled
                         ? '<span class="status-ok">Habilitado</span>'
                         : '<span class="status-warn">Desabilitado</span>';
@@ -100,6 +105,14 @@
                     const isError = status.startsWith('Erro');
                     document.getElementById('cloud-sync-status').innerHTML =
                         '<span class="' + (isError ? 'status-err' : 'status-ok') + '">' + status + '</span>';
+                    document.getElementById('cloud-heartbeat-enabled').innerHTML = data.cloud_heartbeat_enabled
+                        ? '<span class="status-ok">Habilitado</span>'
+                        : '<span class="status-warn">Desabilitado</span>';
+                    document.getElementById('cloud-heartbeat-interval').textContent = (data.cloud_heartbeat_interval_min || 2) + ' minutos';
+                    const hbStatus = data.cloud_heartbeat_status || 'Nunca enviado';
+                    const hbError = hbStatus.startsWith('Erro');
+                    document.getElementById('cloud-heartbeat-status').innerHTML =
+                        '<span class="' + (hbError ? 'status-err' : 'status-ok') + '">' + hbStatus + '</span>';
 
                     document.getElementById('load-time').textContent = (performance.now() - pageStartTime).toFixed(2) + 'ms';
                     document.getElementById('performance-indicator').style.display = 'block';

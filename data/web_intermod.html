@@ -612,16 +612,17 @@
                 html += '<th>Último Check</th>';
                 html += '<th>Origem</th>';
                 html += '<th>GPIOs Alerta</th>';
+                html += '<th>GPIOs Healthcheck</th>';
                 html += '<th>Ações</th>';
                 html += '</tr></thead><tbody>';
 
                 data.modules.forEach(module => {
-                    const statusClass = module.online ? 'status-online' : 
+                    const statusClass = module.online ? 'status-online' :
                                       (module.online === false ? 'status-offline' : 'status-unknown');
-                    const statusText = module.online ? '🟢 Online' : 
+                    const statusText = module.online ? '🟢 Online' :
                                      (module.online === false ? '🔴 Offline' : '⚪ Desconhecido');
-                    const lastCheck = module.ultimo_healthcheck > 0 ? 
-                                    new Date(module.ultimo_healthcheck).toLocaleString('pt-BR') : 
+                    const lastCheck = module.ultimo_healthcheck > 0 ?
+                                    new Date(module.ultimo_healthcheck).toLocaleString('pt-BR') :
                                     'Nunca';
                     const origem = module.auto_descoberto ? '🔍 Auto' : '✍️ Manual';
 
@@ -632,8 +633,10 @@
                     html += `<td><span class="status-badge ${statusClass}">${statusText}</span></td>`;
                     html += `<td>${lastCheck}</td>`;
                     html += `<td>${origem}</td>`;
-                    const alertPins = module.pins_alerta && module.pins_alerta.length > 0 ? escapeHtml(module.pins_alerta) : '<span style="color:#aaa">—</span>';
+                    const alertPins = module.pins_offline && module.pins_offline.length > 0 ? escapeHtml(module.pins_offline) : '<span style="color:#aaa">—</span>';
                     html += `<td>${alertPins}</td>`;
+                    const hcPins = module.pins_healthcheck && module.pins_healthcheck.length > 0 ? escapeHtml(module.pins_healthcheck) : '<span style="color:#aaa">—</span>';
+                    html += `<td>${hcPins}</td>`;
                     html += `<td>
                         <button class="btn action-btn btn-secondary" onclick="testModule('${escapeHtml(module.id)}')">🔍 Testar</button>
                         <button class="btn action-btn btn-success" onclick="syncModule('${escapeHtml(module.id)}')">🔄 Sincronizar</button>

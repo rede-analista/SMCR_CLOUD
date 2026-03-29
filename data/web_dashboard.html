@@ -224,6 +224,8 @@
                 <tr><td>MQTT Status:</td><td id="mqtt-status" class="status-warning">-</td></tr>
                 <tr><td>Telegram:</td><td id="telegram-status" class="status-warning">-</td></tr>
                 <tr><td>Inter-Módulos:</td><td id="intermod-status" class="status-warning">-</td></tr>
+                <tr><td>Cloud Sync:</td><td id="cloud-sync-status" class="status-warning">-</td></tr>
+                <tr><td>Cloud Heartbeat:</td><td id="cloud-hb-status" class="status-warning">-</td></tr>
             </table>
 
             <!-- Card de Comunicações Inter-Módulos -->
@@ -404,6 +406,36 @@
                     } else {
                         intermodStatus.textContent = 'Desabilitado';
                         intermodStatus.className = 'status-error';
+                    }
+
+                    // Cloud Sync Status
+                    const cloudSyncEl = document.getElementById('cloud-sync-status');
+                    if (data.sync) {
+                        const csEnabled = data.sync.cloud_sync_enabled;
+                        const csStatus  = data.sync.cloud_sync_status || '';
+                        const csLast    = data.sync.cloud_sync_last   || '';
+                        if (!csEnabled) {
+                            cloudSyncEl.textContent = 'Desabilitado';
+                            cloudSyncEl.className = 'status-error';
+                        } else {
+                            cloudSyncEl.textContent = csStatus + (csLast ? '  [' + csLast + ']' : '');
+                            cloudSyncEl.className = csStatus.startsWith('Sincronizado') ? 'status-ok' : (csStatus.startsWith('Erro') ? 'status-error' : 'status-warning');
+                        }
+                    }
+
+                    // Cloud Heartbeat Status
+                    const cloudHbEl = document.getElementById('cloud-hb-status');
+                    if (data.sync) {
+                        const hbEnabled = data.sync.cloud_heartbeat_enabled;
+                        const hbStatus  = data.sync.cloud_heartbeat_status || '';
+                        const hbLast    = data.sync.cloud_heartbeat_last   || '';
+                        if (!hbEnabled) {
+                            cloudHbEl.textContent = 'Desabilitado';
+                            cloudHbEl.className = 'status-error';
+                        } else {
+                            cloudHbEl.textContent = hbStatus + (hbLast ? '  [' + hbLast + ']' : '');
+                            cloudHbEl.className = hbStatus === 'OK' ? 'status-ok' : (hbStatus.startsWith('Erro') ? 'status-error' : 'status-warning');
+                        }
                     }
 
                     // Card de Comunicações Inter-Módulos

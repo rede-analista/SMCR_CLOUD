@@ -176,7 +176,7 @@
                     document.getElementById('dl-version').textContent = ver || '—';
                     if (!ver) return;
                     var fname = 'SMCR_v' + ver + '_firmware.bin';
-                    var url   = 'https://github.com/rede-analista/SMCR/releases/download/v' + ver + '/' + fname;
+                    var url   = 'https://raw.githubusercontent.com/rede-analista/SMCR/v' + ver + '/firmware/v' + ver + '/' + fname;
                     document.getElementById('dl-link-cell').innerHTML =
                         '<a href="' + url + '" target="_blank" class="btn btn-primary" style="font-size:13px;padding:6px 14px;">⬇️ ' + fname + '</a>';
                 })

@@ -167,12 +167,13 @@ foreach ($mdns_found as $key => $dev) {
 
     // Online — cadastra ou atualiza
     if (isset($registered[$unique_id])) {
+        // Não sobrescreve firmware_version: o heartbeat é a fonte autoritativa de versão
         $db->prepare('
             UPDATE devices d JOIN device_status ds ON ds.device_id = d.id
             SET d.online = 1, d.last_seen = NOW(),
-                ds.ip = ?, ds.hostname = ?, ds.firmware_version = ?, ds.port = ?, ds.updated_at = NOW()
+                ds.ip = ?, ds.hostname = ?, ds.port = ?, ds.updated_at = NOW()
             WHERE d.unique_id = ?
-        ')->execute([$dev['ip'], $dev['hostname'], $dev['version'], $dev['port'], $unique_id]);
+        ')->execute([$dev['ip'], $dev['hostname'], $dev['port'], $unique_id]);
         echo '[' . date('H:i:s') . "] ONLINE: {$unique_id} [{$dev['ip']}:{$dev['port']}] GET/ {$r['code']} {$r['ms']}ms" . PHP_EOL;
     } else {
         try {

@@ -126,6 +126,24 @@
             </details>
         </nav>
 
+        <!-- Download do firmware -->
+        <div class="section">
+            <div class="section-title">☁️ Download do Firmware</div>
+            <div class="info-box">
+                Baixe o binário do firmware diretamente para o seu computador e use-o no upload OTA abaixo.
+            </div>
+            <table style="border-collapse:collapse;font-size:14px;margin-bottom:12px;">
+                <tr>
+                    <td style="padding:6px 12px 6px 0;color:#555;white-space:nowrap;">Versão atual:</td>
+                    <td><strong id="dl-version">Carregando...</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding:6px 12px 6px 0;color:#555;white-space:nowrap;">Download:</td>
+                    <td id="dl-link-cell"><span style="color:#999;">Aguardando versão...</span></td>
+                </tr>
+            </table>
+        </div>
+
         <div class="section">
             <div class="section-title">⬆️ Upload de Firmware</div>
             <div class="danger-box">
@@ -149,6 +167,24 @@
         </div>
     </div>
     <script>
+        // === DOWNLOAD DO FIRMWARE ===
+        window.addEventListener('load', function() {
+            fetch('/config/json')
+                .then(function(r){ return r.json(); })
+                .then(function(cfg) {
+                    var ver = (cfg.fw_version || '').trim();
+                    document.getElementById('dl-version').textContent = ver || '—';
+                    if (!ver) return;
+                    var fname = 'SMCR_v' + ver + '_firmware.bin';
+                    var url   = 'https://github.com/rede-analista/SMCR/releases/download/v' + ver + '/' + fname;
+                    document.getElementById('dl-link-cell').innerHTML =
+                        '<a href="' + url + '" target="_blank" class="btn btn-primary" style="font-size:13px;padding:6px 14px;">⬇️ ' + fname + '</a>';
+                })
+                .catch(function(){
+                    document.getElementById('dl-version').textContent = 'Erro ao obter versão';
+                });
+        });
+
         // === SISTEMA DE MONITORAMENTO DE PERFORMANCE ===
         const pageStartTime = performance.now();
         

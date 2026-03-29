@@ -31,6 +31,10 @@ if (!is_array($data)) {
 $token = null;
 
 $auth_header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+if (empty($auth_header) && function_exists('apache_request_headers')) {
+    $hdrs = apache_request_headers();
+    $auth_header = $hdrs['Authorization'] ?? $hdrs['authorization'] ?? '';
+}
 if (str_starts_with($auth_header, 'Bearer ')) {
     $token = trim(substr($auth_header, 7));
 }

@@ -158,15 +158,20 @@ try {
         'cloud_heartbeat_enabled'    => (bool)($cfg['cloud_heartbeat_enabled'] ?? 0),
         'cloud_heartbeat_interval_min' => (int)($cfg['cloud_heartbeat_interval_min'] ?? 5),
         'reboot_on_sync'             => (bool)($cfg['reboot_on_sync'] ?? 0),
+        'ota_update_on_sync'         => (bool)($cfg['ota_update_on_sync'] ?? 0),
 
         // Pinos e Ações
         'pins'    => $pins,
         'actions' => $actions,
     ]);
 
-    // Auto-desativa a flag após enviar — o ESP já vai rebootar
+    // Auto-desativa as flags após enviar
     if (!empty($cfg['reboot_on_sync'])) {
         $db->prepare('UPDATE device_config SET reboot_on_sync = 0 WHERE device_id = ?')
+           ->execute([$device_id]);
+    }
+    if (!empty($cfg['ota_update_on_sync'])) {
+        $db->prepare('UPDATE device_config SET ota_update_on_sync = 0 WHERE device_id = ?')
            ->execute([$device_id]);
     }
 

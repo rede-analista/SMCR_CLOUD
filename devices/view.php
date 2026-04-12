@@ -31,9 +31,11 @@ $stmt = $db->prepare('SELECT COUNT(*) FROM device_intermod WHERE device_id = ?')
 $stmt->execute([$device_id]);
 $intermod_count = (int)$stmt->fetchColumn();
 
-$stmt = $db->prepare('SELECT reboot_on_sync FROM device_config WHERE device_id = ?');
+$stmt = $db->prepare('SELECT reboot_on_sync, ota_update_on_sync FROM device_config WHERE device_id = ?');
 $stmt->execute([$device_id]);
-$reboot_on_sync = (bool)($stmt->fetchColumn() ?: false);
+$sync_flags = $stmt->fetch();
+$reboot_on_sync    = (bool)($sync_flags['reboot_on_sync'] ?? false);
+$ota_update_on_sync = (bool)($sync_flags['ota_update_on_sync'] ?? false);
 
 function format_uptime_full(int $ms): string {
     $s = (int)($ms / 1000);
@@ -122,6 +124,11 @@ include __DIR__ . '/../includes/header.php';
                             onclick="toggleRebootOnSync(<?= $device_id ?>)"
                             title="<?= $reboot_on_sync ? 'Reboot agendado para o próximo sincronismo — clique para cancelar' : 'Agendar reboot no próximo sincronismo do ESP32' ?>">
                         <i class="bi bi-arrow-clockwise me-1"></i><?= $reboot_on_sync ? 'Reboot agendado' : 'Reboot no sync' ?>
+                    </button>
+                    <button id="btn_ota_sync" class="btn btn-sm <?= $ota_update_on_sync ? 'btn-info' : 'btn-outline-info' ?>"
+                            onclick="toggleOtaOnSync(<?= $device_id ?>)"
+                            title="<?= $ota_update_on_sync ? 'OTA agendado para o próximo sincronismo — clique para cancelar' : 'Instalar firmware mais recente do GitHub no próximo sincronismo do ESP32' ?>">
+                        <i class="bi bi-cloud-arrow-down me-1"></i><?= $ota_update_on_sync ? 'OTA agendado' : 'OTA no sync' ?>
                     </button>
                 </div>
             </div>
@@ -366,6 +373,41 @@ function toggleRebootOnSync(device_id) {
             btn.className = 'btn btn-sm btn-outline-warning';
             btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Reboot no sync';
             btn.title = 'Agendar reboot no próximo sincronismo do ESP32';
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        alert('Erro: ' + err.message);
+    });
+}
+
+function toggleOtaOnSync(device_id) {
+    const btn = document.getElementById('btn_ota_sync');
+    const isActive = btn.classList.contains('btn-info');
+    const enable = !isActive;
+
+    if (enable && !confirm('Agendar atualização de firmware (OTA) no próximo sincronismo?\n\nO ESP32 buscará o firmware mais recente do GitHub e se atualizará automaticamente.\nO dispositivo ficará offline por aproximadamente 1 minuto durante a atualização.')) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>';
+
+    fetch('/api/set_ota_on_sync.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id, enable }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        if (!data.ok) { alert('Erro:\n' + data.error); return; }
+        if (data.ota_update_on_sync) {
+            btn.className = 'btn btn-sm btn-info';
+            btn.innerHTML = '<i class="bi bi-cloud-arrow-down me-1"></i>OTA agendado';
+            btn.title = 'OTA agendado para o próximo sincronismo — clique para cancelar';
+        } else {
+            btn.className = 'btn btn-sm btn-outline-info';
+            btn.innerHTML = '<i class="bi bi-cloud-arrow-down me-1"></i>OTA no sync';
+            btn.title = 'Instalar firmware mais recente do GitHub no próximo sincronismo do ESP32';
         }
     })
     .catch(err => {

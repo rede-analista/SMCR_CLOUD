@@ -245,6 +245,13 @@
                         <div style="color: #999; font-style: italic;">Nenhuma comunicacao enviada ainda</div>
                     </div>
                 </div>
+
+                <div id="intermod-queue-section" style="margin-top: 15px; display: none;">
+                    <div style="font-weight: bold; color: #dc3545; margin-bottom: 8px; font-size: 14px;">⏳ Fila de Reenvio:</div>
+                    <div id="intermod-queue" style="font-size: 12px; color: #666; padding-left: 10px;">
+                        <div style="color: #999; font-style: italic;">Fila vazia</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -475,6 +482,24 @@
                             sentDiv.innerHTML = sentHTML;
                         } else {
                             sentDiv.innerHTML = '<div style="color: #999; font-style: italic;">Nenhuma comunicacao enviada ainda</div>';
+                        }
+
+                        // Fila de reenvio
+                        const queueSection = document.getElementById('intermod-queue-section');
+                        const queueDiv = document.getElementById('intermod-queue');
+                        if (data.intermod_comm.queue && data.intermod_comm.queue.length > 0) {
+                            queueSection.style.display = 'block';
+                            let queueHTML = '';
+                            data.intermod_comm.queue.forEach((item, index) => {
+                                queueHTML += `<div style="padding: 5px 0; border-bottom: 1px solid #eee;">`;
+                                queueHTML += `<span style="color: #dc3545; font-weight: bold;">#${index + 1}</span> `;
+                                queueHTML += `<span style="color: #333;">para <strong>${item.module}</strong></span> `;
+                                queueHTML += `<span style="color: #666;">→ Pino ${item.pin} = ${item.value}</span>`;
+                                queueHTML += `</div>`;
+                            });
+                            queueDiv.innerHTML = queueHTML;
+                        } else {
+                            queueSection.style.display = 'none';
                         }
                     } else {
                         intermodCommCard.style.display = 'none';

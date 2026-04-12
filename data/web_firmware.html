@@ -42,6 +42,74 @@
             byId('progressBar').style.width = p + '%';
             byId('progressText').textContent = p + '%';
         }
+        function autoUpdateFromGitHub(url, fname) {
+            if (!confirm('Baixar e instalar ' + fname + ' diretamente do GitHub?\n\nO dispositivo irá reiniciar após a instalação.')) return;
+
+            byId('status').className = 'status';
+            setStatus('Baixando firmware do GitHub...', true);
+            updateProgress(0);
+
+            fetch(url)
+                .then(function(r) {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    var total = parseInt(r.headers.get('Content-Length') || '0');
+                    var reader = r.body.getReader();
+                    var chunks = [];
+                    var received = 0;
+                    function pump() {
+                        return reader.read().then(function(result) {
+                            if (result.done) return;
+                            chunks.push(result.value);
+                            received += result.value.length;
+                            if (total > 0) updateProgress(Math.round(received / total * 50)); // 0-50% = download
+                            return pump();
+                        });
+                    }
+                    return pump().then(function() {
+                        var blob = new Blob(chunks, { type: 'application/octet-stream' });
+                        return blob;
+                    });
+                })
+                .then(function(blob) {
+                    setStatus('Enviando firmware ao dispositivo...', true);
+                    updateProgress(50);
+                    var form = new FormData();
+                    form.append('firmware', blob, fname);
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/api/firmware/upload', true);
+                    xhr.upload.onprogress = function(evt) {
+                        if (evt.lengthComputable) {
+                            var pct = 50 + Math.round((evt.loaded / evt.total) * 50); // 50-100% = upload
+                            updateProgress(pct);
+                        }
+                    };
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState !== 4) return;
+                        var pctVal = parseInt((byId('progressText').textContent || '0').replace('%','')) || 0;
+                        if (xhr.status === 0 && pctVal >= 99) {
+                            setStatus('Firmware instalado com sucesso. Reiniciando o dispositivo...', true);
+                            setTimeout(function() { window.location.href = '/'; }, 6000);
+                            return;
+                        }
+                        try {
+                            var res = JSON.parse(xhr.responseText || '{}');
+                            if (xhr.status === 200 && res.success) {
+                                setStatus('Firmware instalado com sucesso. Reiniciando o dispositivo...', true);
+                                setTimeout(function() { window.location.href = '/'; }, 6000);
+                            } else {
+                                setStatus(res.message || ('Falha no update (HTTP ' + xhr.status + ')'), false);
+                            }
+                        } catch(err) {
+                            setStatus('Falha no update (resposta inválida).', false);
+                        }
+                    };
+                    xhr.send(form);
+                })
+                .catch(function(err) {
+                    setStatus('Erro ao baixar firmware: ' + err.message, false);
+                });
+        }
+
         function uploadFirmware(e){
             e.preventDefault();
             const file = byId('fwfile').files[0];
@@ -138,8 +206,12 @@
                     <td><strong id="dl-version">Carregando...</strong></td>
                 </tr>
                 <tr>
+                    <td style="padding:6px 12px 6px 0;color:#555;white-space:nowrap;">Última disponível:</td>
+                    <td><strong id="dl-latest">Verificando...</strong></td>
+                </tr>
+                <tr>
                     <td style="padding:6px 12px 6px 0;color:#555;white-space:nowrap;">Download:</td>
-                    <td id="dl-link-cell"><span style="color:#999;">Aguardando versão...</span></td>
+                    <td id="dl-link-cell"><span style="color:#999;">Aguardando...</span></td>
                 </tr>
             </table>
         </div>
@@ -169,19 +241,49 @@
     <script>
         // === DOWNLOAD DO FIRMWARE ===
         window.addEventListener('load', function() {
+            var currentVer = '';
+
+            // 1. Busca versão atual do dispositivo
             fetch('/status/json')
                 .then(function(r){ return r.json(); })
                 .then(function(cfg) {
-                    var ver = ((cfg.system && cfg.system.fw_version) ? cfg.system.fw_version : '').trim();
-                    document.getElementById('dl-version').textContent = ver || '—';
-                    if (!ver) return;
-                    var fname = 'SMCR_v' + ver + '_firmware.bin';
-                    var url   = 'https://raw.githubusercontent.com/rede-analista/SMCR/v' + ver + '/firmware/v' + ver + '/' + fname;
-                    document.getElementById('dl-link-cell').innerHTML =
-                        '<a href="' + url + '" target="_blank" class="btn btn-primary" style="font-size:13px;padding:6px 14px;">⬇️ ' + fname + '</a>';
+                    currentVer = ((cfg.system && cfg.system.fw_version) ? cfg.system.fw_version : '').trim();
+                    document.getElementById('dl-version').textContent = currentVer || '—';
                 })
                 .catch(function(){
-                    document.getElementById('dl-version').textContent = 'Erro ao obter versão';
+                    document.getElementById('dl-version').textContent = 'Erro';
+                });
+
+            // 2. Busca a última versão disponível no GitHub
+            fetch('https://api.github.com/repos/rede-analista/SMCR/releases/latest')
+                .then(function(r){ return r.json(); })
+                .then(function(release) {
+                    var tag = (release.tag_name || '').trim();          // ex: "v2.1.7"
+                    var latestVer = tag.replace(/^v/, '');              // ex: "2.1.7"
+                    document.getElementById('dl-latest').textContent = tag || '—';
+
+                    if (!latestVer) {
+                        document.getElementById('dl-link-cell').innerHTML = '<span style="color:#999;">Não foi possível obter a versão.</span>';
+                        return;
+                    }
+
+                    var fname = 'SMCR_v' + latestVer + '_firmware.bin';
+                    var url   = 'https://raw.githubusercontent.com/rede-analista/SMCR/' + tag + '/firmware/v' + latestVer + '/' + fname;
+
+                    // Indica se há atualização disponível
+                    var isNewer = currentVer && latestVer && latestVer !== currentVer;
+                    var badge   = isNewer ? ' <span style="background:#28a745;color:#fff;font-size:11px;padding:2px 6px;border-radius:10px;vertical-align:middle;">NOVO</span>' : '';
+                    document.getElementById('dl-latest').innerHTML = '<strong>' + tag + '</strong>' + badge;
+
+                    var installBtn = isNewer
+                        ? ' <button onclick="autoUpdateFromGitHub(\'' + url + '\',\'' + fname + '\')" class="btn btn-success" style="font-size:13px;padding:6px 14px;">⚡ Instalar via GitHub</button>'
+                        : '';
+                    document.getElementById('dl-link-cell').innerHTML =
+                        '<a href="' + url + '" target="_blank" class="btn btn-primary" style="font-size:13px;padding:6px 14px;">⬇️ ' + fname + '</a>' + installBtn;
+                })
+                .catch(function(){
+                    document.getElementById('dl-latest').textContent = 'Erro ao consultar GitHub';
+                    document.getElementById('dl-link-cell').innerHTML = '<span style="color:#999;">Indisponível.</span>';
                 });
         });
 

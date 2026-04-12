@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS device_config (
     cloud_sync_interval_min SMALLINT UNSIGNED DEFAULT 5,
     cloud_heartbeat_enabled TINYINT(1) DEFAULT 0,
     cloud_heartbeat_interval_min SMALLINT UNSIGNED DEFAULT 5,
+    reboot_on_sync TINYINT(1) DEFAULT 0,
     FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
 );
 

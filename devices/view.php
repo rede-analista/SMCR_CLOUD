@@ -31,6 +31,10 @@ $stmt = $db->prepare('SELECT COUNT(*) FROM device_intermod WHERE device_id = ?')
 $stmt->execute([$device_id]);
 $intermod_count = (int)$stmt->fetchColumn();
 
+$stmt = $db->prepare('SELECT reboot_on_sync FROM device_config WHERE device_id = ?');
+$stmt->execute([$device_id]);
+$reboot_on_sync = (bool)($stmt->fetchColumn() ?: false);
+
 function format_uptime_full(int $ms): string {
     $s = (int)($ms / 1000);
     $d = (int)($s / 86400); $s %= 86400;
@@ -108,6 +112,11 @@ include __DIR__ . '/../includes/header.php';
                             onclick="pushDevice(<?= $device_id ?>)"
                             <?= $device['online'] ? '' : 'disabled title="Dispositivo offline"' ?>>
                         <i class="bi bi-cloud-upload me-1"></i>Cloud → ESP32
+                    </button>
+                    <button id="btn_reboot_sync" class="btn btn-sm <?= $reboot_on_sync ? 'btn-warning' : 'btn-outline-warning' ?>"
+                            onclick="toggleRebootOnSync(<?= $device_id ?>)"
+                            title="<?= $reboot_on_sync ? 'Reboot agendado para o próximo sincronismo — clique para cancelar' : 'Agendar reboot no próximo sincronismo do ESP32' ?>">
+                        <i class="bi bi-arrow-clockwise me-1"></i><?= $reboot_on_sync ? 'Reboot agendado' : 'Reboot no sync' ?>
                     </button>
                 </div>
             </div>
@@ -295,6 +304,41 @@ function pullDevice(device_id) {
     .catch(err => {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-cloud-download me-1"></i>ESP32 → Cloud';
+        alert('Erro: ' + err.message);
+    });
+}
+
+function toggleRebootOnSync(device_id) {
+    const btn = document.getElementById('btn_reboot_sync');
+    const isActive = btn.classList.contains('btn-warning');
+    const enable = !isActive;
+
+    if (enable && !confirm('Agendar reboot no próximo sincronismo?\n\nO ESP32 será reiniciado na próxima vez que buscar a configuração no cloud.')) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>';
+
+    fetch('/api/set_reboot_on_sync.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id, enable }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        if (!data.ok) { alert('Erro:\n' + data.error); return; }
+        if (data.reboot_on_sync) {
+            btn.className = 'btn btn-sm btn-warning';
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Reboot agendado';
+            btn.title = 'Reboot agendado para o próximo sincronismo — clique para cancelar';
+        } else {
+            btn.className = 'btn btn-sm btn-outline-warning';
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Reboot no sync';
+            btn.title = 'Agendar reboot no próximo sincronismo do ESP32';
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
         alert('Erro: ' + err.message);
     });
 }

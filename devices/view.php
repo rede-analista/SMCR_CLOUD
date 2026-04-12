@@ -113,6 +113,11 @@ include __DIR__ . '/../includes/header.php';
                             <?= $device['online'] ? '' : 'disabled title="Dispositivo offline"' ?>>
                         <i class="bi bi-cloud-upload me-1"></i>Cloud → ESP32
                     </button>
+                    <button id="btn_reboot" class="btn btn-sm btn-outline-danger"
+                            onclick="rebootDevice(<?= $device_id ?>)"
+                            <?= $device['online'] ? '' : 'disabled title="Dispositivo offline"' ?>>
+                        <i class="bi bi-power me-1"></i>Reiniciar ESP32
+                    </button>
                     <button id="btn_reboot_sync" class="btn btn-sm <?= $reboot_on_sync ? 'btn-warning' : 'btn-outline-warning' ?>"
                             onclick="toggleRebootOnSync(<?= $device_id ?>)"
                             title="<?= $reboot_on_sync ? 'Reboot agendado para o próximo sincronismo — clique para cancelar' : 'Agendar reboot no próximo sincronismo do ESP32' ?>">
@@ -304,6 +309,32 @@ function pullDevice(device_id) {
     .catch(err => {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-cloud-download me-1"></i>ESP32 → Cloud';
+        alert('Erro: ' + err.message);
+    });
+}
+
+function rebootDevice(device_id) {
+    if (!confirm('Reiniciar o ESP32 agora?\n\nO dispositivo ficará offline por alguns segundos.')) return;
+
+    const btn = document.getElementById('btn_reboot');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Reiniciando...';
+
+    fetch('/api/reboot_device.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-power me-1"></i>Reiniciar ESP32';
+        if (!data.ok) { alert('Erro:\n' + data.error); return; }
+        alert('Comando de reinicialização enviado.\nO ESP32 estará de volta em alguns segundos.');
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-power me-1"></i>Reiniciar ESP32';
         alert('Erro: ' + err.message);
     });
 }

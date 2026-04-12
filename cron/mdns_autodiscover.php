@@ -112,7 +112,7 @@ foreach ($targets as $key => $url) {
         CURLOPT_TIMEOUT        => 8,
         CURLOPT_CONNECTTIMEOUT => 5,
         CURLOPT_FOLLOWLOCATION => false,  // 302/401 também confirma que está vivo
-        CURLOPT_NOBODY         => true,   // HEAD-like: só cabeçalhos, sem body — mais leve para o ESP32
+        // CURLOPT_NOBODY removido: ESP32 registra rota apenas para GET, HEAD não combinava e gerava 404
     ]);
     curl_multi_add_handle($mh, $ch);
     $handles[$key] = $ch;

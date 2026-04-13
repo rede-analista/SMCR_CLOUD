@@ -80,6 +80,25 @@ try {
         'assistente'   => (bool)$r['assistente'],
     ], $stmt->fetchAll());
 
+    // Inter-módulos cadastrados
+    $stmt = $db->prepare('SELECT module_id, hostname, ip, porta,
+        pins_offline, offline_alert_enabled, offline_flash_ms,
+        pins_healthcheck, healthcheck_alert_enabled, healthcheck_flash_ms
+        FROM device_intermod WHERE device_id = ? ORDER BY module_id ASC');
+    $stmt->execute([$device_id]);
+    $intermod_modules = array_map(fn($r) => [
+        'module_id'                 => $r['module_id'],
+        'hostname'                  => $r['hostname'],
+        'ip'                        => $r['ip'],
+        'porta'                     => (int)$r['porta'],
+        'pins_offline'              => $r['pins_offline'],
+        'offline_alert_enabled'     => (bool)$r['offline_alert_enabled'],
+        'offline_flash_ms'          => (int)$r['offline_flash_ms'],
+        'pins_healthcheck'          => $r['pins_healthcheck'],
+        'healthcheck_alert_enabled' => (bool)$r['healthcheck_alert_enabled'],
+        'healthcheck_flash_ms'      => (int)$r['healthcheck_flash_ms'],
+    ], $stmt->fetchAll());
+
     http_response_code(200);
     echo json_encode([
         'ok'        => true,
@@ -160,9 +179,10 @@ try {
         'reboot_on_sync'             => (bool)($cfg['reboot_on_sync'] ?? 0),
         'ota_update_on_sync'         => (bool)($cfg['ota_update_on_sync'] ?? 0),
 
-        // Pinos e Ações
-        'pins'    => $pins,
-        'actions' => $actions,
+        // Pinos, Ações e Inter-módulos
+        'pins'             => $pins,
+        'actions'          => $actions,
+        'intermod_modules' => $intermod_modules,
     ]);
 
     // Auto-desativa as flags após enviar

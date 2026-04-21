@@ -176,21 +176,46 @@ foreach ($mdns_found as $key => $dev) {
         ')->execute([$dev['ip'], $dev['hostname'], $dev['port'], $unique_id]);
         echo '[' . date('H:i:s') . "] ONLINE: {$unique_id} [{$dev['ip']}:{$dev['port']}] GET/ {$r['code']} {$r['ms']}ms" . PHP_EOL;
     } else {
-        try {
-            $token = bin2hex(random_bytes(32));
-            $db->beginTransaction();
-            $db->prepare('INSERT INTO devices (unique_id, name, api_token, last_seen, online) VALUES (?,?,?,NOW(),1)')
-               ->execute([$unique_id, $dev['hostname'], $token]);
-            $did = (int)$db->lastInsertId();
-            $db->prepare('INSERT INTO device_config (device_id, hostname, web_server_port) VALUES (?,?,?)')
-               ->execute([$did, $dev['hostname'], $dev['port']]);
-            $db->prepare('INSERT INTO device_status (device_id, ip, hostname, firmware_version, port) VALUES (?,?,?,?,?)')
-               ->execute([$did, $dev['ip'], $dev['hostname'], $dev['version'], $dev['port']]);
-            $db->commit();
-            echo '[' . date('H:i:s') . "] NOVO: {$unique_id} | {$dev['hostname']} | {$dev['ip']}:{$dev['port']}" . PHP_EOL;
-        } catch (Exception $e) {
-            if ($db->inTransaction()) $db->rollBack();
-            echo '[' . date('H:i:s') . "] ERRO ao cadastrar {$unique_id}: " . $e->getMessage() . PHP_EOL;
+        // Antes de criar, verifica se já existe um dispositivo com o mesmo IP
+        // (evita duplicatas quando unique_id muda entre execuções — ex: fallback hostname → MAC-ID)
+        $stmt_ip = $db->prepare('SELECT d.id, d.unique_id FROM devices d JOIN device_status ds ON ds.device_id = d.id WHERE ds.ip = ? LIMIT 1');
+        $stmt_ip->execute([$dev['ip']]);
+        $existing_by_ip = $stmt_ip->fetch();
+
+        if ($existing_by_ip) {
+            $old_uid = $existing_by_ip['unique_id'];
+            $did     = (int)$existing_by_ip['id'];
+            // Atualiza unique_id se o novo parece mais canônico (mac-based) que o antigo (hostname)
+            if ($old_uid !== $unique_id) {
+                $db->prepare('UPDATE devices SET unique_id = ?, online = 1, last_seen = NOW() WHERE id = ?')
+                   ->execute([$unique_id, $did]);
+                $db->prepare('UPDATE device_status SET ip = ?, hostname = ?, port = ?, updated_at = NOW() WHERE device_id = ?')
+                   ->execute([$dev['ip'], $dev['hostname'], $dev['port'], $did]);
+                // Atualiza cache local para o restante do ciclo
+                $registered[$unique_id] = $registered[$old_uid];
+                unset($registered[$old_uid]);
+                echo '[' . date('H:i:s') . "] ID ATUALIZADO: {$old_uid} → {$unique_id} [{$dev['ip']}:{$dev['port']}]" . PHP_EOL;
+            } else {
+                $db->prepare('UPDATE devices SET online = 1, last_seen = NOW() WHERE id = ?')->execute([$did]);
+                echo '[' . date('H:i:s') . "] ONLINE (por IP): {$unique_id} [{$dev['ip']}:{$dev['port']}]" . PHP_EOL;
+            }
+        } else {
+            try {
+                $token = bin2hex(random_bytes(32));
+                $db->beginTransaction();
+                $db->prepare('INSERT INTO devices (unique_id, name, api_token, last_seen, online) VALUES (?,?,?,NOW(),1)')
+                   ->execute([$unique_id, $dev['hostname'], $token]);
+                $did = (int)$db->lastInsertId();
+                $db->prepare('INSERT INTO device_config (device_id, hostname, web_server_port) VALUES (?,?,?)')
+                   ->execute([$did, $dev['hostname'], $dev['port']]);
+                $db->prepare('INSERT INTO device_status (device_id, ip, hostname, firmware_version, port) VALUES (?,?,?,?,?)')
+                   ->execute([$did, $dev['ip'], $dev['hostname'], $dev['version'], $dev['port']]);
+                $db->commit();
+                echo '[' . date('H:i:s') . "] NOVO: {$unique_id} | {$dev['hostname']} | {$dev['ip']}:{$dev['port']}" . PHP_EOL;
+            } catch (Exception $e) {
+                if ($db->inTransaction()) $db->rollBack();
+                echo '[' . date('H:i:s') . "] ERRO ao cadastrar {$unique_id}: " . $e->getMessage() . PHP_EOL;
+            }
         }
     }
 }

@@ -145,6 +145,7 @@ CREATE TABLE IF NOT EXISTS device_intermod (
     hostname VARCHAR(64) DEFAULT '',
     ip VARCHAR(45) DEFAULT '',
     porta SMALLINT UNSIGNED DEFAULT 8080,
+    ativo TINYINT(1) DEFAULT 0,
     pins_offline VARCHAR(255) DEFAULT '',
     offline_alert_enabled TINYINT(1) DEFAULT 0,
     offline_flash_ms SMALLINT UNSIGNED DEFAULT 200,

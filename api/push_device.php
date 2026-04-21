@@ -332,6 +332,7 @@ foreach ($db_modules as $m) {
         'moduleHostname'           => $m['hostname']           ?? '',
         'moduleIp'                 => $m['ip']                 ?? '',
         'modulePort'               => (string)(int)($m['porta'] ?? 8080),
+        'ativo'                    => (string)(int)($m['ativo']                      ?? 0),
         'pinsOffline'              => $m['pins_offline']        ?? '',
         'offlineAlertEnabled'      => (string)(int)($m['offline_alert_enabled']     ?? 0),
         'offlineFlashMs'           => (string)(int)($m['offline_flash_ms']          ?? 200),

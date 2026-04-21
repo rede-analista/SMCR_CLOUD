@@ -1,0 +1,3 @@
+ALTER TABLE device_intermod
+    ADD COLUMN IF NOT EXISTS ativo TINYINT(1) NOT NULL DEFAULT 0
+    AFTER porta;

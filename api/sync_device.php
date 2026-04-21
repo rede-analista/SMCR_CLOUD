@@ -350,10 +350,10 @@ try {
             $count = 0;
             $stmt = $db->prepare("
                 INSERT INTO device_intermod (device_id, module_id, hostname, ip, porta,
-                    pins_offline, offline_alert_enabled, offline_flash_ms,
+                    ativo, pins_offline, offline_alert_enabled, offline_flash_ms,
                     pins_healthcheck, healthcheck_alert_enabled, healthcheck_flash_ms)
                 VALUES (:device_id, :mid, :host, :ip, :port,
-                    :pins_offline, :offline_en, :offline_ms,
+                    :ativo, :pins_offline, :offline_en, :offline_ms,
                     :pins_hc, :hc_en, :hc_ms)
             ");
             foreach ($modules as $mod) {
@@ -365,6 +365,7 @@ try {
                     ':host'         => substr($mod['hostname']   ?? '', 0, 64),
                     ':ip'           => substr($mod['ip']         ?? '', 0, 45),
                     ':port'         => (int)($mod['porta']       ?? $mod['port'] ?? 8080),
+                    ':ativo'        => (int)($mod['ativo']                        ?? 0),
                     ':pins_offline' => substr($mod['pins_offline']              ?? '', 0, 255),
                     ':offline_en'   => (int)($mod['offline_alert_enabled']      ?? 0),
                     ':offline_ms'   => (int)($mod['offline_flash_ms']           ?? 200),

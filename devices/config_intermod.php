@@ -54,12 +54,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         set_flash('success', 'Módulo removido.');
     }
 
+    elseif ($action === 'toggle_module') {
+        $mod_id = (int)($_POST['mod_id'] ?? 0);
+        $db->prepare('UPDATE device_intermod SET ativo = NOT ativo WHERE id = ? AND device_id = ?')->execute([$mod_id, $device_id]);
+        set_flash('success', 'Status do módulo alterado.');
+    }
+
     elseif ($action === 'save_module') {
         $mod_id                    = (int)($_POST['mod_id'] ?? 0);
         $module_id                 = trim($_POST['module_id'] ?? '');
         $hostname                  = trim($_POST['hostname'] ?? '');
         $ip                        = trim($_POST['ip'] ?? '');
         $porta                     = (int)($_POST['porta'] ?? 8080);
+        $ativo                     = isset($_POST['ativo']) ? 1 : 0;
         $pins_offline              = trim($_POST['pins_offline'] ?? '');
         $offline_alert_enabled     = isset($_POST['offline_alert_enabled']) ? 1 : 0;
         $offline_flash_ms          = max(50, (int)($_POST['offline_flash_ms'] ?? 200));
@@ -71,22 +78,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             set_flash('danger', 'O ID do módulo é obrigatório.');
         } elseif ($mod_id > 0) {
             $db->prepare('UPDATE device_intermod SET module_id=?, hostname=?, ip=?, porta=?,
-                pins_offline=?, offline_alert_enabled=?, offline_flash_ms=?,
+                ativo=?, pins_offline=?, offline_alert_enabled=?, offline_flash_ms=?,
                 pins_healthcheck=?, healthcheck_alert_enabled=?, healthcheck_flash_ms=?
                 WHERE id=? AND device_id=?')
                ->execute([$module_id, $hostname, $ip, $porta,
-                          $pins_offline, $offline_alert_enabled, $offline_flash_ms,
+                          $ativo, $pins_offline, $offline_alert_enabled, $offline_flash_ms,
                           $pins_healthcheck, $healthcheck_alert_enabled, $healthcheck_flash_ms,
                           $mod_id, $device_id]);
             set_flash('success', 'Módulo atualizado.');
         } else {
             try {
                 $db->prepare('INSERT INTO device_intermod (device_id, module_id, hostname, ip, porta,
-                    pins_offline, offline_alert_enabled, offline_flash_ms,
+                    ativo, pins_offline, offline_alert_enabled, offline_flash_ms,
                     pins_healthcheck, healthcheck_alert_enabled, healthcheck_flash_ms)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)')
                    ->execute([$device_id, $module_id, $hostname, $ip, $porta,
-                              $pins_offline, $offline_alert_enabled, $offline_flash_ms,
+                              $ativo, $pins_offline, $offline_alert_enabled, $offline_flash_ms,
                               $pins_healthcheck, $healthcheck_alert_enabled, $healthcheck_flash_ms]);
                 set_flash('success', 'Módulo adicionado com sucesso.');
             } catch (PDOException $e) {
@@ -217,6 +224,19 @@ include __DIR__ . '/../includes/header.php';
                            value="<?= h($edit_module['porta'] ?? 8080) ?>">
                 </div>
                 <div class="col-12">
+                    <div class="border border-success rounded p-3">
+                        <div class="fw-semibold text-success mb-2">▶ Status do Módulo</div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="ativo"
+                                   id="ativo" value="1"
+                                   <?= !empty($edit_module['ativo']) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="ativo">
+                                Módulo ativo (participa de healthcheck e comunicação)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
                     <div class="border border-warning rounded p-3">
                         <div class="fw-semibold text-warning mb-2">🔴 Alerta de Offline</div>
                         <div class="row g-2">
@@ -311,6 +331,7 @@ include __DIR__ . '/../includes/header.php';
                         <th>Hostname</th>
                         <th>IP</th>
                         <th>Porta</th>
+                        <th>Ativo</th>
                         <th>GPIOs Offline</th>
                         <th>GPIOs HC</th>
                         <th class="text-end">Ações</th>
@@ -323,10 +344,27 @@ include __DIR__ . '/../includes/header.php';
                         <td><?= h($mod['hostname'] ?: '—') ?></td>
                         <td class="font-monospace"><?= h($mod['ip'] ?: '—') ?></td>
                         <td><?= $mod['porta'] ?></td>
+                        <td>
+                            <?php if ($mod['ativo']): ?>
+                                <span class="badge bg-success">Ativo</span>
+                            <?php else: ?>
+                                <span class="badge bg-secondary">Inativo</span>
+                            <?php endif; ?>
+                        </td>
                         <td><?= $mod['pins_offline'] ? h($mod['pins_offline']) . ($mod['offline_alert_enabled'] ? ' ✓' : ' ✗') : '<span class="text-muted">—</span>' ?></td>
                         <td><?= $mod['pins_healthcheck'] ? h($mod['pins_healthcheck']) . ($mod['healthcheck_alert_enabled'] ? ' ✓' : ' ✗') : '<span class="text-muted">—</span>' ?></td>
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
+                                <form method="POST" action="/devices/config_intermod.php?device_id=<?= $device_id ?>"
+                                      style="display:inline">
+                                    <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+                                    <input type="hidden" name="action" value="toggle_module">
+                                    <input type="hidden" name="mod_id" value="<?= $mod['id'] ?>">
+                                    <button type="submit" class="btn <?= $mod['ativo'] ? 'btn-outline-warning' : 'btn-outline-success' ?>"
+                                            title="<?= $mod['ativo'] ? 'Desativar' : 'Ativar' ?>">
+                                        <i class="bi <?= $mod['ativo'] ? 'bi-pause-fill' : 'bi-play-fill' ?>"></i>
+                                    </button>
+                                </form>
                                 <a href="?device_id=<?= $device_id ?>&edit_mod=<?= $mod['id'] ?>"
                                    class="btn btn-outline-warning" title="Editar">
                                     <i class="bi bi-pencil"></i>

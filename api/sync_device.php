@@ -264,7 +264,7 @@ try {
             WHERE device_id = :device_id
         ");
         $stmt->execute([
-            ':en'        => isset($i['interModEnabled'])        ? (int)$i['interModEnabled']        : null,
+            ':en'        => isset($i['enabled'])                 ? (int)$i['enabled']                 : null,
             ':hchk'      => isset($i['healthCheckInterval'])    ? (int)$i['healthCheckInterval']    : null,
             ':mfail'     => isset($i['maxFailures'])            ? (int)$i['maxFailures']            : null,
             ':adisc'     => isset($i['autoDiscovery'])          ? (int)$i['autoDiscovery']          : null,

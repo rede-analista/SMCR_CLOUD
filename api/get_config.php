@@ -81,7 +81,7 @@ try {
     ], $stmt->fetchAll());
 
     // Inter-módulos cadastrados
-    $stmt = $db->prepare('SELECT module_id, hostname, ip, porta,
+    $stmt = $db->prepare('SELECT module_id, hostname, ip, porta, ativo,
         pins_offline, offline_alert_enabled, offline_flash_ms,
         pins_healthcheck, healthcheck_alert_enabled, healthcheck_flash_ms
         FROM device_intermod WHERE device_id = ? ORDER BY module_id ASC');
@@ -91,6 +91,7 @@ try {
         'hostname'                  => $r['hostname'],
         'ip'                        => $r['ip'],
         'porta'                     => (int)$r['porta'],
+        'ativo'                     => (int)$r['ativo'],
         'pins_offline'              => $r['pins_offline'],
         'offline_alert_enabled'     => (bool)$r['offline_alert_enabled'],
         'offline_flash_ms'          => (int)$r['offline_flash_ms'],

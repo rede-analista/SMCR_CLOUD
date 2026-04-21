@@ -90,6 +90,9 @@ include __DIR__ . '/../includes/header.php';
                 <a href="/devices/config_geral.php?device_id=<?= $device_id ?>" class="btn btn-primary btn-sm">
                     <i class="bi bi-gear me-1"></i>Configurar
                 </a>
+                <a href="/api/export_device.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-download me-1"></i>Exportar
+                </a>
                 <a href="/devices/delete.php?device_id=<?= $device_id ?>" class="btn btn-outline-danger btn-sm">
                     <i class="bi bi-trash me-1"></i>Excluir
                 </a>

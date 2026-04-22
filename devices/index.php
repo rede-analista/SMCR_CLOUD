@@ -47,9 +47,17 @@ include __DIR__ . '/../includes/header.php';
         <h4 class="mb-0 fw-bold"><i class="bi bi-hdd-network-fill me-2"></i>Dispositivos</h4>
         <p class="text-muted small mb-0"><?= count($devices) ?> dispositivo(s) registrado(s)</p>
     </div>
-    <a href="/devices/add.php" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i>Adicionar Dispositivo
-    </a>
+    <div class="d-flex gap-2 flex-wrap justify-content-end">
+        <a href="/devices/add.php" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Adicionar Dispositivo
+        </a>
+        <button id="btn_ota_all" class="btn btn-outline-info" onclick="setAllOta()" <?= empty($devices) ? 'disabled' : '' ?>>
+            <i class="bi bi-cloud-arrow-down me-1"></i>OTA em todos
+        </button>
+        <button id="btn_reboot_all" class="btn btn-outline-warning" onclick="setAllReboot()" <?= empty($devices) ? 'disabled' : '' ?>>
+            <i class="bi bi-arrow-clockwise me-1"></i>Reboot em todos
+        </button>
+    </div>
 </div>
 
 <div class="card">
@@ -144,5 +152,41 @@ include __DIR__ . '/../includes/header.php';
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+function setAllOta() {
+    if (!confirm('Agendar OTA no próximo sincronismo de TODOS os dispositivos?')) return;
+    const btn = document.getElementById('btn_ota_all');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Agendando...';
+    fetch('/api/set_ota_all.php', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            if (!data.ok) { alert('Erro: ' + data.error); btn.innerHTML = '<i class="bi bi-cloud-arrow-down me-1"></i>OTA em todos'; return; }
+            btn.className = 'btn btn-info';
+            btn.innerHTML = '<i class="bi bi-cloud-arrow-down me-1"></i>OTA agendado (' + data.updated + ')';
+            setTimeout(() => { btn.className = 'btn btn-outline-info'; btn.innerHTML = '<i class="bi bi-cloud-arrow-down me-1"></i>OTA em todos'; }, 5000);
+        })
+        .catch(() => { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cloud-arrow-down me-1"></i>OTA em todos'; alert('Erro de comunicação.'); });
+}
+
+function setAllReboot() {
+    if (!confirm('Agendar reboot no próximo sincronismo de TODOS os dispositivos?')) return;
+    const btn = document.getElementById('btn_reboot_all');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Agendando...';
+    fetch('/api/set_reboot_all.php', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            if (!data.ok) { alert('Erro: ' + data.error); btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Reboot em todos'; return; }
+            btn.className = 'btn btn-warning';
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Reboot agendado (' + data.updated + ')';
+            setTimeout(() => { btn.className = 'btn btn-outline-warning'; btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Reboot em todos'; }, 5000);
+        })
+        .catch(() => { btn.disabled = false; btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Reboot em todos'; alert('Erro de comunicação.'); });
+}
+</script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

@@ -4,51 +4,70 @@ require_login();
 
 $db = getDB();
 
-// Busca todos os dispositivos
-$devices = $db->query('SELECT id, name, unique_id FROM devices ORDER BY name, unique_id')->fetchAll();
-
+$devices  = $db->query('SELECT id, name, unique_id FROM devices ORDER BY name, unique_id')->fetchAll();
 $results  = [];
 $errors   = [];
 $done     = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $src_id   = (int)($_POST['source_id']   ?? 0);
-    $targets  = array_map('intval', $_POST['targets'] ?? []);
-    $sections = $_POST['sections'] ?? [];
+    csrf_verify();
 
-    if (!$src_id || empty($targets) || empty($sections)) {
-        $errors[] = 'Selecione origem, ao menos um destino e ao menos uma seção.';
-    } elseif (in_array($src_id, $targets)) {
-        $errors[] = 'O dispositivo de origem não pode ser um dos destinos.';
+    $source_type = $_POST['source_type'] ?? 'device';
+    $src_id      = (int)($_POST['source_id'] ?? 0);
+    $targets     = array_map('intval', $_POST['targets'] ?? []);
+    $sections    = $_POST['sections'] ?? [];
+    $backup_src  = null;
+
+    if (empty($targets) || empty($sections)) {
+        $errors[] = 'Selecione ao menos um destino e ao menos uma seção.';
+    } elseif ($source_type === 'backup') {
+        if (empty($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = 'Selecione um arquivo de backup JSON válido.';
+        } else {
+            $raw = file_get_contents($_FILES['backup_file']['tmp_name']);
+            $backup_src = json_decode($raw, true);
+            if (!is_array($backup_src) || empty($backup_src['smcr_backup'])) {
+                $errors[] = 'Arquivo inválido: não é um backup SMCR.';
+            }
+        }
     } else {
-        // Carrega dados de origem
-        $src_cfg = $db->prepare('SELECT * FROM device_config WHERE device_id = ?');
-        $src_cfg->execute([$src_id]);
-        $cfg = $src_cfg->fetch() ?: [];
+        if (!$src_id) {
+            $errors[] = 'Selecione o dispositivo de origem.';
+        } elseif (in_array($src_id, $targets)) {
+            $errors[] = 'O dispositivo de origem não pode ser um dos destinos.';
+        }
+    }
 
-        $src_pins = $db->prepare('SELECT * FROM device_pins WHERE device_id = ?');
-        $src_pins->execute([$src_id]);
-        $pins = $src_pins->fetchAll();
+    if (empty($errors)) {
+        if ($source_type === 'backup') {
+            $cfg     = $backup_src['config']   ?? [];
+            $pins    = $backup_src['pins']     ?? [];
+            $actions = $backup_src['actions']  ?? [];
+            $modules = $backup_src['intermod'] ?? [];
+        } else {
+            $s = $db->prepare('SELECT * FROM device_config WHERE device_id = ?');
+            $s->execute([$src_id]); $cfg = $s->fetch() ?: [];
 
-        $src_actions = $db->prepare('SELECT * FROM device_actions WHERE device_id = ?');
-        $src_actions->execute([$src_id]);
-        $actions = $src_actions->fetchAll();
+            $s = $db->prepare('SELECT * FROM device_pins WHERE device_id = ?');
+            $s->execute([$src_id]); $pins = $s->fetchAll();
 
-        $src_mods = $db->prepare('SELECT * FROM device_intermod WHERE device_id = ?');
-        $src_mods->execute([$src_id]);
-        $modules = $src_mods->fetchAll();
+            $s = $db->prepare('SELECT * FROM device_actions WHERE device_id = ?');
+            $s->execute([$src_id]); $actions = $s->fetchAll();
+
+            $s = $db->prepare('SELECT * FROM device_intermod WHERE device_id = ?');
+            $s->execute([$src_id]); $modules = $s->fetchAll();
+        }
 
         foreach ($targets as $tgt_id) {
             $tgt = $db->prepare('SELECT name, unique_id FROM devices WHERE id = ?');
             $tgt->execute([$tgt_id]);
-            $tgt_dev = $tgt->fetch();
+            $tgt_dev  = $tgt->fetch();
             $tgt_name = $tgt_dev['name'] ?: $tgt_dev['unique_id'];
-            $cloned = [];
+            $cloned   = [];
 
             try {
                 $db->beginTransaction();
 
-                // ─── Config Geral ───
                 if (in_array('config_geral', $sections) && $cfg) {
                     $db->prepare("UPDATE device_config SET
                         wifi_attempts=:wa, wifi_check_interval=:wci,
@@ -62,23 +81,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         dashboard_auth_required=:dar, ap_fallback_enabled=:afe
                         WHERE device_id=:id"
                     )->execute([
-                        ':wa'  => $cfg['wifi_attempts'],        ':wci' => $cfg['wifi_check_interval'],
-                        ':ntp' => $cfg['ntp_server1'],          ':gmt' => $cfg['gmt_offset_sec'],
-                        ':dst' => $cfg['daylight_offset_sec'],  ':spe' => $cfg['status_pinos_enabled'],
-                        ':ime' => $cfg['inter_modulos_enabled'],':cca' => $cfg['cor_com_alerta'],
-                        ':csa' => $cfg['cor_sem_alerta'],       ':tr'  => $cfg['tempo_refresh'],
-                        ':sah' => $cfg['show_analog_history'],  ':sdh' => $cfg['show_digital_history'],
-                        ':wde' => $cfg['watchdog_enabled'],     ':clk' => $cfg['clock_esp32_mhz'],
-                        ':twu' => $cfg['tempo_watchdog_us'],    ':qp'  => $cfg['qtd_pinos'],
-                        ':sde' => $cfg['serial_debug_enabled'], ':lf'  => $cfg['log_flags'],
-                        ':wsp' => $cfg['web_server_port'],      ':ae'  => $cfg['auth_enabled'],
-                        ':dar' => $cfg['dashboard_auth_required'],':afe'=> $cfg['ap_fallback_enabled'],
+                        ':wa'  => $cfg['wifi_attempts'],         ':wci' => $cfg['wifi_check_interval'],
+                        ':ntp' => $cfg['ntp_server1'],           ':gmt' => $cfg['gmt_offset_sec'],
+                        ':dst' => $cfg['daylight_offset_sec'],   ':spe' => $cfg['status_pinos_enabled'],
+                        ':ime' => $cfg['inter_modulos_enabled'], ':cca' => $cfg['cor_com_alerta'],
+                        ':csa' => $cfg['cor_sem_alerta'],        ':tr'  => $cfg['tempo_refresh'],
+                        ':sah' => $cfg['show_analog_history'],   ':sdh' => $cfg['show_digital_history'],
+                        ':wde' => $cfg['watchdog_enabled'],      ':clk' => $cfg['clock_esp32_mhz'],
+                        ':twu' => $cfg['tempo_watchdog_us'],     ':qp'  => $cfg['qtd_pinos'],
+                        ':sde' => $cfg['serial_debug_enabled'],  ':lf'  => $cfg['log_flags'],
+                        ':wsp' => $cfg['web_server_port'],       ':ae'  => $cfg['auth_enabled'],
+                        ':dar' => $cfg['dashboard_auth_required'], ':afe' => $cfg['ap_fallback_enabled'],
                         ':id'  => $tgt_id,
                     ]);
                     $cloned[] = 'Config Geral';
                 }
 
-                // ─── MQTT ───
                 if (in_array('mqtt', $sections) && $cfg) {
                     $db->prepare("UPDATE device_config SET
                         mqtt_enabled=:en, mqtt_server=:srv, mqtt_port=:port,
@@ -87,17 +105,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         mqtt_ha_batch=:hab, mqtt_ha_interval_ms=:haim, mqtt_ha_repeat_sec=:harp
                         WHERE device_id=:id"
                     )->execute([
-                        ':en'   => $cfg['mqtt_enabled'],          ':srv'  => $cfg['mqtt_server'],
-                        ':port' => $cfg['mqtt_port'],             ':usr'  => $cfg['mqtt_user'],
-                        ':pass' => $cfg['mqtt_password'],         ':topic'=> $cfg['mqtt_topic_base'],
-                        ':pint' => $cfg['mqtt_publish_interval'], ':had'  => $cfg['mqtt_ha_discovery'],
-                        ':hab'  => $cfg['mqtt_ha_batch'],         ':haim' => $cfg['mqtt_ha_interval_ms'],
-                        ':harp' => $cfg['mqtt_ha_repeat_sec'],    ':id'   => $tgt_id,
+                        ':en'   => $cfg['mqtt_enabled'],           ':srv'  => $cfg['mqtt_server'],
+                        ':port' => $cfg['mqtt_port'],              ':usr'  => $cfg['mqtt_user'],
+                        ':pass' => $cfg['mqtt_password'],          ':topic'=> $cfg['mqtt_topic_base'],
+                        ':pint' => $cfg['mqtt_publish_interval'],  ':had'  => $cfg['mqtt_ha_discovery'],
+                        ':hab'  => $cfg['mqtt_ha_batch'],          ':haim' => $cfg['mqtt_ha_interval_ms'],
+                        ':harp' => $cfg['mqtt_ha_repeat_sec'],     ':id'   => $tgt_id,
                     ]);
                     $cloned[] = 'MQTT';
                 }
 
-                // ─── Telegram ───
                 if (in_array('telegram', $sections) && $cfg) {
                     $db->prepare("UPDATE device_config SET
                         telegram_enabled=:en, telegram_token=:tok,
@@ -111,21 +128,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $cloned[] = 'Telegram';
                 }
 
-                // ─── Inter-módulos config ───
                 if (in_array('intermod_cfg', $sections) && $cfg) {
                     $db->prepare("UPDATE device_config SET
                         intermod_enabled=:en, intermod_healthcheck=:hchk,
                         intermod_max_failures=:mf, intermod_auto_discovery=:ad
                         WHERE device_id=:id"
                     )->execute([
-                        ':en'   => $cfg['intermod_enabled'],        ':hchk' => $cfg['intermod_healthcheck'],
-                        ':mf'   => $cfg['intermod_max_failures'],   ':ad'   => $cfg['intermod_auto_discovery'],
+                        ':en'   => $cfg['intermod_enabled'],       ':hchk' => $cfg['intermod_healthcheck'],
+                        ':mf'   => $cfg['intermod_max_failures'],  ':ad'   => $cfg['intermod_auto_discovery'],
                         ':id'   => $tgt_id,
                     ]);
                     $cloned[] = 'Inter-módulos Config';
                 }
 
-                // ─── Pinos ───
                 if (in_array('pinos', $sections)) {
                     $db->prepare('DELETE FROM device_pins WHERE device_id = ?')->execute([$tgt_id]);
                     $stmt = $db->prepare('INSERT INTO device_pins
@@ -140,7 +155,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $cloned[] = 'Pinos (' . count($pins) . ')';
                 }
 
-                // ─── Ações ───
                 if (in_array('acoes', $sections)) {
                     $db->prepare('DELETE FROM device_actions WHERE device_id = ?')->execute([$tgt_id]);
                     $stmt = $db->prepare('INSERT INTO device_actions
@@ -155,15 +169,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $cloned[] = 'Ações (' . count($actions) . ')';
                 }
 
-                // ─── Módulos inter-módulos ───
                 if (in_array('intermod_mods', $sections)) {
                     $db->prepare('DELETE FROM device_intermod WHERE device_id = ?')->execute([$tgt_id]);
                     $stmt = $db->prepare('INSERT INTO device_intermod
-                        (device_id, module_id, hostname, ip, porta, pins_alerta)
-                        VALUES (?,?,?,?,?,?)');
+                        (device_id, module_id, hostname, ip, porta, ativo,
+                         pins_offline, offline_alert_enabled, offline_flash_ms,
+                         pins_healthcheck, healthcheck_alert_enabled, healthcheck_flash_ms)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
                     foreach ($modules as $m) {
-                        $stmt->execute([$tgt_id, $m['module_id'], $m['hostname'],
-                            $m['ip'], $m['porta'], $m['pins_alerta']]);
+                        $stmt->execute([$tgt_id, $m['module_id'], $m['hostname'], $m['ip'], $m['porta'],
+                            $m['ativo'] ?? 0,
+                            $m['pins_offline'] ?? '', $m['offline_alert_enabled'] ?? 0, $m['offline_flash_ms'] ?? 200,
+                            $m['pins_healthcheck'] ?? '', $m['healthcheck_alert_enabled'] ?? 0, $m['healthcheck_flash_ms'] ?? 500]);
                     }
                     $cloned[] = 'Módulos Inter-módulos (' . count($modules) . ')';
                 }
@@ -189,7 +206,6 @@ include __DIR__ . '/../includes/header.php';
 ?>
 
 <?php if ($done): ?>
-<!-- Resultado -->
 <div class="card mb-4">
     <div class="card-header">
         <h6 class="mb-0 fw-bold"><i class="bi bi-clipboard-check me-2"></i>Resultado da Clonagem</h6>
@@ -231,7 +247,8 @@ include __DIR__ . '/../includes/header.php';
 <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i><?= h($errors[0]) ?></div>
 <?php endif; ?>
 
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
+<input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
 <div class="row g-4">
 
     <!-- Origem -->
@@ -239,15 +256,34 @@ include __DIR__ . '/../includes/header.php';
         <div class="card h-100">
             <div class="card-header">
                 <h6 class="mb-0 fw-bold"><i class="bi bi-box-arrow-right me-2 text-primary"></i>Origem</h6>
-                <div class="text-muted small mt-1">Dispositivo que será copiado</div>
+                <div class="text-muted small mt-1">Dispositivo ou backup que será copiado</div>
             </div>
             <div class="card-body">
-                <select name="source_id" class="form-select" id="source_select" required onchange="updateTargets()">
-                    <option value="">Selecione o dispositivo...</option>
-                    <?php foreach ($devices as $d): ?>
-                    <option value="<?= $d['id'] ?>"><?= h($d['name'] ?: $d['unique_id']) ?> <small>(<?= h($d['unique_id']) ?>)</small></option>
-                    <?php endforeach; ?>
-                </select>
+                <div class="btn-group w-100 mb-3" role="group">
+                    <input type="radio" class="btn-check" name="source_type" id="src_device" value="device" checked autocomplete="off">
+                    <label class="btn btn-outline-primary btn-sm" for="src_device" onclick="switchSource('device')">
+                        <i class="bi bi-hdd-stack me-1"></i>Dispositivo
+                    </label>
+                    <input type="radio" class="btn-check" name="source_type" id="src_backup" value="backup" autocomplete="off">
+                    <label class="btn btn-outline-primary btn-sm" for="src_backup" onclick="switchSource('backup')">
+                        <i class="bi bi-file-earmark-arrow-up me-1"></i>Backup JSON
+                    </label>
+                </div>
+
+                <div id="src-device-panel">
+                    <select name="source_id" class="form-select" id="source_select" required onchange="updateTargets()">
+                        <option value="">Selecione o dispositivo...</option>
+                        <?php foreach ($devices as $d): ?>
+                        <option value="<?= $d['id'] ?>"><?= h($d['name'] ?: $d['unique_id']) ?> <small>(<?= h($d['unique_id']) ?>)</small></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div id="src-backup-panel" style="display:none;">
+                    <input type="file" name="backup_file" id="backup_file_src" class="form-control" accept=".json">
+                    <div class="form-text">Backup <code>.json</code> exportado pelo SMCR Cloud.</div>
+                    <div id="backup-src-preview" class="mt-2 p-2 bg-light rounded small" style="display:none;"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -265,13 +301,13 @@ include __DIR__ . '/../includes/header.php';
             <div class="card-body">
                 <?php
                 $sections_list = [
-                    'config_geral'  => ['Config Geral',            'bi-gear-fill',     'text-secondary', 'Rede, NTP, display — exceto WiFi/hostname'],
-                    'mqtt'          => ['MQTT',                     'bi-broadcast',     'text-purple',    'Broker, tópicos, Home Assistant'],
-                    'telegram'      => ['Telegram',                 'bi-telegram',      'text-info',      'Token, chat ID, intervalo'],
-                    'intermod_cfg'  => ['Inter-módulos Config',     'bi-share-fill',    'text-primary',   'Habilitado, healthcheck, falhas'],
-                    'pinos'         => ['Pinos',                    'bi-diagram-3-fill','text-success',   'Todos os pinos (substitui destino)'],
-                    'acoes'         => ['Ações',                    'bi-lightning-fill','text-warning',   'Todas as ações (substitui destino)'],
-                    'intermod_mods' => ['Módulos Inter-módulos',    'bi-hdd-network',   'text-info',      'Lista de módulos cadastrados'],
+                    'config_geral'  => ['Config Geral',         'bi-gear-fill',      'text-secondary', 'Rede, NTP, display — exceto WiFi/hostname'],
+                    'mqtt'          => ['MQTT',                  'bi-broadcast',      'text-purple',    'Broker, tópicos, Home Assistant'],
+                    'telegram'      => ['Telegram',              'bi-telegram',       'text-info',      'Token, chat ID, intervalo'],
+                    'intermod_cfg'  => ['Inter-módulos Config',  'bi-share-fill',     'text-primary',   'Habilitado, healthcheck, falhas'],
+                    'pinos'         => ['Pinos',                 'bi-diagram-3-fill', 'text-success',   'Todos os pinos (substitui destino)'],
+                    'acoes'         => ['Ações',                 'bi-lightning-fill', 'text-warning',   'Todas as ações (substitui destino)'],
+                    'intermod_mods' => ['Módulos Inter-módulos', 'bi-hdd-network',    'text-info',      'Lista de módulos cadastrados'],
                 ];
                 ?>
                 <?php foreach ($sections_list as $key => [$label, $icon, $color, $desc]): ?>
@@ -330,6 +366,21 @@ include __DIR__ . '/../includes/header.php';
 <?php endif; ?>
 
 <script>
+function switchSource(mode) {
+    const isBackup = mode === 'backup';
+    document.getElementById('src-device-panel').style.display = isBackup ? 'none' : '';
+    document.getElementById('src-backup-panel').style.display = isBackup ? '' : 'none';
+    document.getElementById('source_select').required = !isBackup;
+    if (isBackup) {
+        document.querySelectorAll('.target-item').forEach(function(item) {
+            item.classList.remove('opacity-50');
+            item.querySelector('input[type=checkbox]').disabled = false;
+        });
+    } else {
+        updateTargets();
+    }
+}
+
 function updateTargets() {
     var srcId = document.getElementById('source_select').value;
     document.querySelectorAll('.target-item').forEach(function(item) {
@@ -353,6 +404,29 @@ function toggleAll() {
         cb.checked = allChecked;
     });
 }
+
+document.getElementById('backup_file_src').addEventListener('change', function() {
+    const preview = document.getElementById('backup-src-preview');
+    const file = this.files[0];
+    if (!file) { preview.style.display = 'none'; return; }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        let data;
+        try { data = JSON.parse(e.target.result); } catch { alert('Arquivo JSON inválido.'); return; }
+        if (!data.smcr_backup) { alert('Não é um backup SMCR válido.'); return; }
+
+        preview.innerHTML =
+            '<i class="bi bi-box me-1"></i><strong>' + (data.name || data.unique_id || '—') + '</strong> ' +
+            '<span class="text-muted">(' + (data.unique_id || '') + ')</span><br>' +
+            '<i class="bi bi-calendar3 me-1"></i>Exportado: ' + (data.exported_at || '—') + ' &nbsp;' +
+            '<i class="bi bi-diagram-3 me-1"></i>Pinos: ' + (data.pins||[]).length + ' &nbsp;' +
+            '<i class="bi bi-lightning me-1"></i>Ações: ' + (data.actions||[]).length + ' &nbsp;' +
+            '<i class="bi bi-share me-1"></i>Inter-módulos: ' + (data.intermod||[]).length;
+        preview.style.display = '';
+    };
+    reader.readAsText(file);
+});
 </script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

@@ -4,21 +4,22 @@ require_login();
 
 $db = getDB();
 
-// Auto-mark devices offline usando intervalo de heartbeat configurado por dispositivo
+// Auto-mark devices offline (apenas ativos)
 $db->exec("
     UPDATE devices d
     LEFT JOIN device_config dc ON dc.device_id = d.id
     SET d.online = 0
-    WHERE d.last_seen IS NULL
+    WHERE d.ativo = 1
+      AND (d.last_seen IS NULL
        OR d.last_seen < DATE_SUB(NOW(), INTERVAL
            IF(dc.cloud_heartbeat_enabled = 1 AND dc.cloud_heartbeat_interval_min > 0,
               dc.cloud_heartbeat_interval_min + 1,
               2)
-       MINUTE)
+       MINUTE))
 ");
 
 $stmt = $db->query("
-    SELECT d.id, d.name, d.unique_id, d.online, d.last_seen, d.created_at,
+    SELECT d.id, d.name, d.unique_id, d.online, d.ativo, d.last_seen, d.created_at,
            ds.ip, ds.hostname, ds.firmware_version
     FROM devices d
     LEFT JOIN device_status ds ON ds.device_id = d.id
@@ -113,7 +114,11 @@ include __DIR__ . '/../includes/header.php';
                             <?php endif; ?>
                         </td>
                         <td>
-                            <?php if ($dev['online']): ?>
+                            <?php if (!$dev['ativo']): ?>
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-slash-circle me-1" style="font-size:0.5rem;vertical-align:middle;"></i>Inativo
+                            </span>
+                            <?php elseif ($dev['online']): ?>
                             <span class="badge badge-online">
                                 <i class="bi bi-circle-fill me-1" style="font-size:0.5rem;vertical-align:middle;"></i>Online
                             </span>
@@ -123,7 +128,7 @@ include __DIR__ . '/../includes/header.php';
                             </span>
                             <?php endif; ?>
                         </td>
-                        <td class="small text-muted"><?= relative_time($dev['last_seen']) ?></td>
+                        <td class="small text-muted"><?= $dev['ativo'] ? relative_time($dev['last_seen']) : '—' ?></td>
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
                                 <a href="/devices/config_geral.php?device_id=<?= $dev['id'] ?>"
@@ -138,6 +143,11 @@ include __DIR__ . '/../includes/header.php';
                                    class="btn btn-outline-info" title="Visualizar">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                <button class="btn <?= $dev['ativo'] ? 'btn-outline-secondary' : 'btn-secondary' ?>"
+                                        onclick="toggleAtivo(<?= $dev['id'] ?>, this)"
+                                        title="<?= $dev['ativo'] ? 'Desativar dispositivo' : 'Ativar dispositivo' ?>">
+                                    <i class="bi <?= $dev['ativo'] ? 'bi-pause-circle' : 'bi-play-circle' ?>"></i>
+                                </button>
                                 <a href="/devices/delete.php?device_id=<?= $dev['id'] ?>"
                                    class="btn btn-outline-danger" title="Excluir">
                                     <i class="bi bi-trash"></i>
@@ -154,6 +164,24 @@ include __DIR__ . '/../includes/header.php';
 </div>
 
 <script>
+function toggleAtivo(deviceId, btn) {
+    const ativando = btn.querySelector('i').classList.contains('bi-play-circle');
+    const msg = ativando ? 'Ativar este dispositivo?' : 'Desativar este dispositivo? Ele não receberá sync nem será monitorado.';
+    if (!confirm(msg)) return;
+    btn.disabled = true;
+    fetch('/api/toggle_device_active.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id: deviceId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.ok) { alert('Erro: ' + data.error); btn.disabled = false; return; }
+        location.reload();
+    })
+    .catch(() => { btn.disabled = false; alert('Erro de comunicação.'); });
+}
+
 function setAllOta() {
     if (!confirm('Agendar OTA no próximo sincronismo de TODOS os dispositivos?')) return;
     const btn = document.getElementById('btn_ota_all');

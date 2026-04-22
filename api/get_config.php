@@ -32,10 +32,11 @@ if (strlen($token) !== 64 || !ctype_xdigit($token)) json_error('Invalid token fo
 try {
     $db = getDB();
 
-    $stmt = $db->prepare('SELECT id, unique_id FROM devices WHERE api_token = ?');
+    $stmt = $db->prepare('SELECT id, unique_id, ativo FROM devices WHERE api_token = ?');
     $stmt->execute([$token]);
     $device = $stmt->fetch();
     if (!$device) json_error('Device not found or invalid token', 401);
+    if (!(bool)$device['ativo']) json_error('Device is disabled', 403);
 
     $device_id = (int)$device['id'];
 

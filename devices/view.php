@@ -55,8 +55,8 @@ function format_heap(int $bytes): string {
     return $bytes . ' B';
 }
 
-// Mark offline check
 $is_online = (bool)$device['online'];
+$is_ativo  = (bool)($device['ativo'] ?? true);
 
 $page_title = $device['name'] ?: $device['unique_id'];
 $breadcrumb = [
@@ -78,10 +78,16 @@ include __DIR__ . '/../includes/header.php';
                     <h4 class="mb-0 fw-bold"><?= h($device['name'] ?: $device['unique_id']) ?></h4>
                     <div class="text-muted small font-monospace"><?= h($device['unique_id']) ?></div>
                 </div>
+                <?php if (!$is_ativo): ?>
+                <span class="badge bg-secondary ms-2 fs-6">
+                    <i class="bi bi-slash-circle me-1" style="font-size:0.5rem;vertical-align:middle;"></i>Inativo
+                </span>
+                <?php else: ?>
                 <span class="badge <?= $is_online ? 'badge-online' : 'badge-offline' ?> ms-2 fs-6">
                     <i class="bi <?= $is_online ? 'bi-circle-fill' : 'bi-circle' ?> me-1" style="font-size:0.5rem;vertical-align:middle;"></i>
                     <?= $is_online ? 'Online' : 'Offline' ?>
                 </span>
+                <?php endif; ?>
             </div>
             <div class="d-flex gap-2">
                 <a href="/devices/edit.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary btn-sm">
@@ -93,6 +99,11 @@ include __DIR__ . '/../includes/header.php';
                 <a href="/api/export_device.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-download me-1"></i>Exportar
                 </a>
+                <button id="btn_toggle_ativo" class="btn btn-sm <?= $is_ativo ? 'btn-outline-secondary' : 'btn-secondary' ?>"
+                        onclick="toggleAtivo(<?= $device_id ?>)"
+                        title="<?= $is_ativo ? 'Desativar dispositivo' : 'Ativar dispositivo' ?>">
+                    <i class="bi <?= $is_ativo ? 'bi-pause-circle me-1' : 'bi-play-circle me-1' ?>"></i><?= $is_ativo ? 'Desativar' : 'Ativar' ?>
+                </button>
                 <a href="/devices/delete.php?device_id=<?= $device_id ?>" class="btn btn-outline-danger btn-sm">
                     <i class="bi bi-trash me-1"></i>Excluir
                 </a>
@@ -444,6 +455,25 @@ function pushDevice(device_id) {
         btn.innerHTML = '<i class="bi bi-cloud-upload me-1"></i>Cloud → ESP32';
         alert('Erro: ' + err.message);
     });
+}
+
+function toggleAtivo(device_id) {
+    const btn = document.getElementById('btn_toggle_ativo');
+    const ativando = btn.querySelector('i').classList.contains('bi-play-circle');
+    const msg = ativando ? 'Ativar este dispositivo?' : 'Desativar este dispositivo?\n\nEle não receberá sync e não será monitorado.';
+    if (!confirm(msg)) return;
+    btn.disabled = true;
+    fetch('/api/toggle_device_active.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id: device_id })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.ok) { alert('Erro: ' + data.error); btn.disabled = false; return; }
+        location.reload();
+    })
+    .catch(err => { btn.disabled = false; alert('Erro: ' + err.message); });
 }
 </script>
 

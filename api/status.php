@@ -56,12 +56,17 @@ try {
     $db = getDB();
 
     // Find device by api_token
-    $stmt = $db->prepare('SELECT id, unique_id FROM devices WHERE api_token = ?');
+    $stmt = $db->prepare('SELECT id, unique_id, ativo FROM devices WHERE api_token = ?');
     $stmt->execute([$token]);
     $device = $stmt->fetch();
 
     if (!$device) {
         json_error('Device not found or invalid token', 401);
+    }
+
+    if (!(bool)$device['ativo']) {
+        echo json_encode(['ok' => true, 'ignored' => true]);
+        exit;
     }
 
     $device_id = (int)$device['id'];

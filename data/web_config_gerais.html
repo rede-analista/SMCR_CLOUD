@@ -312,6 +312,7 @@
                 <table class="config-table">
                     <tr><td>URL da Cloud:</td><td><input type="text" name="cloud_url" id="cloud_url" maxlength="128" placeholder="smcr.pensenet.com.br"></td></tr>
                     <tr><td>Porta da Cloud:</td><td><input type="number" name="cloud_port" id="cloud_port" min="1" max="65535" value="8765" placeholder="8765"></td></tr>
+                    <tr><td>Usar HTTPS:</td><td><select name="cloud_use_https" id="cloud_use_https"><option value="0">Não (HTTP)</option><option value="1">Sim (HTTPS)</option></select></td></tr>
                     <tr><td>Sync com Cloud Habilitado:</td><td><select name="cloud_sync_enabled" id="cloud_sync_enabled"><option value="0">Desabilitado</option><option value="1">Habilitado</option></select></td></tr>
                     <tr><td>Intervalo de Sync (minutos):</td><td><input type="number" name="cloud_sync_interval_min" id="cloud_sync_interval_min" min="1" max="1440" value="5"></td></tr>
                     <tr><td>Token API:</td><td><input type="password" name="cloud_api_token" id="cloud_api_token" maxlength="128" placeholder="Deixe em branco para manter atual"></td></tr>
@@ -411,6 +412,7 @@
                     // SMCR Cloud
                     document.getElementById('cloud_url').value = data.cloud_url || 'smcr.pensenet.com.br';
                     document.getElementById('cloud_port').value = data.cloud_port || 8765;
+                    document.getElementById('cloud_use_https').value = data.cloud_use_https ? '1' : '0';
                     document.getElementById('cloud_sync_enabled').value = data.cloud_sync_enabled ? '1' : '0';
                     document.getElementById('cloud_sync_interval_min').value = data.cloud_sync_interval_min || 5;
                     document.getElementById('cloud_heartbeat_enabled').value = data.cloud_heartbeat_enabled ? '1' : '0';

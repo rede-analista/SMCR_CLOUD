@@ -180,6 +180,11 @@
             color: #856404;
         }
 
+        .status-inativo {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
         .action-btn {
             padding: 6px 12px;
             font-size: 0.85em;
@@ -371,6 +376,13 @@
                             <label for="editModulePort">Porta:</label>
                             <input type="number" id="editModulePort" name="modulePort" min="1" max="65535" required>
                         </div>
+                        <div class="form-group" style="border:1px solid #28a745;border-radius:6px;padding:12px;margin-top:8px;">
+                            <label style="font-weight:bold;color:#155724;">▶ Status do Módulo</label>
+                            <label style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+                                <input type="checkbox" id="editAtivo" name="ativo" value="1">
+                                Módulo ativo (participa de healthcheck e comunicação)
+                            </label>
+                        </div>
                         <div class="form-group" style="border:1px solid #f6a623;border-radius:6px;padding:12px;margin-top:8px;">
                             <label style="font-weight:bold;color:#c47a00;">🔴 Alerta de Offline</label>
                             <label style="display:flex;align-items:center;gap:8px;margin:8px 0;">
@@ -428,6 +440,14 @@
                             <label for="modulePort">Porta:</label>
                             <input type="number" id="modulePort" name="modulePort"
                                    min="1" max="65535" value="8080" required>
+                        </div>
+
+                        <div class="form-group" style="border:1px solid #28a745;border-radius:6px;padding:12px;margin-top:8px;">
+                            <label style="font-weight:bold;color:#155724;">▶ Status do Módulo</label>
+                            <label style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+                                <input type="checkbox" id="addAtivo" name="ativo" value="1">
+                                Módulo ativo (participa de healthcheck e comunicação)
+                            </label>
                         </div>
 
                         <div class="form-group" style="border:1px solid #f6a623;border-radius:6px;padding:12px;margin-top:8px;">
@@ -608,6 +628,7 @@
                 html += '<th>ID</th>';
                 html += '<th>Hostname</th>';
                 html += '<th>IP:Porta</th>';
+                html += '<th>Ativo</th>';
                 html += '<th>Status</th>';
                 html += '<th>Último Check</th>';
                 html += '<th>Origem</th>';
@@ -617,19 +638,27 @@
                 html += '</tr></thead><tbody>';
 
                 data.modules.forEach(module => {
-                    const statusClass = module.online ? 'status-online' :
-                                      (module.online === false ? 'status-offline' : 'status-unknown');
-                    const statusText = module.online ? '🟢 Online' :
-                                     (module.online === false ? '🔴 Offline' : '⚪ Desconhecido');
+                    const ativo = !!module.ativo;
+                    const ativoClass = ativo ? 'status-online' : 'status-inativo';
+                    const ativoText = ativo ? '✅ Ativo' : '⏸ Inativo';
+                    const statusClass = !ativo ? 'status-inativo' :
+                                      (module.online ? 'status-online' :
+                                      (module.online === false ? 'status-offline' : 'status-unknown'));
+                    const statusText = !ativo ? '— Inativo' :
+                                     (module.online ? '🟢 Online' :
+                                     (module.online === false ? '🔴 Offline' : '⚪ Desconhecido'));
                     const lastCheck = module.ultimo_healthcheck > 0 ?
-                                    new Date(module.ultimo_healthcheck).toLocaleString('pt-BR') :
+                                    new Date(module.ultimo_healthcheck * 1000).toLocaleString('pt-BR') :
                                     'Nunca';
                     const origem = module.auto_descoberto ? '🔍 Auto' : '✍️ Manual';
+                    const toggleBtnClass = ativo ? 'btn-warning' : 'btn-success';
+                    const toggleBtnText = ativo ? '⏸ Desativar' : '▶ Ativar';
 
                     html += '<tr>';
                     html += `<td>${escapeHtml(module.id)}</td>`;
                     html += `<td>${escapeHtml(module.hostname)}</td>`;
                     html += `<td>${escapeHtml(module.ip)}:${module.porta}</td>`;
+                    html += `<td><span class="status-badge ${ativoClass}">${ativoText}</span></td>`;
                     html += `<td><span class="status-badge ${statusClass}">${statusText}</span></td>`;
                     html += `<td>${lastCheck}</td>`;
                     html += `<td>${origem}</td>`;
@@ -638,6 +667,7 @@
                     const hcPins = module.pins_healthcheck && module.pins_healthcheck.length > 0 ? escapeHtml(module.pins_healthcheck) : '<span style="color:#aaa">—</span>';
                     html += `<td>${hcPins}</td>`;
                     html += `<td>
+                        <button class="btn action-btn ${toggleBtnClass}" onclick="toggleModule('${escapeHtml(module.id)}', ${ativo})">${toggleBtnText}</button>
                         <button class="btn action-btn btn-secondary" onclick="testModule('${escapeHtml(module.id)}')">🔍 Testar</button>
                         <button class="btn action-btn btn-success" onclick="syncModule('${escapeHtml(module.id)}')">🔄 Sincronizar</button>
                         <button class="btn action-btn btn-warning" onclick="editModule('${escapeHtml(module.id)}')">✏️ Editar</button>
@@ -683,6 +713,7 @@
             document.getElementById('editModuleHostname').value = module.hostname;
             document.getElementById('editModuleIp').value = module.ip;
             document.getElementById('editModulePort').value = module.porta;
+            document.getElementById('editAtivo').checked = !!module.ativo;
             document.getElementById('editPinsOffline').value = module.pins_offline || '';
             document.getElementById('editOfflineAlertEnabled').checked = !!module.offline_alert_enabled;
             document.getElementById('editOfflineFlashMs').value = module.offline_flash_ms || 200;
@@ -699,6 +730,26 @@
             document.getElementById('editModuleForm').style.display = 'none';
         }
 
+        // Ativa/desativa módulo
+        async function toggleModule(moduleId, isAtivo) {
+            try {
+                const formData = new FormData();
+                formData.append('id', moduleId);
+                formData.append('ativo', isAtivo ? '0' : '1');
+                const response = await fetch('/api/intermod/modules/toggle', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    loadModules();
+                } else {
+                    showMessage('Erro ao alterar status do módulo', 'error');
+                }
+            } catch (error) {
+                showMessage('Erro de comunicação com o servidor', 'error');
+            }
+        }
+
         // Salva edição do módulo
         document.getElementById('moduleEditForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -706,6 +757,7 @@
 
             const formData = new FormData(this);
             // Garante envio explícito dos checkboxes (não enviados pelo FormData quando desmarcados)
+            formData.set('ativo',                   document.getElementById('editAtivo').checked                   ? '1' : '0');
             formData.set('offlineAlertEnabled',     document.getElementById('editOfflineAlertEnabled').checked     ? '1' : '0');
             formData.set('healthcheckAlertEnabled', document.getElementById('editHealthcheckAlertEnabled').checked ? '1' : '0');
 

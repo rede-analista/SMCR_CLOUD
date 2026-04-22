@@ -19,7 +19,7 @@ $db->exec("
 
 // Fetch all devices with status
 $stmt = $db->query("
-    SELECT d.id, d.name, d.unique_id, d.online, d.last_seen, d.created_at,
+    SELECT d.id, d.name, d.unique_id, d.online, UNIX_TIMESTAMP(d.last_seen) as last_seen_unix, d.created_at,
            ds.ip, ds.hostname, ds.firmware_version, ds.free_heap, ds.uptime_ms, ds.wifi_rssi
     FROM devices d
     LEFT JOIN device_status ds ON ds.device_id = d.id
@@ -34,9 +34,9 @@ foreach ($devices as $d) {
 }
 $offline_count = $total - $online_count;
 
-function relative_time(?string $ts): string {
-    if (!$ts || $ts === '0000-00-00 00:00:00') return 'Nunca';
-    $diff = time() - strtotime($ts);
+function relative_time(?int $unix): string {
+    if (!$unix) return 'Nunca';
+    $diff = time() - $unix;
     if ($diff < 60) return 'há ' . $diff . ' segundo' . ($diff !== 1 ? 's' : '');
     if ($diff < 3600) { $m = (int)($diff/60); return 'há ' . $m . ' minuto' . ($m !== 1 ? 's' : ''); }
     if ($diff < 86400) { $h = (int)($diff/3600); return 'há ' . $h . ' hora' . ($h !== 1 ? 's' : ''); }
@@ -186,7 +186,7 @@ include __DIR__ . '/includes/header.php';
 
                 <div class="text-muted small mb-3">
                     <i class="bi bi-clock-history me-1"></i>
-                    Última vez: <strong><?= relative_time($dev['last_seen']) ?></strong>
+                    Última vez: <strong><?= relative_time((int)$dev['last_seen_unix']) ?></strong>
                 </div>
 
                 <div class="d-flex gap-2">

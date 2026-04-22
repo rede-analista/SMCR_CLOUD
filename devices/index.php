@@ -19,7 +19,8 @@ $db->exec("
 ");
 
 $stmt = $db->query("
-    SELECT d.id, d.name, d.unique_id, d.online, d.ativo, d.last_seen, d.created_at,
+    SELECT d.id, d.name, d.unique_id, d.online, d.ativo,
+           UNIX_TIMESTAMP(d.last_seen) as last_seen_unix, d.created_at,
            ds.ip, ds.hostname, ds.firmware_version
     FROM devices d
     LEFT JOIN device_status ds ON ds.device_id = d.id
@@ -27,9 +28,9 @@ $stmt = $db->query("
 ");
 $devices = $stmt->fetchAll();
 
-function relative_time(?string $ts): string {
-    if (!$ts || $ts === '0000-00-00 00:00:00') return 'Nunca';
-    $diff = time() - strtotime($ts);
+function relative_time(?int $unix): string {
+    if (!$unix) return 'Nunca';
+    $diff = time() - $unix;
     if ($diff < 60) return 'há ' . $diff . 's';
     if ($diff < 3600) return 'há ' . (int)($diff/60) . 'min';
     if ($diff < 86400) return 'há ' . (int)($diff/3600) . 'h';
@@ -128,7 +129,7 @@ include __DIR__ . '/../includes/header.php';
                             </span>
                             <?php endif; ?>
                         </td>
-                        <td class="small text-muted"><?= $dev['ativo'] ? relative_time($dev['last_seen']) : '—' ?></td>
+                        <td class="small text-muted"><?= $dev['ativo'] ? relative_time((int)$dev['last_seen_unix']) : '—' ?></td>
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
                                 <a href="/devices/config_geral.php?device_id=<?= $dev['id'] ?>"

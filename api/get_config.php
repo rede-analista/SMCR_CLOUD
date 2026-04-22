@@ -174,6 +174,7 @@ try {
         // SMCR Cloud
         'cloud_url'                  => $cfg['cloud_url'] ?? 'smcr.pensenet.com.br',
         'cloud_port'                 => (int)($cfg['cloud_port'] ?? 8765),
+        'cloud_use_https'            => (bool)($cfg['cloud_use_https'] ?? 0),
         'cloud_sync_enabled'         => (bool)($cfg['cloud_sync_enabled'] ?? 0),
         'cloud_sync_interval_min'    => (int)($cfg['cloud_sync_interval_min'] ?? 5),
         'cloud_heartbeat_enabled'    => (bool)($cfg['cloud_heartbeat_enabled'] ?? 0),

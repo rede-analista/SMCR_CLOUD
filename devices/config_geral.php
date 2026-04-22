@@ -69,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'dashboard_auth_required'=> isset($_POST['dashboard_auth_required']) ? 1 : 0,
         'cloud_url'                  => trim($_POST['cloud_url'] ?? 'smcr.pensenet.com.br'),
         'cloud_port'                 => (int)($_POST['cloud_port'] ?? 8765),
+        'cloud_use_https'            => isset($_POST['cloud_use_https']) ? 1 : 0,
         'cloud_sync_enabled'         => isset($_POST['cloud_sync_enabled']) ? 1 : 0,
         'cloud_sync_interval_min'    => (int)($_POST['cloud_sync_interval_min'] ?? 5),
         'cloud_heartbeat_enabled'    => isset($_POST['cloud_heartbeat_enabled']) ? 1 : 0,
@@ -468,7 +469,16 @@ include __DIR__ . '/../includes/header.php';
                         <input type="number" class="form-control" name="cloud_port"
                                value="<?= h($cfg['cloud_port'] ?? 8765) ?>" min="1" max="65535">
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-2">
+                        <label class="form-label">HTTPS</label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" name="cloud_use_https"
+                                   id="cloud_use_https" value="1"
+                                   <?= ($cfg['cloud_use_https'] ?? 0) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="cloud_use_https">Usar HTTPS</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
                         <label class="form-label">Intervalo de Sync (minutos)</label>
                         <input type="number" class="form-control" name="cloud_sync_interval_min"
                                value="<?= h($cfg['cloud_sync_interval_min'] ?? 5) ?>" min="1" max="1440">

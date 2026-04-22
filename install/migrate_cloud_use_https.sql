@@ -1,0 +1,1 @@
+ALTER TABLE device_config ADD COLUMN IF NOT EXISTS cloud_use_https TINYINT(1) NOT NULL DEFAULT 0;

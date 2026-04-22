@@ -186,6 +186,10 @@ try {
         'intermod_modules' => $intermod_modules,
     ]);
 
+    // Atualiza last_seen e online ao sincronizar
+    $db->prepare('UPDATE devices SET last_seen = NOW(), online = 1 WHERE id = ?')
+       ->execute([$device_id]);
+
     // Auto-desativa as flags após enviar
     if (!empty($cfg['reboot_on_sync'])) {
         $db->prepare('UPDATE device_config SET reboot_on_sync = 0 WHERE device_id = ?')

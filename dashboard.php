@@ -9,12 +9,13 @@ $db->exec("
     UPDATE devices d
     LEFT JOIN device_config dc ON dc.device_id = d.id
     SET d.online = 0
-    WHERE d.last_seen IS NULL
+    WHERE d.ativo = 1
+      AND (d.last_seen IS NULL
        OR d.last_seen < DATE_SUB(NOW(), INTERVAL
            IF(dc.cloud_heartbeat_enabled = 1 AND dc.cloud_heartbeat_interval_min > 0,
               dc.cloud_heartbeat_interval_min + 1,
               2)
-       MINUTE)
+       MINUTE))
 ");
 
 // Fetch all devices with status
@@ -214,7 +215,7 @@ include __DIR__ . '/includes/header.php';
 
                 <div class="text-muted small mb-3">
                     <i class="bi bi-clock-history me-1"></i>
-                    Última vez: <strong><?= relative_time((int)$dev['last_seen_unix']) ?></strong>
+                    <?= $dev['ativo'] ? 'Última vez: <strong>' . relative_time((int)$dev['last_seen_unix']) . '</strong>' : '&mdash;' ?>
                 </div>
 
                 <div class="d-flex gap-2">

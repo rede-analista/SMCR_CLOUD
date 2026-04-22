@@ -29,7 +29,7 @@ $db = getDB();
 
 // Busca IP e porta do dispositivo
 $stmt = $db->prepare('
-    SELECT d.id, d.unique_id, ds.ip, ds.hostname,
+    SELECT d.id, d.unique_id, d.ativo, ds.ip, ds.hostname,
            COALESCE(dc.web_server_port, 8080) AS port,
            COALESCE(dc.auth_enabled, 0) AS auth_enabled,
            COALESCE(dc.web_username, \'\') AS web_username,
@@ -42,8 +42,18 @@ $stmt = $db->prepare('
 $stmt->execute([$device_id]);
 $device = $stmt->fetch();
 
-if (!$device || empty($device['ip'])) {
-    echo json_encode(['ok' => false, 'error' => 'Dispositivo não encontrado ou IP desconhecido']);
+if (!$device) {
+    echo json_encode(['ok' => false, 'error' => 'Dispositivo não encontrado']);
+    exit;
+}
+
+if (!(bool)$device['ativo']) {
+    echo json_encode(['ok' => false, 'error' => 'Dispositivo inativo — sincronização bloqueada']);
+    exit;
+}
+
+if (empty($device['ip'])) {
+    echo json_encode(['ok' => false, 'error' => 'IP do dispositivo desconhecido']);
     exit;
 }
 

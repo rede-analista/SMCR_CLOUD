@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS devices (
     api_token VARCHAR(64) NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_seen TIMESTAMP NULL DEFAULT NULL,
-    online TINYINT(1) DEFAULT 0
+    online TINYINT(1) DEFAULT 0,
+    ativo TINYINT(1) NOT NULL DEFAULT 1 COMMENT 'Quando 0, não recebe sync e não é monitorado'
 );
 
 CREATE TABLE IF NOT EXISTS device_status (

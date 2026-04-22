@@ -91,7 +91,8 @@ $export = [
     'intermod'     => $intermod,
 ];
 
-$filename = 'smcr_backup_' . $device['unique_id'] . '_' . date('Ymd_His') . '.json';
+$safe_name = $device['name'] !== '' ? preg_replace('/[^a-zA-Z0-9_\-]/', '_', $device['name']) . '_' : '';
+$filename = 'smcr_backup_' . $safe_name . $device['unique_id'] . '_' . date('Ymd_His') . '.json';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');

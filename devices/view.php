@@ -99,6 +99,9 @@ include __DIR__ . '/../includes/header.php';
                 <a href="/api/export_device.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-download me-1"></i>Exportar
                 </a>
+                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalImport">
+                    <i class="bi bi-upload me-1"></i>Importar
+                </button>
                 <button id="btn_toggle_ativo" class="btn btn-sm <?= $is_ativo ? 'btn-outline-secondary' : 'btn-secondary' ?>"
                         onclick="toggleAtivo(<?= $device_id ?>)"
                         title="<?= $is_ativo ? 'Desativar dispositivo' : 'Ativar dispositivo' ?>">
@@ -475,6 +478,69 @@ function toggleAtivo(device_id) {
     })
     .catch(err => { btn.disabled = false; alert('Erro: ' + err.message); });
 }
+
+function importBackup() {
+    const fileInput = document.getElementById('import_file');
+    const updateToken = document.getElementById('import_update_token').checked;
+    if (!fileInput.files.length) { alert('Selecione um arquivo de backup.'); return; }
+
+    const btn = document.getElementById('btn_import_submit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Importando...';
+
+    const fd = new FormData();
+    fd.append('device_id', <?= $device_id ?>);
+    fd.append('update_token', updateToken ? '1' : '');
+    fd.append('backup_file', fileInput.files[0]);
+
+    fetch('/api/import_device.php', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-upload me-1"></i>Restaurar';
+            if (!data.ok) { alert('Erro:\n' + data.error); return; }
+            bootstrap.Modal.getInstance(document.getElementById('modalImport')).hide();
+            alert('Backup restaurado com sucesso!');
+            location.reload();
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-upload me-1"></i>Restaurar';
+            alert('Erro: ' + err.message);
+        });
+}
 </script>
+
+<!-- Modal Import -->
+<div class="modal fade" id="modalImport" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Importar Backup</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Selecione um arquivo <code>.json</code> exportado pelo SMCR Cloud. As configurações, pinos, ações e inter-módulos serão substituídos pelos dados do backup.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Arquivo de Backup</label>
+                    <input type="file" id="import_file" class="form-control" accept=".json">
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="import_update_token">
+                    <label class="form-check-label" for="import_update_token">
+                        Restaurar chave de API (api_token)
+                    </label>
+                    <div class="form-text text-warning"><i class="bi bi-exclamation-triangle me-1"></i>Só ative se o ESP32 ainda usa a chave do backup.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="btn_import_submit" class="btn btn-primary" onclick="importBackup()">
+                    <i class="bi bi-upload me-1"></i>Restaurar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

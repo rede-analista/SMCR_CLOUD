@@ -19,20 +19,23 @@ $db->exec("
 
 // Fetch all devices with status
 $stmt = $db->query("
-    SELECT d.id, d.name, d.unique_id, d.online, UNIX_TIMESTAMP(d.last_seen) as last_seen_unix, d.created_at,
+    SELECT d.id, d.name, d.unique_id, d.online, d.ativo, UNIX_TIMESTAMP(d.last_seen) as last_seen_unix, d.created_at,
            ds.ip, ds.hostname, ds.firmware_version, ds.free_heap, ds.uptime_ms, ds.wifi_rssi
     FROM devices d
     LEFT JOIN device_status ds ON ds.device_id = d.id
-    ORDER BY d.online DESC, d.name ASC
+    ORDER BY d.ativo DESC, d.online DESC, d.name ASC
 ");
 $devices = $stmt->fetchAll();
 
 $total = count($devices);
 $online_count = 0;
+$offline_count = 0;
+$inactive_count = 0;
 foreach ($devices as $d) {
-    if ($d['online']) $online_count++;
+    if (!$d['ativo']) $inactive_count++;
+    elseif ($d['online']) $online_count++;
+    else $offline_count++;
 }
-$offline_count = $total - $online_count;
 
 function relative_time(?int $unix): string {
     if (!$unix) return 'Nunca';
@@ -69,20 +72,20 @@ include __DIR__ . '/includes/header.php';
 
 <!-- Stats row -->
 <div class="row g-3 mb-4">
-    <div class="col-sm-4">
+    <div class="col-6 col-sm-3">
         <div class="card h-100">
             <div class="card-body d-flex align-items-center gap-3">
                 <div style="width:48px;height:48px;background:linear-gradient(135deg,#0f3460,#533483);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <i class="bi bi-hdd-network-fill text-white fs-5"></i>
                 </div>
                 <div>
-                    <div class="text-muted small">Total de Dispositivos</div>
+                    <div class="text-muted small">Total</div>
                     <div class="fs-3 fw-bold text-dark"><?= $total ?></div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-sm-4">
+    <div class="col-6 col-sm-3">
         <div class="card h-100">
             <div class="card-body d-flex align-items-center gap-3">
                 <div style="width:48px;height:48px;background:linear-gradient(135deg,#198754,#20c997);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -95,7 +98,7 @@ include __DIR__ . '/includes/header.php';
             </div>
         </div>
     </div>
-    <div class="col-sm-4">
+    <div class="col-6 col-sm-3">
         <div class="card h-100">
             <div class="card-body d-flex align-items-center gap-3">
                 <div style="width:48px;height:48px;background:linear-gradient(135deg,#dc3545,#e74c3c);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -104,6 +107,19 @@ include __DIR__ . '/includes/header.php';
                 <div>
                     <div class="text-muted small">Offline</div>
                     <div class="fs-3 fw-bold text-danger"><?= $offline_count ?></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-sm-3">
+        <div class="card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div style="width:48px;height:48px;background:linear-gradient(135deg,#6c757d,#495057);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <i class="bi bi-slash-circle text-white fs-5"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Inativo</div>
+                    <div class="fs-3 fw-bold text-secondary"><?= $inactive_count ?></div>
                 </div>
             </div>
         </div>
@@ -132,17 +148,29 @@ include __DIR__ . '/includes/header.php';
 <div class="row g-3">
     <?php foreach ($devices as $dev): ?>
     <div class="col-md-6 col-xl-4">
-        <div class="card h-100" style="border-left: 4px solid <?= $dev['online'] ? '#198754' : '#dc3545' ?>;">
+        <?php
+        $border_color = !$dev['ativo'] ? '#6c757d' : ($dev['online'] ? '#198754' : '#dc3545');
+        ?>
+        <div class="card h-100" style="border-left: 4px solid <?= $border_color ?>;">
             <div class="card-body">
                 <div class="d-flex align-items-start justify-content-between mb-2">
                     <div>
                         <h6 class="card-title mb-0 fw-bold"><?= h($dev['name'] ?: $dev['unique_id']) ?></h6>
                         <div class="text-muted small font-monospace"><?= h($dev['unique_id']) ?></div>
                     </div>
-                    <span class="badge <?= $dev['online'] ? 'badge-online' : 'badge-offline' ?> ms-2">
-                        <i class="bi <?= $dev['online'] ? 'bi-circle-fill' : 'bi-circle' ?> me-1" style="font-size:0.5rem;vertical-align:middle;"></i>
-                        <?= $dev['online'] ? 'Online' : 'Offline' ?>
+                    <?php if (!$dev['ativo']): ?>
+                    <span class="badge bg-secondary ms-2">
+                        <i class="bi bi-slash-circle me-1" style="font-size:0.5rem;vertical-align:middle;"></i>Inativo
                     </span>
+                    <?php elseif ($dev['online']): ?>
+                    <span class="badge badge-online ms-2">
+                        <i class="bi bi-circle-fill me-1" style="font-size:0.5rem;vertical-align:middle;"></i>Online
+                    </span>
+                    <?php else: ?>
+                    <span class="badge badge-offline ms-2">
+                        <i class="bi bi-circle me-1" style="font-size:0.5rem;vertical-align:middle;"></i>Offline
+                    </span>
+                    <?php endif; ?>
                 </div>
 
                 <div class="row g-1 small text-muted mb-3">

@@ -12,7 +12,7 @@ if (!$device_id) {
 
 $db = getDB();
 
-$stmt = $db->prepare('SELECT id, unique_id, name FROM devices WHERE id = ?');
+$stmt = $db->prepare('SELECT id, unique_id, name, api_token FROM devices WHERE id = ?');
 $stmt->execute([$device_id]);
 $device = $stmt->fetch();
 if (!$device) {
@@ -84,6 +84,7 @@ $export = [
     'exported_at'  => date('Y-m-d H:i:s'),
     'unique_id'    => $device['unique_id'],
     'name'         => $device['name'],
+    'api_token'    => $device['api_token'],
     'config'       => $cfg,
     'pins'         => $pins,
     'actions'      => $actions,

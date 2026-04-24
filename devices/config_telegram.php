@@ -11,7 +11,7 @@ $device = $stmt->fetch();
 
 if (!$device) {
     set_flash('danger', 'Dispositivo não encontrado.');
-    header('Location: /devices/index.php');
+    header('Location: ' . BASE . '/devices/index.php');
     exit;
 }
 
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $db->prepare('UPDATE device_config SET ' . implode(', ', $set) . ' WHERE device_id = ?')->execute($vals);
 
     set_flash('success', 'Configurações do Telegram salvas com sucesso.');
-    header('Location: /devices/config_telegram.php?device_id=' . $device_id);
+    header('Location: ' . BASE . '/devices/config_telegram.php?device_id=' . $device_id);
     exit;
 }
 
@@ -62,7 +62,7 @@ include __DIR__ . '/../includes/header.php';
 
 <div class="row g-4">
     <div class="col-lg-7">
-        <form method="POST" action="/devices/config_telegram.php?device_id=<?= $device_id ?>">
+        <form method="POST" action="<?= BASE ?>/devices/config_telegram.php?device_id=<?= $device_id ?>">
             <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
 
             <div class="card">
@@ -121,7 +121,7 @@ include __DIR__ . '/../includes/header.php';
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-lg me-1"></i>Salvar Configurações
                     </button>
-                    <a href="/devices/view.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">Cancelar</a>
+                    <a href="<?= BASE ?>/devices/view.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">Cancelar</a>
                 </div>
             </div>
         </form>
@@ -152,7 +152,7 @@ include __DIR__ . '/../includes/header.php';
                     </li>
                     <li>
                         <strong>Configure as ações:</strong><br>
-                        Em <a href="/devices/config_acoes.php?device_id=<?= $device_id ?>">Configuração de Ações</a>,
+                        Em <a href="<?= BASE ?>/devices/config_acoes.php?device_id=<?= $device_id ?>">Configuração de Ações</a>,
                         marque a opção "Notificar via Telegram" para os eventos desejados.
                     </li>
                 </ol>

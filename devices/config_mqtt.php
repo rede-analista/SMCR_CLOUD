@@ -11,7 +11,7 @@ $device = $stmt->fetch();
 
 if (!$device) {
     set_flash('danger', 'Dispositivo não encontrado.');
-    header('Location: /devices/index.php');
+    header('Location: ' . BASE . '/devices/index.php');
     exit;
 }
 
@@ -79,7 +79,7 @@ include __DIR__ . '/../includes/header.php';
 
 <div class="row g-4">
     <div class="col-lg-8">
-        <form method="POST" action="/devices/config_mqtt.php?device_id=<?= $device_id ?>">
+        <form method="POST" action="<?= BASE ?>/devices/config_mqtt.php?device_id=<?= $device_id ?>">
             <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
 
             <div class="card mb-3">
@@ -197,7 +197,7 @@ include __DIR__ . '/../includes/header.php';
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check-lg me-1"></i>Salvar Configurações MQTT
                 </button>
-                <a href="/devices/view.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">Cancelar</a>
+                <a href="<?= BASE ?>/devices/view.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">Cancelar</a>
             </div>
         </form>
     </div>

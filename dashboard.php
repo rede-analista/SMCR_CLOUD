@@ -130,7 +130,7 @@ include __DIR__ . '/includes/header.php';
 <!-- Devices grid -->
 <div class="d-flex align-items-center justify-content-between mb-3">
     <h5 class="mb-0 fw-bold"><i class="bi bi-cpu me-2"></i>Dispositivos Registrados</h5>
-    <a href="/devices/add.php" class="btn btn-sm btn-primary">
+    <a href="<?= BASE ?>/devices/add.php" class="btn btn-sm btn-primary">
         <i class="bi bi-plus-lg me-1"></i>Adicionar Dispositivo
     </a>
 </div>
@@ -140,7 +140,7 @@ include __DIR__ . '/includes/header.php';
     <div class="card-body text-center py-5 text-muted">
         <i class="bi bi-hdd-network display-4 d-block mb-3 opacity-25"></i>
         <p class="mb-2">Nenhum dispositivo registrado ainda.</p>
-        <a href="/devices/add.php" class="btn btn-primary btn-sm">
+        <a href="<?= BASE ?>/devices/add.php" class="btn btn-primary btn-sm">
             <i class="bi bi-plus-lg me-1"></i>Adicionar primeiro dispositivo
         </a>
     </div>
@@ -219,10 +219,10 @@ include __DIR__ . '/includes/header.php';
                 </div>
 
                 <div class="d-flex gap-2">
-                    <a href="/devices/config_geral.php?device_id=<?= $dev['id'] ?>" class="btn btn-sm btn-primary flex-fill">
+                    <a href="<?= BASE ?>/devices/config_geral.php?device_id=<?= $dev['id'] ?>" class="btn btn-sm btn-primary flex-fill">
                         <i class="bi bi-gear me-1"></i>Configurar
                     </a>
-                    <a href="/devices/view.php?device_id=<?= $dev['id'] ?>" class="btn btn-sm btn-outline-secondary flex-fill">
+                    <a href="<?= BASE ?>/devices/view.php?device_id=<?= $dev['id'] ?>" class="btn btn-sm btn-outline-secondary flex-fill">
                         <i class="bi bi-eye me-1"></i>Detalhes
                     </a>
                 </div>

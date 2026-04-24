@@ -244,7 +244,7 @@ function selectFile(name, editable) {
 
     if (!editable) {
         show('editor-binary');
-        document.getElementById('binary-download').href = '/data/' + encodeURIComponent(name);
+        document.getElementById('binary-download').href = BASE_PATH + '/data/' + encodeURIComponent(name);
         return;
     }
 
@@ -261,7 +261,7 @@ function selectFile(name, editable) {
         editor.setOption('mode', modeMap[ext] || 'text/plain');
     }
 
-    fetch('/api/data_files.php?action=read&file=' + encodeURIComponent(name))
+    fetch(BASE_PATH + '/api/data_files.php?action=read&file=' + encodeURIComponent(name))
         .then(function(r) { return r.json(); })
         .then(function(data) {
             document.getElementById('btn_save').disabled = false;
@@ -284,7 +284,7 @@ function saveFile() {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Salvando...';
     var content = getEditorValue();
 
-    fetch('/api/data_files.php?action=save', {
+    fetch(BASE_PATH + '/api/data_files.php?action=save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file: currentFile, content: content })
@@ -320,7 +320,7 @@ function formatCode() {
 
 function deleteFile(name) {
     if (!confirm(`Excluir "${name}"?\n\nEsta ação não pode ser desfeita.`)) return;
-    fetch('/api/data_files.php?action=delete', {
+    fetch(BASE_PATH + '/api/data_files.php?action=delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file: name })
@@ -357,7 +357,7 @@ function uploadFiles(files) {
 
         const fd = new FormData();
         fd.append('file', file);
-        fetch('/api/data_files.php?action=upload', { method: 'POST', body: fd })
+        fetch(BASE_PATH + '/api/data_files.php?action=upload', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(data => {
                 const status = row.querySelector('span:last-child');

@@ -11,7 +11,7 @@ $device = $stmt->fetch();
 
 if (!$device) {
     set_flash('danger', 'Dispositivo não encontrado.');
-    header('Location: /devices/index.php');
+    header('Location: ' . BASE . '/devices/index.php');
     exit;
 }
 
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $db->prepare('DELETE FROM device_actions WHERE id = ? AND device_id = ?');
         $stmt->execute([$act_id, $device_id]);
         set_flash('success', 'Ação removida com sucesso.');
-        header('Location: /devices/config_acoes.php?device_id=' . $device_id);
+        header('Location: ' . BASE . '/devices/config_acoes.php?device_id=' . $device_id);
         exit;
     }
 
@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 set_flash('danger', 'Erro: já existe uma ação ' . $numero_acao . ' para este pino.');
             }
         }
-        header('Location: /devices/config_acoes.php?device_id=' . $device_id);
+        header('Location: ' . BASE . '/devices/config_acoes.php?device_id=' . $device_id);
         exit;
     }
 }
@@ -133,7 +133,7 @@ include __DIR__ . '/../includes/header.php';
 <?php if (empty($device_pins)): ?>
 <div class="alert alert-warning">
     <i class="bi bi-exclamation-triangle me-2"></i>
-    Nenhum pino configurado para este dispositivo. <a href="/devices/config_pinos.php?device_id=<?= $device_id ?>">Configure pinos</a> antes de adicionar ações.
+    Nenhum pino configurado para este dispositivo. <a href="<?= BASE ?>/devices/config_pinos.php?device_id=<?= $device_id ?>">Configure pinos</a> antes de adicionar ações.
 </div>
 <?php endif; ?>
 
@@ -145,7 +145,7 @@ include __DIR__ . '/../includes/header.php';
         <h6 class="mb-0"><?= $edit_action ? 'Editar Ação' : 'Adicionar Ação' ?></h6>
     </div>
     <div class="card-body">
-        <form method="POST" action="/devices/config_acoes.php?device_id=<?= $device_id ?>">
+        <form method="POST" action="<?= BASE ?>/devices/config_acoes.php?device_id=<?= $device_id ?>">
             <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
             <input type="hidden" name="action" value="save">
             <input type="hidden" name="act_id" value="<?= $edit_action ? $edit_action['id'] : 0 ?>">
@@ -268,7 +268,7 @@ include __DIR__ . '/../includes/header.php';
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check-lg me-1"></i><?= $edit_action ? 'Salvar Alterações' : 'Adicionar Ação' ?>
                 </button>
-                <a href="/devices/config_acoes.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">Cancelar</a>
+                <a href="<?= BASE ?>/devices/config_acoes.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">Cancelar</a>
             </div>
         </form>
     </div>
@@ -350,7 +350,7 @@ include __DIR__ . '/../includes/header.php';
                                    class="btn btn-outline-warning" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <form method="POST" action="/devices/config_acoes.php?device_id=<?= $device_id ?>"
+                                <form method="POST" action="<?= BASE ?>/devices/config_acoes.php?device_id=<?= $device_id ?>"
                                       style="display:inline"
                                       onsubmit="return confirm('Remover esta ação?')">
                                     <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">

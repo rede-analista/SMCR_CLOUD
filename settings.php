@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt  = $db->prepare("UPDATE settings SET value = ? WHERE `key` = 'register_token'");
         $stmt->execute([$token]);
         set_flash('success', 'Token de auto-registro regenerado com sucesso.');
-        header('Location: /settings.php');
+        header('Location: ' . BASE . '/settings.php');
         exit;
     }
 
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$hash, $_SESSION['user_id']]);
             set_flash('success', 'Senha alterada com sucesso.');
         }
-        header('Location: /settings.php');
+        header('Location: ' . BASE . '/settings.php');
         exit;
     }
 
@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 set_flash('success', "Usuário \"{$username}\" criado com sucesso.");
             }
         }
-        header('Location: /settings.php');
+        header('Location: ' . BASE . '/settings.php');
         exit;
     }
 
@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$uid]);
             set_flash('success', 'Usuário excluído.');
         }
-        header('Location: /settings.php');
+        header('Location: ' . BASE . '/settings.php');
         exit;
     }
 
@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
            ->execute([$dashboard_refresh, $dashboard_refresh]);
 
         set_flash('success', 'Configurações de automação salvas.');
-        header('Location: /settings.php');
+        header('Location: ' . BASE . '/settings.php');
         exit;
     }
 }
@@ -168,7 +168,7 @@ include __DIR__ . '/includes/header.php';
                 <p class="small fw-semibold mb-1">Endpoint de registro:</p>
                 <code class="d-block bg-light rounded p-2 small">POST http://smcr.pensenet.com.br/api/register.php</code>
                 <p class="small text-muted mt-2 mb-0">
-                    <a href="/devices/discover.php">Descobrir dispositivos na rede &rarr;</a>
+                    <a href="<?= BASE ?>/devices/discover.php">Descobrir dispositivos na rede &rarr;</a>
                 </p>
             </div>
         </div>

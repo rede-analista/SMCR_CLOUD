@@ -26,12 +26,13 @@ if ($device_id > 0 && $device === null) {
 $page_title = isset($page_title) ? $page_title : 'SMCR Cloud';
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-base="<?= BASE ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= h($page_title) ?> - SMCR Cloud</title>
-    <link rel="icon" href="/data/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="<?= BASE ?>/data/favicon.ico" type="image/x-icon">
+    <script>const BASE_PATH = <?= json_encode(BASE) ?>;</script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
@@ -307,7 +308,7 @@ $page_title = isset($page_title) ? $page_title : 'SMCR Cloud';
 
 <!-- Sidebar -->
 <nav id="sidebar">
-    <a href="/dashboard.php" class="sidebar-brand">
+    <a href="<?= BASE ?>/dashboard.php" class="sidebar-brand">
         <div class="brand-icon">
             <i class="bi bi-cpu-fill"></i>
         </div>
@@ -320,27 +321,27 @@ $page_title = isset($page_title) ? $page_title : 'SMCR Cloud';
     <div class="sidebar-section">
         <div class="sidebar-section-title">Principal</div>
         <nav class="sidebar-nav">
-            <a href="/dashboard.php"
+            <a href="<?= BASE ?>/dashboard.php"
                class="nav-link <?= ($current_script === 'dashboard.php') ? 'active' : '' ?>">
                 <i class="bi bi-grid-1x2-fill"></i>
                 Dashboard
             </a>
-            <a href="/devices/index.php"
+            <a href="<?= BASE ?>/devices/index.php"
                class="nav-link <?= ($current_script === 'index.php' && $current_dir === 'devices') ? 'active' : '' ?>">
                 <i class="bi bi-hdd-network-fill"></i>
                 Dispositivos
             </a>
-            <a href="/devices/add.php"
+            <a href="<?= BASE ?>/devices/add.php"
                class="nav-link <?= ($current_script === 'add.php' && $current_dir === 'devices') ? 'active' : '' ?>">
                 <i class="bi bi-plus-circle-fill"></i>
                 Adicionar Dispositivo
             </a>
-            <a href="/devices/discover.php"
+            <a href="<?= BASE ?>/devices/discover.php"
                class="nav-link <?= ($current_script === 'discover.php') ? 'active' : '' ?>">
                 <i class="bi bi-radar"></i>
                 Descobrir Dispositivos
             </a>
-            <a href="/devices/clone.php"
+            <a href="<?= BASE ?>/devices/clone.php"
                class="nav-link <?= ($current_script === 'clone.php') ? 'active' : '' ?>">
                 <i class="bi bi-copy"></i>
                 Clonar Configuração
@@ -351,12 +352,12 @@ $page_title = isset($page_title) ? $page_title : 'SMCR Cloud';
     <div class="sidebar-section">
         <div class="sidebar-section-title">Sistema</div>
         <nav class="sidebar-nav">
-            <a href="/data_files/index.php"
+            <a href="<?= BASE ?>/data_files/index.php"
                class="nav-link <?= ($current_script === 'index.php' && $current_dir === 'data_files') ? 'active' : '' ?>">
                 <i class="bi bi-folder-fill"></i>
                 Arquivos Data
             </a>
-            <a href="/settings.php"
+            <a href="<?= BASE ?>/settings.php"
                class="nav-link <?= ($current_script === 'settings.php') ? 'active' : '' ?>">
                 <i class="bi bi-sliders"></i>
                 Configurações
@@ -371,37 +372,37 @@ $page_title = isset($page_title) ? $page_title : 'SMCR Cloud';
             <div class="device-name"><i class="bi bi-cpu me-1"></i><?= h($device['name'] ?: $device['unique_id']) ?></div>
         </div>
         <nav class="sidebar-nav sidebar-submenu">
-            <a href="/devices/view.php?device_id=<?= $device_id ?>"
+            <a href="<?= BASE ?>/devices/view.php?device_id=<?= $device_id ?>"
                class="nav-link <?= ($current_script === 'view.php') ? 'active' : '' ?>">
                 <i class="bi bi-info-circle"></i>
                 Visão Geral
             </a>
-            <a href="/devices/config_geral.php?device_id=<?= $device_id ?>"
+            <a href="<?= BASE ?>/devices/config_geral.php?device_id=<?= $device_id ?>"
                class="nav-link <?= ($current_script === 'config_geral.php') ? 'active' : '' ?>">
                 <i class="bi bi-gear-fill"></i>
                 Config. Geral
             </a>
-            <a href="/devices/config_pinos.php?device_id=<?= $device_id ?>"
+            <a href="<?= BASE ?>/devices/config_pinos.php?device_id=<?= $device_id ?>"
                class="nav-link <?= ($current_script === 'config_pinos.php') ? 'active' : '' ?>">
                 <i class="bi bi-diagram-3-fill"></i>
                 Pinos
             </a>
-            <a href="/devices/config_acoes.php?device_id=<?= $device_id ?>"
+            <a href="<?= BASE ?>/devices/config_acoes.php?device_id=<?= $device_id ?>"
                class="nav-link <?= ($current_script === 'config_acoes.php') ? 'active' : '' ?>">
                 <i class="bi bi-lightning-fill"></i>
                 Ações
             </a>
-            <a href="/devices/config_mqtt.php?device_id=<?= $device_id ?>"
+            <a href="<?= BASE ?>/devices/config_mqtt.php?device_id=<?= $device_id ?>"
                class="nav-link <?= ($current_script === 'config_mqtt.php') ? 'active' : '' ?>">
                 <i class="bi bi-broadcast"></i>
                 MQTT
             </a>
-            <a href="/devices/config_intermod.php?device_id=<?= $device_id ?>"
+            <a href="<?= BASE ?>/devices/config_intermod.php?device_id=<?= $device_id ?>"
                class="nav-link <?= ($current_script === 'config_intermod.php') ? 'active' : '' ?>">
                 <i class="bi bi-share-fill"></i>
                 Inter-Módulos
             </a>
-            <a href="/devices/config_telegram.php?device_id=<?= $device_id ?>"
+            <a href="<?= BASE ?>/devices/config_telegram.php?device_id=<?= $device_id ?>"
                class="nav-link <?= ($current_script === 'config_telegram.php') ? 'active' : '' ?>">
                 <i class="bi bi-telegram"></i>
                 Telegram
@@ -412,7 +413,7 @@ $page_title = isset($page_title) ? $page_title : 'SMCR Cloud';
 
     <div class="sidebar-section mt-auto" style="position:absolute;bottom:0;width:100%;padding-bottom:1rem;background:var(--sidebar-bg);">
         <nav class="sidebar-nav">
-            <a href="/logout.php" class="nav-link text-danger">
+            <a href="<?= BASE ?>/logout.php" class="nav-link text-danger">
                 <i class="bi bi-box-arrow-left"></i>
                 Sair
             </a>
@@ -430,7 +431,7 @@ $page_title = isset($page_title) ? $page_title : 'SMCR Cloud';
 
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/dashboard.php"><i class="bi bi-house-fill"></i></a></li>
+                <li class="breadcrumb-item"><a href="<?= BASE ?>/dashboard.php"><i class="bi bi-house-fill"></i></a></li>
                 <?php if (isset($breadcrumb) && is_array($breadcrumb)): ?>
                     <?php foreach ($breadcrumb as $bc): ?>
                         <?php if (isset($bc['url'])): ?>
@@ -451,7 +452,7 @@ $page_title = isset($page_title) ? $page_title : 'SMCR Cloud';
                 <div class="avatar"><?= strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)) ?></div>
                 <span><?= h($_SESSION['username'] ?? '') ?></span>
             </div>
-            <a href="/logout.php" class="btn btn-sm btn-outline-danger" title="Sair">
+            <a href="<?= BASE ?>/logout.php" class="btn btn-sm btn-outline-danger" title="Sair">
                 <i class="bi bi-box-arrow-right"></i>
             </a>
             <?php endif; ?>

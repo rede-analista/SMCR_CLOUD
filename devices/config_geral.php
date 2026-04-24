@@ -11,7 +11,7 @@ $device = $stmt->fetch();
 
 if (!$device) {
     set_flash('danger', 'Dispositivo não encontrado.');
-    header('Location: /devices/index.php');
+    header('Location: ' . BASE . '/devices/index.php');
     exit;
 }
 
@@ -125,7 +125,7 @@ include __DIR__ . '/../includes/header.php';
     <span class="text-muted small"><?= h($device['name'] ?: $device['unique_id']) ?></span>
 </div>
 
-<form method="POST" action="/devices/config_geral.php?device_id=<?= $device_id ?>">
+<form method="POST" action="<?= BASE ?>/devices/config_geral.php?device_id=<?= $device_id ?>">
     <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
 
     <div class="card">
@@ -515,7 +515,7 @@ include __DIR__ . '/../includes/header.php';
             <button type="submit" class="btn btn-primary">
                 <i class="bi bi-check-lg me-1"></i>Salvar Configurações
             </button>
-            <a href="/devices/view.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">Cancelar</a>
+            <a href="<?= BASE ?>/devices/view.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">Cancelar</a>
         </div>
     </div><!-- /.card -->
 </form>

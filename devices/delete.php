@@ -11,7 +11,7 @@ $device = $stmt->fetch();
 
 if (!$device) {
     set_flash('danger', 'Dispositivo não encontrado.');
-    header('Location: /devices/index.php');
+    header('Location: ' . BASE . '/devices/index.php');
     exit;
 }
 
@@ -32,10 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$device_id]);
 
         set_flash('success', 'Dispositivo "' . $device['unique_id'] . '" excluído com sucesso.');
-        header('Location: /devices/index.php');
+        header('Location: ' . BASE . '/devices/index.php');
         exit;
     } else {
-        header('Location: /devices/index.php');
+        header('Location: ' . BASE . '/devices/index.php');
         exit;
     }
 }
@@ -89,13 +89,13 @@ include __DIR__ . '/../includes/header.php';
                     inter-módulos, Telegram e todos os status registrados.
                 </p>
 
-                <form method="POST" action="/devices/delete.php?device_id=<?= $device_id ?>">
+                <form method="POST" action="<?= BASE ?>/devices/delete.php?device_id=<?= $device_id ?>">
                     <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
                     <div class="d-flex gap-2">
                         <button type="submit" name="confirm_delete" value="1" class="btn btn-danger">
                             <i class="bi bi-trash-fill me-1"></i>Sim, excluir definitivamente
                         </button>
-                        <a href="/devices/view.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">
+                        <a href="<?= BASE ?>/devices/view.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">
                             Cancelar
                         </a>
                     </div>

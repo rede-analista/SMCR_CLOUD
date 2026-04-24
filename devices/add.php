@@ -249,7 +249,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $msg = $import_mode ? "Dispositivo \"$unique_id\" importado com sucesso!" : "Dispositivo \"$unique_id\" cadastrado com sucesso!";
             set_flash('success', $msg);
-            header('Location: /devices/view.php?device_id=' . $device_id);
+            header('Location: ' . BASE . '/devices/view.php?device_id=' . $device_id);
             exit;
         } catch (Exception $e) {
             $db->rollBack();
@@ -294,7 +294,7 @@ include __DIR__ . '/../includes/header.php';
                 </ul>
             </div>
             <div class="card-body">
-                <form method="POST" action="/devices/add.php" enctype="multipart/form-data" id="addForm">
+                <form method="POST" action="<?= BASE ?>/devices/add.php" enctype="multipart/form-data" id="addForm">
                     <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
 
                     <!-- === MANUAL === -->
@@ -320,7 +320,7 @@ include __DIR__ . '/../includes/header.php';
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-check-lg me-1"></i>Cadastrar Dispositivo
                             </button>
-                            <a href="/devices/index.php" class="btn btn-outline-secondary">Cancelar</a>
+                            <a href="<?= BASE ?>/devices/index.php" class="btn btn-outline-secondary">Cancelar</a>
                         </div>
                     </div>
 
@@ -359,7 +359,7 @@ include __DIR__ . '/../includes/header.php';
                             <button type="submit" class="btn btn-primary" id="btn-import-submit" disabled>
                                 <i class="bi bi-upload me-1"></i>Importar e Cadastrar
                             </button>
-                            <a href="/devices/index.php" class="btn btn-outline-secondary">Cancelar</a>
+                            <a href="<?= BASE ?>/devices/index.php" class="btn btn-outline-secondary">Cancelar</a>
                         </div>
                     </div>
                 </form>

@@ -50,7 +50,7 @@ include __DIR__ . '/../includes/header.php';
         <p class="text-muted small mb-0"><?= count($devices) ?> dispositivo(s) registrado(s)</p>
     </div>
     <div class="d-flex gap-2 flex-wrap justify-content-end">
-        <a href="/devices/add.php" class="btn btn-primary">
+        <a href="<?= BASE ?>/devices/add.php" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i>Adicionar Dispositivo
         </a>
         <button id="btn_ota_all" class="btn btn-outline-info" onclick="setAllOta()" <?= empty($devices) ? 'disabled' : '' ?>>
@@ -68,7 +68,7 @@ include __DIR__ . '/../includes/header.php';
         <div class="text-center py-5 text-muted">
             <i class="bi bi-hdd-network display-4 d-block mb-3 opacity-25"></i>
             <p class="mb-2">Nenhum dispositivo registrado.</p>
-            <a href="/devices/add.php" class="btn btn-primary btn-sm">
+            <a href="<?= BASE ?>/devices/add.php" class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-lg me-1"></i>Adicionar primeiro dispositivo
             </a>
         </div>
@@ -90,7 +90,7 @@ include __DIR__ . '/../includes/header.php';
                     <?php foreach ($devices as $dev): ?>
                     <tr>
                         <td>
-                            <a href="/devices/view.php?device_id=<?= $dev['id'] ?>" class="text-decoration-none fw-semibold">
+                            <a href="<?= BASE ?>/devices/view.php?device_id=<?= $dev['id'] ?>" class="text-decoration-none fw-semibold">
                                 <?= h($dev['name'] ?: '(sem nome)') ?>
                             </a>
                         </td>
@@ -132,15 +132,15 @@ include __DIR__ . '/../includes/header.php';
                         <td class="small text-muted"><?= $dev['ativo'] ? relative_time((int)$dev['last_seen_unix']) : '—' ?></td>
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
-                                <a href="/devices/config_geral.php?device_id=<?= $dev['id'] ?>"
+                                <a href="<?= BASE ?>/devices/config_geral.php?device_id=<?= $dev['id'] ?>"
                                    class="btn btn-outline-primary" title="Configurar">
                                     <i class="bi bi-gear"></i>
                                 </a>
-                                <a href="/devices/edit.php?device_id=<?= $dev['id'] ?>"
+                                <a href="<?= BASE ?>/devices/edit.php?device_id=<?= $dev['id'] ?>"
                                    class="btn btn-outline-secondary" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <a href="/devices/view.php?device_id=<?= $dev['id'] ?>"
+                                <a href="<?= BASE ?>/devices/view.php?device_id=<?= $dev['id'] ?>"
                                    class="btn btn-outline-info" title="Visualizar">
                                     <i class="bi bi-eye"></i>
                                 </a>
@@ -149,7 +149,7 @@ include __DIR__ . '/../includes/header.php';
                                         title="<?= $dev['ativo'] ? 'Desativar dispositivo' : 'Ativar dispositivo' ?>">
                                     <i class="bi <?= $dev['ativo'] ? 'bi-pause-circle' : 'bi-play-circle' ?>"></i>
                                 </button>
-                                <a href="/devices/delete.php?device_id=<?= $dev['id'] ?>"
+                                <a href="<?= BASE ?>/devices/delete.php?device_id=<?= $dev['id'] ?>"
                                    class="btn btn-outline-danger" title="Excluir">
                                     <i class="bi bi-trash"></i>
                                 </a>
@@ -170,7 +170,7 @@ function toggleAtivo(deviceId, btn) {
     const msg = ativando ? 'Ativar este dispositivo?' : 'Desativar este dispositivo? Ele não receberá sync nem será monitorado.';
     if (!confirm(msg)) return;
     btn.disabled = true;
-    fetch('/api/toggle_device_active.php', {
+    fetch(BASE_PATH + '/api/toggle_device_active.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ device_id: deviceId })
@@ -188,7 +188,7 @@ function setAllOta() {
     const btn = document.getElementById('btn_ota_all');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Agendando...';
-    fetch('/api/set_ota_all.php', { method: 'POST' })
+    fetch(BASE_PATH + '/api/set_ota_all.php', { method: 'POST' })
         .then(r => r.json())
         .then(data => {
             btn.disabled = false;
@@ -205,7 +205,7 @@ function setAllReboot() {
     const btn = document.getElementById('btn_reboot_all');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Agendando...';
-    fetch('/api/set_reboot_all.php', { method: 'POST' })
+    fetch(BASE_PATH + '/api/set_reboot_all.php', { method: 'POST' })
         .then(r => r.json())
         .then(data => {
             btn.disabled = false;

@@ -33,7 +33,7 @@ if ($last_run) {
 echo '[' . date('Y-m-d H:i:s') . '] Iniciando...' . PHP_EOL;
 
 // ─── Descobre dispositivos SMCR via mDNS ───
-$mdns_output = shell_exec('avahi-browse -t -r -p _http._tcp 2>/dev/null');
+$mdns_output = shell_exec('python3 /var/www/html/scripts/mdns_scan.py 2>/dev/null');
 $mdns_found  = [];
 
 if ($mdns_output) {

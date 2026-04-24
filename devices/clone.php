@@ -231,10 +231,10 @@ include __DIR__ . '/../includes/header.php';
         </div>
         <?php endforeach; ?>
         <div class="d-flex gap-2 mt-2">
-            <a href="/devices/clone.php" class="btn btn-primary btn-sm">
+            <a href="<?= BASE ?>/devices/clone.php" class="btn btn-primary btn-sm">
                 <i class="bi bi-arrow-repeat me-1"></i>Nova Clonagem
             </a>
-            <a href="/devices/index.php" class="btn btn-outline-secondary btn-sm">
+            <a href="<?= BASE ?>/devices/index.php" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-list me-1"></i>Ver Dispositivos
             </a>
         </div>

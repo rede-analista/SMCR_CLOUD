@@ -11,7 +11,7 @@ $device = $stmt->fetch();
 
 if (!$device) {
     set_flash('danger', 'Dispositivo não encontrado.');
-    header('Location: /devices/index.php');
+    header('Location: ' . BASE . '/devices/index.php');
     exit;
 }
 
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $db->prepare('DELETE FROM device_pins WHERE id = ? AND device_id = ?');
         $stmt->execute([$pin_id, $device_id]);
         set_flash('success', 'Pino removido com sucesso.');
-        header('Location: /devices/config_pinos.php?device_id=' . $device_id);
+        header('Location: ' . BASE . '/devices/config_pinos.php?device_id=' . $device_id);
         exit;
     }
 
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 set_flash('danger', 'Erro: pino ' . $pino . ' já está cadastrado para este dispositivo.');
             }
         }
-        header('Location: /devices/config_pinos.php?device_id=' . $device_id);
+        header('Location: ' . BASE . '/devices/config_pinos.php?device_id=' . $device_id);
         exit;
     }
 }
@@ -133,7 +133,7 @@ include __DIR__ . '/../includes/header.php';
         <h6 class="mb-0"><?= $edit_pin ? 'Editar Pino' : 'Adicionar Pino' ?></h6>
     </div>
     <div class="card-body">
-        <form method="POST" action="/devices/config_pinos.php?device_id=<?= $device_id ?>">
+        <form method="POST" action="<?= BASE ?>/devices/config_pinos.php?device_id=<?= $device_id ?>">
             <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
             <input type="hidden" name="action" value="save">
             <input type="hidden" name="pin_id" value="<?= $edit_pin ? $edit_pin['id'] : 0 ?>">
@@ -214,7 +214,7 @@ include __DIR__ . '/../includes/header.php';
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check-lg me-1"></i><?= $edit_pin ? 'Salvar Alterações' : 'Adicionar Pino' ?>
                 </button>
-                <a href="/devices/config_pinos.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">Cancelar</a>
+                <a href="<?= BASE ?>/devices/config_pinos.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">Cancelar</a>
             </div>
         </form>
     </div>
@@ -279,7 +279,7 @@ include __DIR__ . '/../includes/header.php';
                                    class="btn btn-outline-warning" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <form method="POST" action="/devices/config_pinos.php?device_id=<?= $device_id ?>"
+                                <form method="POST" action="<?= BASE ?>/devices/config_pinos.php?device_id=<?= $device_id ?>"
                                       style="display:inline"
                                       onsubmit="return confirm('Remover GPIO <?= $pin['pino'] ?> (<?= h(addslashes($pin['nome'])) ?>)?')">
                                     <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">

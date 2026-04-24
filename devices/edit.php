@@ -11,7 +11,7 @@ $device = $stmt->fetch();
 
 if (!$device) {
     set_flash('danger', 'Dispositivo não encontrado.');
-    header('Location: /devices/index.php');
+    header('Location: ' . BASE . '/devices/index.php');
     exit;
 }
 
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute([$name, $device_id]);
 
     set_flash('success', 'Nome do dispositivo atualizado com sucesso.');
-    header('Location: /devices/view.php?device_id=' . $device_id);
+    header('Location: ' . BASE . '/devices/view.php?device_id=' . $device_id);
     exit;
 }
 
@@ -47,7 +47,7 @@ include __DIR__ . '/../includes/header.php';
                 <h5 class="mb-0">Editar Dispositivo</h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="/devices/edit.php?device_id=<?= $device_id ?>">
+                <form method="POST" action="<?= BASE ?>/devices/edit.php?device_id=<?= $device_id ?>">
                     <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
 
                     <div class="mb-3">
@@ -68,7 +68,7 @@ include __DIR__ . '/../includes/header.php';
                         <button type="submit" class="btn btn-warning">
                             <i class="bi bi-check-lg me-1"></i>Salvar Alterações
                         </button>
-                        <a href="/devices/view.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">Cancelar</a>
+                        <a href="<?= BASE ?>/devices/view.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">Cancelar</a>
                     </div>
                 </form>
             </div>

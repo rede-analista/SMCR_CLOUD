@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
  */
 function discover_via_mdns(): array {
     // -t = termina após listar tudo, -r = resolve (mostra IP/porta/TXT), -p = formato parseável
-    $output = shell_exec('avahi-browse -t -r -p _http._tcp 2>/dev/null');
+    $output = shell_exec('python3 /var/www/html/scripts/mdns_scan.py 2>/dev/null');
     if ($output === null || $output === '') {
         return [];
     }

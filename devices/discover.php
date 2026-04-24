@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quick_register'])) {
             $stmt->execute([$device_id, $ip, $hostname]);
             $db->commit();
             set_flash('success', "Dispositivo \"{$name}\" cadastrado com sucesso!");
-            header('Location: /devices/view.php?device_id=' . $device_id);
+            header('Location: ' . BASE . '/devices/view.php?device_id=' . $device_id);
             exit;
         } else {
             set_flash('danger', "Dispositivo com ID \"{$unique_id}\" já está cadastrado.");
@@ -148,7 +148,7 @@ include __DIR__ . '/../includes/header.php';
                         <button class="btn btn-outline-secondary" onclick="copyText(this, document.getElementById('reg_token_field').value)">
                             <i class="bi bi-clipboard"></i>
                         </button>
-                        <a href="/settings.php" class="btn btn-outline-warning" title="Gerenciar token">
+                        <a href="<?= BASE ?>/settings.php" class="btn btn-outline-warning" title="Gerenciar token">
                             <i class="bi bi-sliders"></i>
                         </a>
                     </div>
@@ -187,7 +187,7 @@ version     = 2.1.2</pre>
 </div>
 
 <!-- Quick-register form -->
-<form method="POST" action="/devices/discover.php" id="quick_register_form">
+<form method="POST" action="<?= BASE ?>/devices/discover.php" id="quick_register_form">
     <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
     <input type="hidden" name="quick_register" value="1">
     <input type="hidden" name="unique_id" id="qr_unique_id">
@@ -259,7 +259,7 @@ document.getElementById('btn_mdns').addEventListener('click', function () {
     progress.classList.remove('d-none');
     results.classList.add('d-none');
 
-    fetch('/api/mdns_scan.php', { method: 'POST' })
+    fetch(BASE_PATH + '/api/mdns_scan.php', { method: 'POST' })
         .then(r => r.json())
         .then(data => {
             progress.classList.add('d-none');
@@ -294,7 +294,7 @@ document.getElementById('btn_scan').addEventListener('click', function () {
     results.classList.add('d-none');
     document.getElementById('scan_status').textContent = `Varrendo ${ip_range}:${port}...`;
 
-    fetch('/api/scan.php', {
+    fetch(BASE_PATH + '/api/scan.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ip_range, port }),

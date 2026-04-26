@@ -387,15 +387,36 @@
                                 <label for="telegram">📱 Notificar Telegram</label>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <div class="checkbox-group">
                                 <input type="checkbox" id="assistente" name="assistente">
                                 <label for="assistente">🎤 Notificar Assistente</label>
                             </div>
                         </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="agendamento_hab" onchange="toggleAgendamento(this.checked)">
+                                <label for="agendamento_hab">⏰ Agendar por horário</label>
+                            </div>
+                        </div>
                     </div>
-                    
+
+                    <div id="agendamentoGroup" style="display:none">
+                        <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="form-group">
+                                <label for="hora_agendada">Hora (0-23)</label>
+                                <input type="number" id="hora_agendada" name="hora_agendada" min="0" max="23" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="minuto_agendado">Minuto (0-59)</label>
+                                <input type="number" id="minuto_agendado" name="minuto_agendado" min="0" max="59" value="0">
+                            </div>
+                        </div>
+                        <p style="font-size:0.8rem;color:#888;margin:0 0 8px">Requer NTP sincronizado. A ação dispara uma vez por minuto no horário configurado, independente do pino de origem.</p>
+                    </div>
+
                     <div class="button-group">
                         <button type="submit" class="btn-primary">Salvar Ação</button>
                         <button type="button" class="btn-secondary" onclick="resetForm()">Limpar</button>
@@ -409,6 +430,15 @@
                 <div id="actionsTableContainer">
                     <div class="loading">Carregando ações...</div>
                 </div>
+            </div>
+
+            <!-- Histórico de Acionamentos -->
+            <div class="section">
+                <h2 class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+                    Histórico de Acionamentos
+                    <button class="btn-secondary" style="font-size:0.8rem;padding:4px 10px" onclick="loadHistory()">↻ Atualizar</button>
+                </h2>
+                <div id="historyContainer"><p style="color:#888;font-size:0.9rem">Clique em Atualizar para carregar o histórico.</p></div>
             </div>
         </div>
     </div>
@@ -567,6 +597,7 @@
                             <div class="notification-icons">
                                 ${action.telegram ? '<span class="icon icon-telegram" title="Telegram">T</span>' : ''}
                                 ${action.assistente ? '<span class="icon icon-assistente" title="Assistente">A</span>' : ''}
+                                ${action.hora_agendada !== undefined && action.hora_agendada !== 255 ? `<span class="icon" title="Agendado ${String(action.hora_agendada).padStart(2,'0')}:${String(action.minuto_agendado).padStart(2,'0')}" style="background:#6f42c1;color:#fff">⏰</span>` : ''}
                                 ${action.mqtt ? '<span class="icon icon-mqtt" title="MQTT">M</span>' : ''}
                             </div>
                         </td>
@@ -620,14 +651,41 @@
             }
         }
         
+        function toggleAgendamento(show) {
+            document.getElementById('agendamentoGroup').style.display = show ? 'block' : 'none';
+        }
+
+        const ACTION_NAMES = {1:'LIGA', 2:'LIGA DELAY', 3:'PISCA', 4:'PULSO', 5:'PULSO DELAY ON'};
+
+        async function loadHistory() {
+            const el = document.getElementById('historyContainer');
+            el.innerHTML = '<p style="color:#888;font-size:0.9rem">Carregando...</p>';
+            try {
+                const res = await fetch('/api/history');
+                const data = await res.json();
+                if (!Array.isArray(data) || data.length === 0) {
+                    el.innerHTML = '<p style="color:#888;font-size:0.9rem">Nenhum acionamento registrado.</p>';
+                    return;
+                }
+                const rows = [...data].reverse().map(e =>
+                    `<tr><td>${e.ts || '—'}</td><td>${ACTION_NAMES[e.tipo] || 'TIPO '+e.tipo}</td><td>${e.gpio}</td></tr>`
+                ).join('');
+                el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+                    <thead><tr style="background:#f5f5f5"><th style="padding:6px;text-align:left">Horário</th><th style="padding:6px;text-align:left">Tipo</th><th style="padding:6px;text-align:left">GPIO</th></tr></thead>
+                    <tbody>${rows}</tbody></table>`;
+            } catch(e) {
+                el.innerHTML = '<p style="color:red;font-size:0.9rem">Erro ao carregar histórico.</p>';
+            }
+        }
+
         // Configurar envio do formulário
         function setupFormSubmit() {
             document.getElementById('actionForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
-                
+
                 const formData = new FormData(this);
                 const params = new URLSearchParams();
-                
+
                 formData.forEach((value, key) => {
                     if (key === 'telegram' || key === 'assistente' || key === 'mqtt') {
                         params.append(key, document.getElementById(key).checked);
@@ -635,6 +693,11 @@
                         params.append(key, value);
                     }
                 });
+
+                // Agendamento: se não habilitado, envia 255 para desabilitar
+                const agendHab = document.getElementById('agendamento_hab').checked;
+                params.set('hora_agendada', agendHab ? document.getElementById('hora_agendada').value : '255');
+                params.set('minuto_agendado', agendHab ? document.getElementById('minuto_agendado').value : '0');
                 
                 // Força inclusão de campos disabled quando em modo de edição
                 const pinoOrigemDisabled = document.getElementById('pino_origem').disabled;
@@ -695,7 +758,15 @@
             document.getElementById('envia_modulo').value = action.envia_modulo;
             document.getElementById('telegram').checked = action.telegram;
             document.getElementById('assistente').checked = action.assistente;
-            
+
+            const agendHab = action.hora_agendada !== undefined && action.hora_agendada !== 255;
+            document.getElementById('agendamento_hab').checked = agendHab;
+            toggleAgendamento(agendHab);
+            if (agendHab) {
+                document.getElementById('hora_agendada').value = action.hora_agendada;
+                document.getElementById('minuto_agendado').value = action.minuto_agendado;
+            }
+
             // Desabilitar campos de identificação durante edição
             document.getElementById('pino_origem').disabled = true;
             document.getElementById('numero_acao').disabled = true;
@@ -739,6 +810,8 @@
             document.getElementById('edit_numero_acao').value = '';
             document.getElementById('pino_origem').disabled = false;
             document.getElementById('numero_acao').disabled = false;
+            document.getElementById('agendamento_hab').checked = false;
+            toggleAgendamento(false);
             editMode = false;
             editingOrigin = null;
             editingNumber = null;

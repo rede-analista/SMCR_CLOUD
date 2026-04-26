@@ -207,6 +207,7 @@
                 <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
                     <a href="/serial" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Web Serial</a>
                     <a href="/reset" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Reset</a>
+                    <a href="/historico" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Histórico de Ações</a>
                 </div>
             </details>
         </nav>
@@ -315,7 +316,8 @@
                     <tr><td>Usar HTTPS:</td><td><select name="cloud_use_https" id="cloud_use_https"><option value="0">Não (HTTP)</option><option value="1">Sim (HTTPS)</option></select></td></tr>
                     <tr><td>Sync com Cloud Habilitado:</td><td><select name="cloud_sync_enabled" id="cloud_sync_enabled"><option value="0">Desabilitado</option><option value="1">Habilitado</option></select></td></tr>
                     <tr><td>Intervalo de Sync (minutos):</td><td><input type="number" name="cloud_sync_interval_min" id="cloud_sync_interval_min" min="1" max="1440" value="5"></td></tr>
-                    <tr><td>Token API:</td><td><input type="password" name="cloud_api_token" id="cloud_api_token" maxlength="128" placeholder="Deixe em branco para manter atual"></td></tr>
+                    <tr><td>Token de Registro:</td><td><input type="password" name="cloud_register_token" id="cloud_register_token" maxlength="64" placeholder="Token de auto-registro (Configurações do Cloud)"><small style="color:#888;display:block;margin-top:3px">Cole o token exibido em Configurações no Cloud/HA. O ESP32 se registra automaticamente e obtém o Token API.</small></td></tr>
+                    <tr><td>Token API:</td><td><input type="password" name="cloud_api_token" id="cloud_api_token" maxlength="128" placeholder="Deixe em branco para manter atual"><small style="color:#888;display:block;margin-top:3px">Preenchido automaticamente após o auto-registro. Só altere manualmente se necessário.</small></td></tr>
                     <tr><td>Heartbeat para Cloud:</td><td><select name="cloud_heartbeat_enabled" id="cloud_heartbeat_enabled"><option value="0">Desabilitado</option><option value="1">Habilitado</option></select></td></tr>
                     <tr><td>Intervalo do Heartbeat (minutos):</td><td><input type="number" name="cloud_heartbeat_interval_min" id="cloud_heartbeat_interval_min" min="1" max="60" value="2"></td></tr>
                 </table>
@@ -415,6 +417,7 @@
                     document.getElementById('cloud_use_https').value = data.cloud_use_https ? '1' : '0';
                     document.getElementById('cloud_sync_enabled').value = data.cloud_sync_enabled ? '1' : '0';
                     document.getElementById('cloud_sync_interval_min').value = data.cloud_sync_interval_min || 5;
+                    document.getElementById('cloud_register_token').value = data.cloud_register_token || '';
                     document.getElementById('cloud_heartbeat_enabled').value = data.cloud_heartbeat_enabled ? '1' : '0';
                     document.getElementById('cloud_heartbeat_interval_min').value = data.cloud_heartbeat_interval_min || 2;
 

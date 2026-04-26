@@ -306,6 +306,7 @@
                 <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
                     <a href="/serial" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Web Serial</a>
                     <a href="/reset" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Reset</a>
+                    <a href="/historico" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Histórico de Ações</a>
                 </div>
             </details>
         </nav>
@@ -404,7 +405,7 @@
                     </div>
 
                     <div id="agendamentoGroup" style="display:none">
-                        <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
                             <div class="form-group">
                                 <label for="hora_agendada">Hora (0-23)</label>
                                 <input type="number" id="hora_agendada" name="hora_agendada" min="0" max="23" value="0">
@@ -413,8 +414,12 @@
                                 <label for="minuto_agendado">Minuto (0-59)</label>
                                 <input type="number" id="minuto_agendado" name="minuto_agendado" min="0" max="59" value="0">
                             </div>
+                            <div class="form-group">
+                                <label for="duracao_agendada_s">Duração (seg, 0=indefinida)</label>
+                                <input type="number" id="duracao_agendada_s" name="duracao_agendada_s" min="0" max="65535" value="0">
+                            </div>
                         </div>
-                        <p style="font-size:0.8rem;color:#888;margin:0 0 8px">Requer NTP sincronizado. A ação dispara uma vez por minuto no horário configurado, independente do pino de origem.</p>
+                        <p style="font-size:0.8rem;color:#888;margin:0 0 8px">Requer NTP. Dispara independente do pino de origem. Duração 0 = fica ativo até reiniciar.</p>
                     </div>
 
                     <div class="button-group">
@@ -430,15 +435,6 @@
                 <div id="actionsTableContainer">
                     <div class="loading">Carregando ações...</div>
                 </div>
-            </div>
-
-            <!-- Histórico de Acionamentos -->
-            <div class="section">
-                <h2 class="section-title" style="display:flex;justify-content:space-between;align-items:center">
-                    Histórico de Acionamentos
-                    <button class="btn-secondary" style="font-size:0.8rem;padding:4px 10px" onclick="loadHistory()">↻ Atualizar</button>
-                </h2>
-                <div id="historyContainer"><p style="color:#888;font-size:0.9rem">Clique em Atualizar para carregar o histórico.</p></div>
             </div>
         </div>
     </div>
@@ -657,27 +653,6 @@
 
         const ACTION_NAMES = {1:'LIGA', 2:'LIGA DELAY', 3:'PISCA', 4:'PULSO', 5:'PULSO DELAY ON'};
 
-        async function loadHistory() {
-            const el = document.getElementById('historyContainer');
-            el.innerHTML = '<p style="color:#888;font-size:0.9rem">Carregando...</p>';
-            try {
-                const res = await fetch('/api/history');
-                const data = await res.json();
-                if (!Array.isArray(data) || data.length === 0) {
-                    el.innerHTML = '<p style="color:#888;font-size:0.9rem">Nenhum acionamento registrado.</p>';
-                    return;
-                }
-                const rows = [...data].reverse().map(e =>
-                    `<tr><td>${e.ts || '—'}</td><td>${ACTION_NAMES[e.tipo] || 'TIPO '+e.tipo}</td><td>${e.gpio}</td></tr>`
-                ).join('');
-                el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:0.85rem">
-                    <thead><tr style="background:#f5f5f5"><th style="padding:6px;text-align:left">Horário</th><th style="padding:6px;text-align:left">Tipo</th><th style="padding:6px;text-align:left">GPIO</th></tr></thead>
-                    <tbody>${rows}</tbody></table>`;
-            } catch(e) {
-                el.innerHTML = '<p style="color:red;font-size:0.9rem">Erro ao carregar histórico.</p>';
-            }
-        }
-
         // Configurar envio do formulário
         function setupFormSubmit() {
             document.getElementById('actionForm').addEventListener('submit', async function(e) {
@@ -698,6 +673,7 @@
                 const agendHab = document.getElementById('agendamento_hab').checked;
                 params.set('hora_agendada', agendHab ? document.getElementById('hora_agendada').value : '255');
                 params.set('minuto_agendado', agendHab ? document.getElementById('minuto_agendado').value : '0');
+                params.set('duracao_agendada_s', agendHab ? document.getElementById('duracao_agendada_s').value : '0');
                 
                 // Força inclusão de campos disabled quando em modo de edição
                 const pinoOrigemDisabled = document.getElementById('pino_origem').disabled;
@@ -765,6 +741,7 @@
             if (agendHab) {
                 document.getElementById('hora_agendada').value = action.hora_agendada;
                 document.getElementById('minuto_agendado').value = action.minuto_agendado;
+                document.getElementById('duracao_agendada_s').value = action.duracao_agendada_s || 0;
             }
 
             // Desabilitar campos de identificação durante edição
@@ -811,6 +788,9 @@
             document.getElementById('pino_origem').disabled = false;
             document.getElementById('numero_acao').disabled = false;
             document.getElementById('agendamento_hab').checked = false;
+            document.getElementById('hora_agendada').value = '0';
+            document.getElementById('minuto_agendado').value = '0';
+            document.getElementById('duracao_agendada_s').value = '0';
             toggleAgendamento(false);
             editMode = false;
             editingOrigin = null;

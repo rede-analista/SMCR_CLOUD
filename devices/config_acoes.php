@@ -58,26 +58,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pino_destino = (int)($_POST['pino_destino'] ?? 0);
         $tempo_on     = (int)($_POST['tempo_on'] ?? 0);
         $tempo_off    = (int)($_POST['tempo_off'] ?? 0);
-        $pino_remoto  = (int)($_POST['pino_remoto'] ?? 0);
-        $envia_modulo = trim($_POST['envia_modulo'] ?? '');
-        $telegram_chk = isset($_POST['telegram']) ? 1 : 0;
-        $assistente   = isset($_POST['assistente']) ? 1 : 0;
+        $pino_remoto       = (int)($_POST['pino_remoto'] ?? 0);
+        $envia_modulo      = trim($_POST['envia_modulo'] ?? '');
+        $telegram_chk      = isset($_POST['telegram']) ? 1 : 0;
+        $assistente        = isset($_POST['assistente']) ? 1 : 0;
+        $agendar           = isset($_POST['agendar_horario']) ? 1 : 0;
+        $hora_agendada     = $agendar ? (int)($_POST['hora_agendada'] ?? 0) : 255;
+        $minuto_agendado   = $agendar ? (int)($_POST['minuto_agendado'] ?? 0) : 0;
+        $duracao_agendada_s= (int)($_POST['duracao_agendada_s'] ?? 0);
 
         if ($act_id > 0) {
             $stmt = $db->prepare('UPDATE device_actions SET pino_origem=?, numero_acao=?, acao=?,
                 pino_destino=?, tempo_on=?, tempo_off=?, pino_remoto=?, envia_modulo=?,
-                telegram=?, assistente=? WHERE id=? AND device_id=?');
+                telegram=?, assistente=?, hora_agendada=?, minuto_agendado=?, duracao_agendada_s=?
+                WHERE id=? AND device_id=?');
             $stmt->execute([$pino_origem, $numero_acao, $acao, $pino_destino, $tempo_on, $tempo_off,
-                $pino_remoto, $envia_modulo, $telegram_chk, $assistente, $act_id, $device_id]);
+                $pino_remoto, $envia_modulo, $telegram_chk, $assistente,
+                $hora_agendada, $minuto_agendado, $duracao_agendada_s, $act_id, $device_id]);
             set_flash('success', 'Ação atualizada com sucesso.');
         } else {
             try {
                 $stmt = $db->prepare('INSERT INTO device_actions
                     (device_id, pino_origem, numero_acao, acao, pino_destino, tempo_on, tempo_off,
-                     pino_remoto, envia_modulo, telegram, assistente)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+                     pino_remoto, envia_modulo, telegram, assistente,
+                     hora_agendada, minuto_agendado, duracao_agendada_s)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
                 $stmt->execute([$device_id, $pino_origem, $numero_acao, $acao, $pino_destino,
-                    $tempo_on, $tempo_off, $pino_remoto, $envia_modulo, $telegram_chk, $assistente]);
+                    $tempo_on, $tempo_off, $pino_remoto, $envia_modulo, $telegram_chk, $assistente,
+                    $hora_agendada, $minuto_agendado, $duracao_agendada_s]);
                 set_flash('success', 'Ação adicionada com sucesso.');
             } catch (PDOException $e) {
                 set_flash('danger', 'Erro: já existe uma ação ' . $numero_acao . ' para este pino.');
@@ -261,6 +269,40 @@ include __DIR__ . '/../includes/header.php';
                             <i class="bi bi-robot me-1"></i>Ativar Assistente
                         </label>
                     </div>
+                    <div class="form-check form-check-inline">
+                        <?php $tem_agendamento = isset($edit_action['hora_agendada']) && $edit_action['hora_agendada'] != 255; ?>
+                        <input class="form-check-input" type="checkbox" name="agendar_horario" id="acao_agendar" value="1"
+                               <?= $tem_agendamento ? 'checked' : '' ?>
+                               onchange="document.getElementById('agendamento_fields').style.display=this.checked?'flex':'none'">
+                        <label class="form-check-label" for="acao_agendar">
+                            <i class="bi bi-clock me-1"></i>Agendar por horário
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-12" id="agendamento_fields" style="display:<?= $tem_agendamento ? 'flex' : 'none' ?>;gap:1rem;align-items:flex-end;flex-wrap:wrap;">
+                    <div>
+                        <label class="form-label fw-semibold">Hora</label>
+                        <select class="form-select form-select-sm" name="hora_agendada" style="width:80px">
+                            <?php for ($h = 0; $h < 24; $h++): ?>
+                            <option value="<?= $h ?>" <?= ($edit_action['hora_agendada'] ?? 255) == $h ? 'selected' : '' ?>><?= sprintf('%02d', $h) ?></option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold">Minuto</label>
+                        <select class="form-select form-select-sm" name="minuto_agendado" style="width:80px">
+                            <?php for ($m = 0; $m < 60; $m++): ?>
+                            <option value="<?= $m ?>" <?= ($edit_action['minuto_agendado'] ?? 0) == $m ? 'selected' : '' ?>><?= sprintf('%02d', $m) ?></option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold">Duração (seg, 0=indefinida)</label>
+                        <input type="number" class="form-control form-control-sm" name="duracao_agendada_s"
+                               min="0" max="65535" style="width:120px"
+                               value="<?= (int)($edit_action['duracao_agendada_s'] ?? 0) ?>">
+                    </div>
                 </div>
             </div>
 
@@ -304,6 +346,7 @@ include __DIR__ . '/../includes/header.php';
                         <th>Ação</th>
                         <th>Destino</th>
                         <th>Tempos</th>
+                        <th>Agendamento</th>
                         <th>Módulo</th>
                         <th>Extras</th>
                         <th class="text-end">Ações</th>
@@ -332,6 +375,18 @@ include __DIR__ . '/../includes/header.php';
                         <td>
                             <?php if ($act['tempo_on'] || $act['tempo_off']): ?>
                             <span title="ON/OFF">ON: <?= $act['tempo_on'] ?>ms / OFF: <?= $act['tempo_off'] ?>ms</span>
+                            <?php else: ?>
+                            <span class="text-muted">—</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if (($act['hora_agendada'] ?? 255) != 255): ?>
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-clock me-1"></i><?= sprintf('%02d:%02d', $act['hora_agendada'], $act['minuto_agendado']) ?>
+                            </span>
+                            <?php if ($act['duracao_agendada_s'] > 0): ?>
+                            <div class="text-muted" style="font-size:0.75rem;"><?= $act['duracao_agendada_s'] ?>s</div>
+                            <?php endif; ?>
                             <?php else: ?>
                             <span class="text-muted">—</span>
                             <?php endif; ?>

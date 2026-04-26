@@ -113,6 +113,27 @@ try {
         $stmt->execute([$device_id]);
     }
 
+    // Persistir histórico de acionamentos recebido no heartbeat
+    if (!empty($data['action_history']) && is_array($data['action_history'])) {
+        $stmt_hist = $db->prepare('
+            INSERT IGNORE INTO device_action_events
+                (device_id, gpio_origem, gpio_destino, tipo, ocorrido_em)
+            VALUES (?, ?, ?, ?, STR_TO_DATE(?, \'%d/%m/%Y %H:%i:%S\'))
+        ');
+        foreach ($data['action_history'] as $ev) {
+            if (!is_array($ev)) continue;
+            $ts = isset($ev['ts']) ? trim((string)$ev['ts']) : '';
+            if (strlen($ts) < 19 || $ts === '—') continue;
+            $stmt_hist->execute([
+                $device_id,
+                isset($ev['origem']) ? (int)$ev['origem'] : 0,
+                isset($ev['gpio'])   ? (int)$ev['gpio']   : 0,
+                isset($ev['tipo'])   ? (int)$ev['tipo']   : 0,
+                $ts,
+            ]);
+        }
+    }
+
     http_response_code(200);
     echo json_encode([
         'ok' => true,

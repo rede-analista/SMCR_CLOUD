@@ -341,23 +341,24 @@ include __DIR__ . '/../includes/header.php';
 const ACTION_NAMES = {1:'LIGA', 2:'LIGA_DELAY', 3:'PISCA', 4:'PULSO', 5:'PULSO_DELAY'};
 
 function loadHistory() {
-    fetch(BASE_PATH + '/api/proxy_device.php?device_id=<?= $device_id ?>&endpoint=api/history')
+    fetch(BASE_PATH + '/api/get_action_history.php?device_id=<?= $device_id ?>')
     .then(r => r.json())
     .then(data => {
         const el = document.getElementById('historyBody');
-        if (!Array.isArray(data) || data.length === 0) {
-            el.innerHTML = '<div class="list-group-item text-muted small">Nenhum acionamento registrado.</div>';
+        if (!data.ok || !data.events || data.events.length === 0) {
+            el.innerHTML = '<div class="list-group-item text-muted small">Nenhum acionamento registrado. Os eventos são salvos a cada heartbeat (~1 min).</div>';
             return;
         }
-        el.innerHTML = [...data].reverse().map(e =>
-            `<div class="list-group-item d-flex gap-2 align-items-center py-2">
+        el.innerHTML = data.events.map(e =>
+            `<div class="list-group-item d-flex gap-2 align-items-center py-2 flex-wrap">
                 <span class="badge bg-primary">${ACTION_NAMES[e.tipo] || 'TIPO ' + e.tipo}</span>
-                <span class="small">GPIO <strong>${e.gpio}</strong></span>
+                <span class="small">Origem: <strong>GPIO ${e.gpio_origem}</strong></span>
+                <span class="small">→ Destino: <strong>GPIO ${e.gpio_destino}</strong></span>
                 <span class="text-muted small ms-auto">${e.ts}</span>
             </div>`
         ).join('');
     })
-    .catch(() => { document.getElementById('historyBody').innerHTML = '<div class="list-group-item text-danger small">Erro ao conectar ao dispositivo.</div>'; });
+    .catch(() => { document.getElementById('historyBody').innerHTML = '<div class="list-group-item text-danger small">Erro ao carregar histórico.</div>'; });
 }
 
 function loadSerialLog() {

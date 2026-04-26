@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Ações - SMCR</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px; min-height: 100vh; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px; }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .content { padding: 20px; }
+        .section-title { font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: 600; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a6fd6; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        thead tr { background: #f5f5f5; }
+        th { padding: 10px 8px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #e0e0e0; }
+        td { padding: 9px 8px; border-bottom: 1px solid #f0f0f0; }
+        tr:hover td { background: #fafafa; }
+        .badge-tipo { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; background: #e8f0fe; color: #1a5276; }
+        #status { color: #888; font-size: 0.9rem; padding: 12px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SMCR - Histórico de Ações</h1>
+        <nav class="navbar" style="background:#f8f9fa;border-bottom:1px solid #e9ecef;padding:10px 14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <a href="/" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Status</a>
+            <a href="/configuracao" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Configurações</a>
+            <a href="/pinos" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Pinos</a>
+            <a href="/acoes" style="text-decoration:none;color:#333;padding:8px 12px;border-radius:6px;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Ações</a>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Serviços</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/mqtt" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">MQTT</a>
+                    <a href="/intermod" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Inter-Módulos</a>
+                    <a href="/assistentes" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Assistentes</a>
+                    <a href="/cloud" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">SMCR Cloud</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Arquivos</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/arquivos/firmware" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Firmware</a>
+                    <a href="/arquivos/preferencias" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Preferências</a>
+                    <a href="/arquivos/littlefs" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">LittleFS</a>
+                </div>
+            </details>
+            <details style="position:relative;">
+                <summary style="list-style:none;cursor:pointer;padding:8px 12px;border-radius:6px;color:#333;border:1px solid #dee2e6;background:#fff;transition:background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#fff'">Util</summary>
+                <div style="position:absolute;background:#fff;border:1px solid #e9ecef;box-shadow:0 8px 20px rgba(0,0,0,0.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:10;">
+                    <a href="/serial" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Web Serial</a>
+                    <a href="/reset" style="text-decoration:none;color:#333;padding:6px 8px;border-radius:4px;">Reset</a>
+                    <a href="/historico" style="text-decoration:none;color:#667eea;font-weight:600;padding:6px 8px;border-radius:4px;">Histórico de Ações</a>
+                </div>
+            </details>
+        </nav>
+
+        <div class="content">
+            <div class="section-title">
+                Histórico de Acionamentos
+                <button class="btn btn-primary" onclick="loadHistory()">↻ Atualizar</button>
+            </div>
+            <div id="status">Carregando...</div>
+            <div id="tableWrap"></div>
+        </div>
+    </div>
+
+    <script>
+        const ACTION_NAMES = {1:'LIGA', 2:'LIGA DELAY', 3:'PISCA', 4:'PULSO', 5:'PULSO DELAY ON'};
+        let pinsData = [];
+
+        async function loadPins() {
+            try {
+                const r = await fetch('/api/pins');
+                const d = await r.json();
+                pinsData = d.pins || [];
+            } catch(e) {}
+        }
+
+        function pinLabel(gpio) {
+            const p = pinsData.find(p => (p.pino || p.gpio) == gpio);
+            const name = p ? (p.nome || p.description || '') : '';
+            return `GPIO ${gpio}${name ? ' - ' + name : ''}`;
+        }
+
+        async function loadHistory() {
+            document.getElementById('status').textContent = 'Carregando...';
+            document.getElementById('tableWrap').innerHTML = '';
+            try {
+                const r = await fetch('/api/history');
+                const data = await r.json();
+                if (!Array.isArray(data) || data.length === 0) {
+                    document.getElementById('status').textContent = 'Nenhum acionamento registrado nesta sessão.';
+                    return;
+                }
+                document.getElementById('status').textContent = '';
+                const rows = [...data].reverse().map(e =>
+                    `<tr>
+                        <td>${e.ts || '—'}</td>
+                        <td><span class="badge-tipo">${ACTION_NAMES[e.tipo] || 'TIPO ' + e.tipo}</span></td>
+                        <td>${pinLabel(e.origem)}</td>
+                        <td>${pinLabel(e.gpio)}</td>
+                    </tr>`
+                ).join('');
+                document.getElementById('tableWrap').innerHTML =
+                    `<table>
+                        <thead><tr><th>Horário</th><th>Tipo</th><th>Origem</th><th>Destino</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>`;
+            } catch(e) {
+                document.getElementById('status').textContent = 'Erro ao conectar ao dispositivo.';
+            }
+        }
+
+        loadPins().then(loadHistory);
+    </script>
+</body>
+</html>

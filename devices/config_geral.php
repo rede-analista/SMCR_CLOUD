@@ -74,7 +74,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'cloud_sync_interval_min'    => (int)($_POST['cloud_sync_interval_min'] ?? 5),
         'cloud_heartbeat_enabled'    => isset($_POST['cloud_heartbeat_enabled']) ? 1 : 0,
         'cloud_heartbeat_interval_min' => (int)($_POST['cloud_heartbeat_interval_min'] ?? 5),
+        'cloud_register_token'       => trim($_POST['cloud_register_token'] ?? ''),
     ];
+    if (isset($_POST['cloud_api_token'])) {
+        $fields['cloud_api_token'] = trim($_POST['cloud_api_token']);
+    }
 
     $set_parts = [];
     $values = [];
@@ -505,6 +509,29 @@ include __DIR__ . '/../includes/header.php';
                         <label class="form-label">Intervalo do Heartbeat (minutos)</label>
                         <input type="number" class="form-control" name="cloud_heartbeat_interval_min"
                                value="<?= h($cfg['cloud_heartbeat_interval_min'] ?? 5) ?>" min="1" max="1440">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Token de Registro</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="cloud_register_token"
+                                   id="cloud_register_token" value="<?= h($cfg['cloud_register_token'] ?? '') ?>" maxlength="128">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleVis('cloud_register_token',this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">Copie de Configurações → SMCR Cloud no painel. O ESP32 usa este token para se registrar automaticamente.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Token API</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="cloud_api_token"
+                                   id="cloud_api_token" value="<?= h($cfg['cloud_api_token'] ?? '') ?>" maxlength="128">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleVis('cloud_api_token',this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">Gerado automaticamente após o registro. Deixe em branco para forçar novo registro no próximo sync.</div>
                     </div>
                 </div>
             </div>

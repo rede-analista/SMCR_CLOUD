@@ -65,20 +65,24 @@ try {
 
     // Ações
     $stmt = $db->prepare('SELECT pino_origem, numero_acao, pino_destino, acao,
-        tempo_on, tempo_off, pino_remoto, envia_modulo, telegram, assistente
+        tempo_on, tempo_off, pino_remoto, envia_modulo, telegram, assistente,
+        hora_agendada, minuto_agendado, duracao_agendada_s
         FROM device_actions WHERE device_id = ? ORDER BY pino_origem, numero_acao ASC');
     $stmt->execute([$device_id]);
     $actions = array_map(fn($r) => [
-        'pino_origem'  => (int)$r['pino_origem'],
-        'numero_acao'  => (int)$r['numero_acao'],
-        'pino_destino' => (int)$r['pino_destino'],
-        'acao'         => (int)$r['acao'],
-        'tempo_on'     => (int)$r['tempo_on'],
-        'tempo_off'    => (int)$r['tempo_off'],
-        'pino_remoto'  => (int)$r['pino_remoto'],
-        'envia_modulo' => $r['envia_modulo'],
-        'telegram'     => (bool)$r['telegram'],
-        'assistente'   => (bool)$r['assistente'],
+        'pino_origem'       => (int)$r['pino_origem'],
+        'numero_acao'       => (int)$r['numero_acao'],
+        'pino_destino'      => (int)$r['pino_destino'],
+        'acao'              => (int)$r['acao'],
+        'tempo_on'          => (int)$r['tempo_on'],
+        'tempo_off'         => (int)$r['tempo_off'],
+        'pino_remoto'       => (int)$r['pino_remoto'],
+        'envia_modulo'      => $r['envia_modulo'],
+        'telegram'          => (bool)$r['telegram'],
+        'assistente'        => (bool)$r['assistente'],
+        'hora_agendada'     => (int)($r['hora_agendada'] ?? 255),
+        'minuto_agendado'   => (int)($r['minuto_agendado'] ?? 0),
+        'duracao_agendada_s'=> (int)($r['duracao_agendada_s'] ?? 0),
     ], $stmt->fetchAll());
 
     // Inter-módulos cadastrados

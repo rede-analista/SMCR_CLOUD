@@ -327,25 +327,30 @@ try {
         $stmt = $db->prepare("
             INSERT INTO device_actions
                 (device_id, pino_origem, numero_acao, pino_destino, acao,
-                 tempo_on, tempo_off, pino_remoto, envia_modulo, telegram, assistente)
+                 tempo_on, tempo_off, pino_remoto, envia_modulo, telegram, assistente,
+                 hora_agendada, minuto_agendado, duracao_agendada_s)
             VALUES
                 (:device_id, :orig, :num, :dest, :acao,
-                 :ton, :toff, :premoto, :modulo, :tg, :ass)
+                 :ton, :toff, :premoto, :modulo, :tg, :ass,
+                 :hora, :minuto, :duracao)
         ");
         foreach ($raw['actions']['actions'] as $a) {
             if (!isset($a['pino_origem'])) continue;
             $stmt->execute([
                 ':device_id' => $device_id,
                 ':orig'      => (int)$a['pino_origem'],
-                ':num'       => (int)($a['numero_acao']  ?? 1),
-                ':dest'      => (int)($a['pino_destino'] ?? 0),
-                ':acao'      => (int)($a['acao']         ?? 0),
-                ':ton'       => (int)($a['tempo_on']     ?? 0),
-                ':toff'      => (int)($a['tempo_off']    ?? 0),
-                ':premoto'   => (int)($a['pino_remoto']  ?? 0),
+                ':num'       => (int)($a['numero_acao']       ?? 1),
+                ':dest'      => (int)($a['pino_destino']      ?? 0),
+                ':acao'      => (int)($a['acao']              ?? 0),
+                ':ton'       => (int)($a['tempo_on']          ?? 0),
+                ':toff'      => (int)($a['tempo_off']         ?? 0),
+                ':premoto'   => (int)($a['pino_remoto']       ?? 0),
                 ':modulo'    => substr($a['envia_modulo'] ?? '', 0, 64),
-                ':tg'        => (int)($a['telegram']     ?? 0),
-                ':ass'       => (int)($a['assistente']   ?? 0),
+                ':tg'        => (int)($a['telegram']          ?? 0),
+                ':ass'       => (int)($a['assistente']        ?? 0),
+                ':hora'      => (int)($a['hora_agendada']     ?? 255),
+                ':minuto'    => (int)($a['minuto_agendado']   ?? 0),
+                ':duracao'   => (int)($a['duracao_agendada_s']?? 0),
             ]);
             $count++;
         }

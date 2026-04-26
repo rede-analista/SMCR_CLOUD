@@ -34,6 +34,10 @@ $intermod_count = (int)$stmt->fetchColumn();
 $stmt = $db->prepare('SELECT reboot_on_sync, ota_update_on_sync FROM device_config WHERE device_id = ?');
 $stmt->execute([$device_id]);
 $sync_flags = $stmt->fetch();
+
+$stmt = $db->prepare('SELECT event, created_at FROM device_events WHERE device_id = ? ORDER BY created_at DESC LIMIT 30');
+$stmt->execute([$device_id]);
+$events = $stmt->fetchAll();
 $reboot_on_sync    = (bool)($sync_flags['reboot_on_sync'] ?? false);
 $ota_update_on_sync = (bool)($sync_flags['ota_update_on_sync'] ?? false);
 
@@ -184,6 +188,25 @@ include __DIR__ . '/../includes/header.php';
                     </div>
                     <div class="col-6 col-md-4">
                         <div class="p-3 bg-light rounded">
+                            <div class="text-muted small mb-1"><i class="bi bi-hdd me-1"></i>Flash Firmware</div>
+                            <?php
+                            $sk_size = (int)($status['sketch_size'] ?? 0);
+                            $sk_free = (int)($status['sketch_free'] ?? 0);
+                            $sk_total = $sk_size + $sk_free;
+                            $sk_pct = $sk_total > 0 ? round($sk_size / $sk_total * 100, 1) : 0;
+                            ?>
+                            <?php if ($sk_total > 0): ?>
+                            <div class="fw-semibold small"><?= $sk_pct ?>% <span class="text-muted">(<?= round($sk_size/1024) ?> / <?= round($sk_total/1024) ?> KB)</span></div>
+                            <div class="progress mt-1" style="height:4px">
+                                <div class="progress-bar <?= $sk_pct > 90 ? 'bg-danger' : ($sk_pct > 75 ? 'bg-warning' : 'bg-success') ?>" style="width:<?= $sk_pct ?>%"></div>
+                            </div>
+                            <?php else: ?>
+                            <div class="fw-semibold small">—</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="p-3 bg-light rounded">
                             <div class="text-muted small mb-1"><i class="bi bi-wifi me-1"></i>WiFi RSSI</div>
                             <div class="fw-semibold small"><?= $status['wifi_rssi'] ? $status['wifi_rssi'] . ' dBm' : '—' ?></div>
                         </div>
@@ -290,7 +313,72 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
+<?php if (!empty($events)): ?>
+<div class="container-fluid px-3 pb-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white fw-semibold">
+            <i class="bi bi-clock-history me-2"></i>Histórico de Conexões
+        </div>
+        <div class="card-body p-0">
+            <div class="list-group list-group-flush" style="max-height:240px;overflow-y:auto">
+                <?php foreach ($events as $ev): ?>
+                <div class="list-group-item d-flex align-items-center gap-2 py-2">
+                    <?php if ($ev['event'] === 'online'): ?>
+                        <span class="badge bg-success">Online</span>
+                    <?php else: ?>
+                        <span class="badge bg-danger">Offline</span>
+                    <?php endif; ?>
+                    <span class="text-muted small"><?= date('d/m/Y H:i:s', strtotime($ev['created_at'])) ?></span>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <script>
+const ACTION_NAMES = {1:'LIGA', 2:'LIGA_DELAY', 3:'PISCA', 4:'PULSO', 5:'PULSO_DELAY'};
+
+function loadHistory() {
+    fetch(BASE_PATH + '/api/proxy_device.php?device_id=<?= $device_id ?>&endpoint=api/history')
+    .then(r => r.json())
+    .then(data => {
+        const el = document.getElementById('historyBody');
+        if (!Array.isArray(data) || data.length === 0) {
+            el.innerHTML = '<div class="list-group-item text-muted small">Nenhum acionamento registrado.</div>';
+            return;
+        }
+        el.innerHTML = [...data].reverse().map(e =>
+            `<div class="list-group-item d-flex gap-2 align-items-center py-2">
+                <span class="badge bg-primary">${ACTION_NAMES[e.tipo] || 'TIPO ' + e.tipo}</span>
+                <span class="small">GPIO <strong>${e.gpio}</strong></span>
+                <span class="text-muted small ms-auto">${e.ts}</span>
+            </div>`
+        ).join('');
+    })
+    .catch(() => { document.getElementById('historyBody').innerHTML = '<div class="list-group-item text-danger small">Erro ao conectar ao dispositivo.</div>'; });
+}
+
+function loadSerialLog() {
+    fetch(BASE_PATH + '/api/proxy_device.php?device_id=<?= $device_id ?>&endpoint=api/serial/logs')
+    .then(r => r.json())
+    .then(data => {
+        const el = document.getElementById('serialLogBody');
+        if (!data.logs || data.logs.length === 0) {
+            el.innerHTML = '<span class="text-secondary">Nenhum log disponível.</span>';
+            return;
+        }
+        el.innerHTML = data.logs.map(l => `<div>${escHtml(l)}</div>`).join('');
+        el.scrollTop = el.scrollHeight;
+    })
+    .catch(() => { document.getElementById('serialLogBody').innerHTML = '<span class="text-danger">Erro ao conectar ao dispositivo.</span>'; });
+}
+
+function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 function toggleToken() {
     const input = document.getElementById('api_token');
     const eye = document.getElementById('token_eye');
@@ -434,8 +522,55 @@ function toggleOtaOnSync(device_id) {
 }
 
 function pushDevice(device_id) {
-    if (!confirm('Sincronizar TUDO do Cloud para o ESP32?\n\nIsso inclui configurações gerais, pinos, ações e serviços.\nO ESP32 será reiniciado ao final.')) return;
+    const btn = document.getElementById('btn_push');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Carregando...';
 
+    fetch(BASE_PATH + '/api/get_push_preview.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-cloud-upload me-1"></i>Cloud → ESP32';
+        if (!data.ok) { alert('Erro: ' + data.error); return; }
+
+        const d = data.device, c = data.config, n = data.counts;
+        let html = '';
+        if (!d.online) html += '<div class="alert alert-warning py-2 mb-3"><i class="bi bi-exclamation-triangle me-1"></i>Dispositivo está <strong>offline</strong>. O envio pode falhar.</div>';
+        html += '<table class="table table-sm table-bordered mb-3">';
+        html += '<tbody>';
+        html += `<tr><td class="text-muted" style="width:45%">Dispositivo</td><td><strong>${d.name}</strong></td></tr>`;
+        html += `<tr><td class="text-muted">IP</td><td>${d.ip || '—'}</td></tr>`;
+        if (d.firmware_version) html += `<tr><td class="text-muted">Firmware</td><td>v${d.firmware_version}</td></tr>`;
+        if (d.flash_pct !== null) html += `<tr><td class="text-muted">Flash uso</td><td>${d.flash_pct}%</td></tr>`;
+        html += `<tr><td class="text-muted">Pinos</td><td>${n.pins}</td></tr>`;
+        html += `<tr><td class="text-muted">Ações</td><td>${n.actions}</td></tr>`;
+        html += `<tr><td class="text-muted">Inter-módulos ativos</td><td>${n.intermod}</td></tr>`;
+        html += `<tr><td class="text-muted">MQTT</td><td>${c.mqtt_enabled ? '✓ ' + c.mqtt_server : '✗ Desabilitado'}</td></tr>`;
+        html += `<tr><td class="text-muted">Telegram</td><td>${c.telegram_enabled ? '✓ Habilitado' : '✗ Desabilitado'}</td></tr>`;
+        html += `<tr><td class="text-muted">Cloud URL</td><td>${c.cloud_url}</td></tr>`;
+        html += `<tr><td class="text-muted">OTA no sync</td><td>${c.ota_enabled ? '✓' : '✗'}</td></tr>`;
+        html += `<tr><td class="text-muted">Reboot no sync</td><td>${c.reboot_on_sync ? '✓' : '✗'}</td></tr>`;
+        html += '</tbody></table>';
+
+        document.getElementById('pushPreviewBody').innerHTML = html;
+        document.getElementById('btnConfirmPush').onclick = () => {
+            bootstrap.Modal.getInstance(document.getElementById('modalPushConfirm')).hide();
+            doPushDevice(device_id);
+        };
+        new bootstrap.Modal(document.getElementById('modalPushConfirm')).show();
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-cloud-upload me-1"></i>Cloud → ESP32';
+        alert('Erro: ' + err.message);
+    });
+}
+
+function doPushDevice(device_id) {
     const btn = document.getElementById('btn_push');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Enviando...';
@@ -510,6 +645,60 @@ function importBackup() {
         });
 }
 </script>
+
+<!-- Histórico de Acionamentos + Log Serial -->
+<div class="container-fluid px-3 pb-4">
+    <div class="row g-3">
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-lightning-charge me-2"></i>Histórico de Acionamentos</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="loadHistory()"><i class="bi bi-arrow-clockwise"></i></button>
+                </div>
+                <div class="card-body p-0">
+                    <div id="historyBody" class="list-group list-group-flush" style="max-height:220px;overflow-y:auto">
+                        <div class="list-group-item text-muted small">Clique em atualizar para carregar.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-terminal me-2"></i>Log Serial</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="loadSerialLog()"><i class="bi bi-arrow-clockwise"></i></button>
+                </div>
+                <div class="card-body p-0">
+                    <div id="serialLogBody" style="max-height:220px;overflow-y:auto;background:#1e1e1e;font-family:monospace;font-size:0.75rem;padding:8px;color:#d4d4d4;border-radius:0 0 4px 4px">
+                        <span class="text-secondary">Clique em atualizar para carregar.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Push Confirm -->
+<div class="modal fade" id="modalPushConfirm" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-cloud-upload me-2"></i>Confirmar Sincronização Cloud → ESP32</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Revise o que será enviado ao dispositivo:</p>
+                <div id="pushPreviewBody"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="btnConfirmPush" class="btn btn-primary">
+                    <i class="bi bi-cloud-upload me-1"></i>Confirmar Envio
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal Import -->
 <div class="modal fade" id="modalImport" tabindex="-1">

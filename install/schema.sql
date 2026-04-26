@@ -156,3 +156,12 @@ CREATE TABLE IF NOT EXISTS device_intermod (
     UNIQUE KEY uq_device_module (device_id, module_id),
     FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS device_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    device_id INT NOT NULL,
+    event ENUM('online', 'offline') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_device_events (device_id, created_at),
+    FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
+);

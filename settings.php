@@ -98,6 +98,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    if ($action === 'save_offline_alert') {
+        $alert_enabled  = isset($_POST['offline_alert_enabled']) ? '1' : '0';
+        $alert_minutes  = max(1, (int)($_POST['offline_alert_minutes'] ?? 10));
+        $alert_tg_token = substr(trim($_POST['offline_alert_telegram_token'] ?? ''), 0, 128);
+        $alert_tg_chat  = substr(trim($_POST['offline_alert_telegram_chatid'] ?? ''), 0, 64);
+
+        foreach ([
+            'offline_alert_enabled'          => $alert_enabled,
+            'offline_alert_minutes'          => (string)$alert_minutes,
+            'offline_alert_telegram_token'   => $alert_tg_token,
+            'offline_alert_telegram_chatid'  => $alert_tg_chat,
+        ] as $k => $v) {
+            $db->prepare("INSERT INTO settings (`key`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?")
+               ->execute([$k, $v, $v]);
+        }
+        set_flash('success', 'Configurações de alerta offline salvas.');
+        header('Location: ' . BASE . '/settings.php');
+        exit;
+    }
+
     if ($action === 'save_timers') {
         $mdns_interval     = (int)($_POST['mdns_interval']     ?? 5);
         $dashboard_refresh = (int)($_POST['dashboard_refresh'] ?? 30);
@@ -128,6 +148,14 @@ $mdns_interval = (int)($stmt->fetchColumn() ?: 5);
 $stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'dashboard_refresh'");
 $stmt->execute();
 $dashboard_refresh = (int)($stmt->fetchColumn() ?: 30);
+
+$stmt = $db->query("SELECT `key`, value FROM settings WHERE `key` LIKE 'offline_alert%'");
+$offline_settings = [];
+foreach ($stmt->fetchAll() as $row) $offline_settings[$row['key']] = $row['value'];
+$offline_alert_enabled  = (bool)($offline_settings['offline_alert_enabled'] ?? false);
+$offline_alert_minutes  = (int)($offline_settings['offline_alert_minutes']  ?? 10);
+$offline_alert_tg_token = $offline_settings['offline_alert_telegram_token']  ?? '';
+$offline_alert_tg_chat  = $offline_settings['offline_alert_telegram_chatid'] ?? '';
 
 $users = $db->query('SELECT id, username, created_at FROM users ORDER BY id')->fetchAll();
 
@@ -306,6 +334,38 @@ include __DIR__ . '/includes/header.php';
                         </form>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-bell-slash text-danger"></i>
+                <h5 class="mb-0">Alerta de Dispositivo Offline</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="<?= BASE ?>/settings.php">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="action" value="save_offline_alert">
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="offline_alert_enabled" id="offline_alert_enabled" value="1" <?= $offline_alert_enabled ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="offline_alert_enabled">Alertas habilitados</label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Minutos sem resposta para considerar offline</label>
+                        <input type="number" class="form-control" name="offline_alert_minutes" value="<?= $offline_alert_minutes ?>" min="1" max="60">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Token do Bot Telegram</label>
+                        <input type="text" class="form-control font-monospace" name="offline_alert_telegram_token" value="<?= h($offline_alert_tg_token) ?>" placeholder="123456789:ABC...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Chat ID do Telegram</label>
+                        <input type="text" class="form-control font-monospace" name="offline_alert_telegram_chatid" value="<?= h($offline_alert_tg_chat) ?>" placeholder="-100123456789">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
+                </form>
             </div>
         </div>
     </div>

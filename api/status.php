@@ -78,11 +78,13 @@ try {
     $free_heap        = isset($data['free_heap'])        ? (int)$data['free_heap']                         : 0;
     $uptime_ms        = isset($data['uptime_ms'])        ? (int)$data['uptime_ms']                         : 0;
     $wifi_rssi        = isset($data['wifi_rssi'])        ? (int)$data['wifi_rssi']                         : 0;
+    $sketch_size      = isset($data['sketch_size'])      ? (int)$data['sketch_size']                       : 0;
+    $sketch_free      = isset($data['sketch_free'])      ? (int)$data['sketch_free']                       : 0;
 
     // UPSERT device_status
     $stmt = $db->prepare('
-        INSERT INTO device_status (device_id, ip, hostname, firmware_version, free_heap, uptime_ms, wifi_rssi)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO device_status (device_id, ip, hostname, firmware_version, free_heap, uptime_ms, wifi_rssi, sketch_size, sketch_free)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             ip               = VALUES(ip),
             hostname         = VALUES(hostname),
@@ -90,13 +92,26 @@ try {
             free_heap        = VALUES(free_heap),
             uptime_ms        = VALUES(uptime_ms),
             wifi_rssi        = VALUES(wifi_rssi),
+            sketch_size      = VALUES(sketch_size),
+            sketch_free      = VALUES(sketch_free),
             updated_at       = CURRENT_TIMESTAMP
     ');
-    $stmt->execute([$device_id, $ip, $hostname, $firmware_version, $free_heap, $uptime_ms, $wifi_rssi]);
+    $stmt->execute([$device_id, $ip, $hostname, $firmware_version, $free_heap, $uptime_ms, $wifi_rssi, $sketch_size, $sketch_free]);
+
+    // Check previous online state to detect offline→online transition
+    $stmt = $db->prepare('SELECT online FROM devices WHERE id = ?');
+    $stmt->execute([$device_id]);
+    $prev_online = (bool)$stmt->fetchColumn();
 
     // Update device last_seen and online flag
     $stmt = $db->prepare('UPDATE devices SET last_seen = NOW(), online = 1 WHERE id = ?');
     $stmt->execute([$device_id]);
+
+    // Log online transition event
+    if (!$prev_online) {
+        $stmt = $db->prepare('INSERT INTO device_events (device_id, event) VALUES (?, \'online\')');
+        $stmt->execute([$device_id]);
+    }
 
     http_response_code(200);
     echo json_encode([

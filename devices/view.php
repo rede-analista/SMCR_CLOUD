@@ -344,27 +344,6 @@ include __DIR__ . '/../includes/header.php';
 <script>
 const ACTION_NAMES = {1:'LIGA', 2:'LIGA_DELAY', 3:'PISCA', 4:'PULSO', 5:'PULSO_DELAY'};
 
-function simularPino(device_id) {
-    const pino = document.getElementById('simPino').value;
-    const btn  = document.getElementById('btn_simular');
-    const res  = document.getElementById('sim_result');
-    btn.disabled = true;
-    res.textContent = 'Enviando...';
-    res.className = 'small text-muted';
-    fetch(BASE_PATH + '/api/trigger_device.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: `device_id=${device_id}&pino=${pino}`
-    })
-    .then(r => r.json())
-    .then(d => {
-        res.textContent = d.ok ? 'Simulação enviada!' : ('Erro: ' + (d.error || '?'));
-        res.className = 'small ' + (d.ok ? 'text-success' : 'text-danger');
-    })
-    .catch(() => { res.textContent = 'Falha na comunicação'; res.className = 'small text-danger'; })
-    .finally(() => { btn.disabled = false; });
-}
-
 function loadHistory() {
     fetch(BASE_PATH + '/api/get_action_history.php?device_id=<?= $device_id ?>')
     .then(r => r.json())
@@ -672,30 +651,6 @@ function importBackup() {
 }
 </script>
 
-<!-- Simular Sensor -->
-<?php if (!empty($device_pins_list) && $device['online']): ?>
-<div class="container-fluid px-3 pb-2">
-    <div class="card shadow-sm">
-        <div class="card-header bg-white fw-semibold">
-            <i class="bi bi-play-circle me-2 text-success"></i>Simular Acionamento de Sensor
-        </div>
-        <div class="card-body">
-            <p class="text-muted small mb-3">Selecione um pino de origem e dispare a simulação. O ESP32 processará como se o sensor tivesse acionado fisicamente — executa ações, envia para inter-módulos, Telegram, etc.</p>
-            <div class="d-flex gap-2 align-items-center flex-wrap">
-                <select class="form-select form-select-sm" id="simPino" style="max-width:300px">
-                    <?php foreach ($device_pins_list as $p): ?>
-                    <option value="<?= $p['pino'] ?>">GPIO <?= $p['pino'] ?><?= $p['nome'] ? ' — ' . h($p['nome']) : '' ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <button class="btn btn-sm btn-success" onclick="simularPino(<?= $device_id ?>)" id="btn_simular">
-                    <i class="bi bi-play-fill me-1"></i>Simular
-                </button>
-                <span id="sim_result" class="small"></span>
-            </div>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
 
 <!-- Histórico de Acionamentos + Log Serial -->
 <div class="container-fluid px-3 pb-4">

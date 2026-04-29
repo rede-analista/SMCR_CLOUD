@@ -652,36 +652,11 @@ function importBackup() {
 </script>
 
 
-<!-- Histórico de Acionamentos + Log Serial -->
+<!-- Logs & Histórico -->
 <div class="container-fluid px-3 pb-4">
-    <div class="row g-3">
-        <div class="col-12 col-lg-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-lightning-charge me-2"></i>Histórico de Acionamentos</span>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="loadHistory()"><i class="bi bi-arrow-clockwise"></i></button>
-                </div>
-                <div class="card-body p-0">
-                    <div id="historyBody" class="list-group list-group-flush" style="max-height:220px;overflow-y:auto">
-                        <div class="list-group-item text-muted small">Clique em atualizar para carregar.</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-lg-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-terminal me-2"></i>Log Serial</span>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="loadSerialLog()"><i class="bi bi-arrow-clockwise"></i></button>
-                </div>
-                <div class="card-body p-0">
-                    <div id="serialLogBody" style="max-height:220px;overflow-y:auto;background:#1e1e1e;font-family:monospace;font-size:0.75rem;padding:8px;color:#d4d4d4;border-radius:0 0 4px 4px">
-                        <span class="text-secondary">Clique em atualizar para carregar.</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <a href="<?= BASE ?>/devices/logs.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">
+        <i class="bi bi-journal-text me-2"></i>Ver Logs & Histórico de Acionamentos
+    </a>
 </div>
 
 <!-- Modal Push Confirm -->

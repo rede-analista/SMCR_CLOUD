@@ -407,6 +407,11 @@ $page_title = isset($page_title) ? $page_title : 'SMCR Cloud';
                 <i class="bi bi-telegram"></i>
                 Telegram
             </a>
+            <a href="<?= BASE ?>/devices/logs.php?device_id=<?= $device_id ?>"
+               class="nav-link <?= ($current_script === 'logs.php') ? 'active' : '' ?>">
+                <i class="bi bi-journal-text"></i>
+                Logs & Histórico
+            </a>
         </nav>
     </div>
     <?php endif; ?>

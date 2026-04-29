@@ -481,6 +481,7 @@
                                 <span class="pin-status ${statusClass}">${statusText}</span>
                                 <button onclick="event.stopPropagation(); editPin(${index})" class="btn btn-primary" style="margin-left: 10px; padding: 5px 10px; font-size: 12px;">Editar</button>
                                 <button onclick="event.stopPropagation(); deletePin(${index})" class="btn btn-danger" style="margin-left: 10px; padding: 5px 10px; font-size: 12px;">Excluir</button>
+                                <button onclick="event.stopPropagation(); triggerPin(${pin.pino}, this)" class="btn btn-warning" style="margin-left: 10px; padding: 5px 10px; font-size: 12px;">Disparar</button>
                             </div>
                         </div>
                         <div class="pin-details" id="pin-details-${index}">
@@ -668,6 +669,26 @@
                         showStatus('ESP32 reiniciado. Recarregue a pagina manualmente.', 'success');
                     });
             }
+        }
+
+        function triggerPin(pino, btn) {
+            const orig = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '...';
+            fetch('/api/trigger', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'pino=' + pino
+            })
+            .then(r => r.json())
+            .then(d => {
+                btn.textContent = d.ok ? 'OK!' : 'Erro';
+                setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
+            })
+            .catch(() => {
+                btn.textContent = 'Erro';
+                setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
+            });
         }
 
         function deletePin(index) {

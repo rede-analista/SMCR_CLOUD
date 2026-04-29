@@ -289,6 +289,11 @@ include __DIR__ . '/../includes/header.php';
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
+                                <button type="button" class="btn btn-outline-secondary"
+                                        title="Disparar acionamento virtual"
+                                        onclick="triggerPin(<?= $device_id ?>, <?= $pin['pino'] ?>, this)">
+                                    <i class="bi bi-lightning-charge"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -300,4 +305,25 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
+<script>
+function triggerPin(device_id, pino, btn) {
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    fetch('<?= BASE ?>/api/trigger_device.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'device_id=' + device_id + '&pino=' + pino
+    })
+    .then(r => r.json())
+    .then(d => {
+        btn.innerHTML = d.ok ? '<i class="bi bi-check-lg"></i>' : '<i class="bi bi-x-lg"></i>';
+        setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1500);
+    })
+    .catch(() => {
+        btn.innerHTML = '<i class="bi bi-x-lg"></i>';
+        setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1500);
+    });
+}
+</script>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

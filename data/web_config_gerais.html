@@ -168,6 +168,10 @@
             font-size: 16px;
             color: #007bff;
         }
+        .pass-wrap { display:inline-flex; align-items:center; gap:4px; }
+        .pass-wrap input { flex:1; }
+        .pass-eye { background:none; border:1px solid #ccc; border-radius:3px; cursor:pointer; padding:1px 6px; font-size:13px; line-height:1.4; }
+        .pass-eye:hover { background:#f0f0f0; }
     </style>
 </head>
 <body>
@@ -221,8 +225,8 @@
                 <table class="config-table">
                     <tr><td>Hostname:</td><td><input type="text" name="hostname" id="hostname" maxlength="32"></td></tr>
                     <tr><td>SSID da Rede WiFi:</td><td><input type="text" name="wifi_ssid" id="wifi_ssid" maxlength="32"></td></tr>
-                    <tr><td>Senha WiFi:</td><td><input type="password" name="wifi_pass" id="wifi_pass" maxlength="64" placeholder="Deixe em branco para manter atual"></td></tr>
-                    <tr><td>Tentativas de Conexao:</td><td><input type="number" name="wifi_attempts" id="wifi_attempts" min="5" max="50" value="15"></td></tr>
+                    <tr><td>Senha WiFi:</td><td><span class="pass-wrap"><input type="password" name="wifi_pass" id="wifi_pass" maxlength="64" placeholder="Deixe em branco para manter atual"><button type="button" class="pass-eye" onclick="togglePass('wifi_pass',this)">👁</button></span></td></tr>
+                    <tr><td>Tentativas de Conexao:</td><td><input type="number" name="wifi_attempts" id="wifi_attempts" min="1" max="50" value="4"></td></tr>
                     <tr><td>Intervalo de Checagem (ms):</td><td><input type="number" name="wifi_check_interval" id="wifi_check_interval" min="10000" max="60000" value="15000"></td></tr>
                 </table>
 
@@ -279,7 +283,7 @@
                         </div>
                     </td></tr>
                     <tr><td>Watchdog Habilitado:</td><td><select name="watchdog_enabled" id="watchdog_enabled"><option value="1">Habilitado</option><option value="0">Desabilitado</option></select></td></tr>
-                    <tr><td>Tempo Watchdog (microseg):</td><td><input type="number" name="tempo_watchdog_us" id="tempo_watchdog_us" min="1000000" max="8000000" value="2000000"></td></tr>
+                    <tr><td>Tempo Watchdog (microseg):</td><td><input type="number" name="tempo_watchdog_us" id="tempo_watchdog_us" min="1000000" max="4294967295" value="8000000"></td></tr>
                     <tr><td>Clock ESP32 (MHz):</td><td>
                         <select name="clock_esp32_mhz" id="clock_esp32_mhz">
                             <option value="80">80 MHz</option>
@@ -299,14 +303,14 @@
                 <div class="section-title">Configuracoes do Access Point (Fallback)</div>
                 <table class="config-table">
                     <tr><td>SSID do Access Point:</td><td><input type="text" name="ap_ssid" id="ap_ssid" maxlength="32" value="esp32modularx Ponto de Acesso"></td></tr>
-                    <tr><td>Senha do Access Point:</td><td><input type="password" name="ap_pass" id="ap_pass" maxlength="64" placeholder="Deixe em branco para manter atual"></td></tr>
+                    <tr><td>Senha do Access Point:</td><td><span class="pass-wrap"><input type="password" name="ap_pass" id="ap_pass" maxlength="64" placeholder="Deixe em branco para manter atual"><button type="button" class="pass-eye" onclick="togglePass('ap_pass',this)">👁</button></span></td></tr>
                     <tr><td>Fallback AP Habilitado:</td><td><select name="ap_fallback_enabled" id="ap_fallback_enabled"><option value="1">Habilitado</option><option value="0">Desabilitado</option></select></td></tr>
                 </table>
 
                 <div class="section-title">Autenticacao Web</div>
                 <table class="config-table">
                     <tr><td>Usuario Web:</td><td><input type="text" name="web_username" id="web_username" maxlength="32"></td></tr>
-                    <tr><td>Senha Web:</td><td><input type="password" name="web_password" id="web_password" maxlength="64" placeholder="Deixe em branco para manter atual"></td></tr>
+                    <tr><td>Senha Web:</td><td><span class="pass-wrap"><input type="password" name="web_password" id="web_password" maxlength="64" placeholder="Deixe em branco para manter atual"><button type="button" class="pass-eye" onclick="togglePass('web_password',this)">👁</button></span></td></tr>
                 </table>
 
                 <div class="section-title">SMCR Cloud</div>
@@ -316,8 +320,8 @@
                     <tr><td>Usar HTTPS:</td><td><select name="cloud_use_https" id="cloud_use_https"><option value="0">Não (HTTP)</option><option value="1">Sim (HTTPS)</option></select></td></tr>
                     <tr><td>Sync com Cloud Habilitado:</td><td><select name="cloud_sync_enabled" id="cloud_sync_enabled"><option value="0">Desabilitado</option><option value="1">Habilitado</option></select></td></tr>
                     <tr><td>Intervalo de Sync (minutos):</td><td><input type="number" name="cloud_sync_interval_min" id="cloud_sync_interval_min" min="1" max="1440" value="5"></td></tr>
-                    <tr><td>Token de Registro:</td><td><input type="password" name="cloud_register_token" id="cloud_register_token" maxlength="64" placeholder="Token de auto-registro (Configurações do Cloud)"><small style="color:#888;display:block;margin-top:3px">Cole o token exibido em Configurações no Cloud/HA. O ESP32 se registra automaticamente e obtém o Token API.</small></td></tr>
-                    <tr><td>Token API:</td><td><input type="password" name="cloud_api_token" id="cloud_api_token" maxlength="128" placeholder="Deixe em branco para manter atual"><small style="color:#888;display:block;margin-top:3px">Preenchido automaticamente após o auto-registro. Só altere manualmente se necessário.</small></td></tr>
+                    <tr><td>Token de Registro:</td><td><span class="pass-wrap"><input type="password" name="cloud_register_token" id="cloud_register_token" maxlength="64" placeholder="Token de auto-registro (Configurações do Cloud)"><button type="button" class="pass-eye" onclick="togglePass('cloud_register_token',this)">👁</button></span><small style="color:#888;display:block;margin-top:3px">Cole o token exibido em Configurações no Cloud/HA. O ESP32 se registra automaticamente e obtém o Token API.</small></td></tr>
+                    <tr><td>Token API:</td><td><span class="pass-wrap"><input type="password" name="cloud_api_token" id="cloud_api_token" maxlength="128" placeholder="Deixe em branco para manter atual"><button type="button" class="pass-eye" onclick="togglePass('cloud_api_token',this)">👁</button></span><small style="color:#888;display:block;margin-top:3px">Preenchido automaticamente após o auto-registro. Só altere manualmente se necessário.</small></td></tr>
                     <tr><td>Heartbeat para Cloud:</td><td><select name="cloud_heartbeat_enabled" id="cloud_heartbeat_enabled"><option value="0">Desabilitado</option><option value="1">Habilitado</option></select></td></tr>
                     <tr><td>Intervalo do Heartbeat (minutos):</td><td><input type="number" name="cloud_heartbeat_interval_min" id="cloud_heartbeat_interval_min" min="1" max="60" value="2"></td></tr>
                 </table>
@@ -328,6 +332,12 @@
     </div>
 
     <script>
+        function togglePass(id, btn) {
+            var inp = document.getElementById(id);
+            if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+            else { inp.type = 'password'; btn.textContent = '👁'; }
+        }
+
         // Função para obter nome da cor baseado no valor hexadecimal
         function getColorName(hex) {
             const colors = {
@@ -379,7 +389,7 @@
                 .then(data => {
                     document.getElementById('hostname').value = data.hostname || '';
                     document.getElementById('wifi_ssid').value = data.wifi_ssid || '';
-                    document.getElementById('wifi_attempts').value = data.wifi_attempts || 15;
+                    document.getElementById('wifi_attempts').value = data.wifi_attempts || 4;
                     document.getElementById('wifi_check_interval').value = data.wifi_check_interval || 15000;
                     document.getElementById('ntp_server1').value = data.ntp_server1 || 'pool.ntp.br';
                     document.getElementById('gmt_offset').value = data.gmt_offset || -10800;

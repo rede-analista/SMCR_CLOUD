@@ -435,7 +435,8 @@ $page_title = isset($page_title) ? $page_title : 'SMCR Cloud';
                 <?php if (isset($breadcrumb) && is_array($breadcrumb)): ?>
                     <?php foreach ($breadcrumb as $bc): ?>
                         <?php if (isset($bc['url'])): ?>
-                            <li class="breadcrumb-item"><a href="<?= h($bc['url']) ?>"><?= h($bc['label']) ?></a></li>
+                            <?php $bc_href = (isset($bc['url'][0]) && $bc['url'][0] === '/') ? BASE . $bc['url'] : $bc['url']; ?>
+                            <li class="breadcrumb-item"><a href="<?= h($bc_href) ?>"><?= h($bc['label']) ?></a></li>
                         <?php else: ?>
                             <li class="breadcrumb-item active"><?= h($bc['label']) ?></li>
                         <?php endif; ?>

@@ -117,8 +117,8 @@ try {
     if (!empty($data['action_history']) && is_array($data['action_history'])) {
         $stmt_hist = $db->prepare('
             INSERT IGNORE INTO device_action_events
-                (device_id, gpio_origem, gpio_destino, tipo, ocorrido_em)
-            VALUES (?, ?, ?, ?, STR_TO_DATE(?, \'%d/%m/%Y %H:%i:%S\'))
+                (device_id, gpio_origem, gpio_destino, tipo, valor_pino, ocorrido_em)
+            VALUES (?, ?, ?, ?, ?, STR_TO_DATE(?, \'%d/%m/%Y %H:%i:%S\'))
         ');
         foreach ($data['action_history'] as $ev) {
             if (!is_array($ev)) continue;
@@ -129,6 +129,7 @@ try {
                 isset($ev['origem']) ? (int)$ev['origem'] : 0,
                 isset($ev['gpio'])   ? (int)$ev['gpio']   : 0,
                 isset($ev['tipo'])   ? (int)$ev['tipo']   : 0,
+                isset($ev['valor'])  ? (int)$ev['valor']  : 0,
                 $ts,
             ]);
         }

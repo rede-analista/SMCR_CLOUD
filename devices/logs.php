@@ -49,7 +49,12 @@ include __DIR__ . '/../includes/header.php';
     <div class="card shadow-sm">
         <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
             <span><i class="bi bi-lightning-charge me-2 text-warning"></i>Histórico de Acionamentos</span>
-            <span id="historyCount" class="badge bg-secondary">—</span>
+            <div class="d-flex gap-2 align-items-center">
+                <span id="historyCount" class="badge bg-secondary">—</span>
+                <a href="<?= BASE ?>/api/export_history.php?device_id=<?= $device_id ?>" class="btn btn-sm btn-outline-success" title="Exportar CSV">
+                    <i class="bi bi-download me-1"></i>CSV
+                </a>
+            </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -59,6 +64,7 @@ include __DIR__ . '/../includes/header.php';
                             <th>Tipo</th>
                             <th>Origem</th>
                             <th>Destino</th>
+                            <th>Valor</th>
                             <th class="text-end">Horário</th>
                         </tr>
                     </thead>
@@ -78,6 +84,9 @@ include __DIR__ . '/../includes/header.php';
             <span><i class="bi bi-terminal me-2 text-success"></i>Log Serial do ESP32</span>
             <div class="d-flex gap-2 align-items-center">
                 <span id="serialStatus" class="badge bg-secondary small">—</span>
+                <button class="btn btn-sm btn-outline-success" onclick="exportSerialLog()" title="Exportar TXT">
+                    <i class="bi bi-download me-1"></i>TXT
+                </button>
                 <button class="btn btn-sm btn-outline-secondary" onclick="loadSerialLog()">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
@@ -96,6 +105,7 @@ include __DIR__ . '/../includes/header.php';
 const ACTION_NAMES = {1:'LIGA', 2:'LIGA_DELAY', 3:'PISCA', 4:'PULSO', 5:'PULSO_DELAY'};
 const ACTION_COLORS = {1:'success', 2:'info', 3:'warning', 4:'primary', 5:'secondary'};
 let autoRefreshTimer = null;
+let currentSerialLogs = [];
 
 function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -117,10 +127,14 @@ function loadHistory() {
             const tipo = e.tipo;
             const nome = ACTION_NAMES[tipo] || 'TIPO ' + tipo;
             const cor  = ACTION_COLORS[tipo] || 'secondary';
+            const val  = e.valor_pino !== undefined && e.valor_pino !== null
+                ? `<span class="badge bg-secondary font-monospace">${escHtml(String(e.valor_pino))}</span>`
+                : '<span class="text-muted">—</span>';
             return `<tr>
                 <td><span class="badge bg-${cor}">${escHtml(nome)}</span></td>
                 <td><span class="badge bg-dark font-monospace">GPIO ${escHtml(e.gpio_origem)}</span></td>
                 <td><span class="badge bg-dark font-monospace">GPIO ${escHtml(e.gpio_destino)}</span></td>
+                <td>${val}</td>
                 <td class="text-end text-muted small">${escHtml(e.ts)}</td>
             </tr>`;
         }).join('');
@@ -144,6 +158,7 @@ function loadSerialLog() {
             status.className = 'badge bg-secondary small';
             return;
         }
+        currentSerialLogs = data.logs;
         el.innerHTML = data.logs.map(l => `<div>${escHtml(l)}</div>`).join('');
         status.textContent = data.logs.length + ' linhas';
         status.className = 'badge bg-success small';
@@ -154,6 +169,16 @@ function loadSerialLog() {
         status.textContent = 'Offline';
         status.className = 'badge bg-danger small';
     });
+}
+
+function exportSerialLog() {
+    if (!currentSerialLogs.length) return;
+    const blob = new Blob([currentSerialLogs.join('\n')], {type: 'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'serial_<?= $device_id ?>_' + new Date().toISOString().replace(/[:.]/g,'-').slice(0,19) + '.txt';
+    a.click();
+    URL.revokeObjectURL(a.href);
 }
 
 function loadAll() {

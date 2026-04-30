@@ -19,6 +19,7 @@ try {
             gpio_origem,
             gpio_destino,
             tipo,
+            valor_pino,
             DATE_FORMAT(ocorrido_em, \'%d/%m/%Y %H:%i:%S\') AS ts
         FROM device_action_events
         WHERE device_id = ?

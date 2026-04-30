@@ -50,6 +50,14 @@ try {
             curl_close($ch);
         }
     }
+    // Limpeza automática do histórico de acionamentos
+    $stmt = $db->query("SELECT value FROM settings WHERE `key` = 'history_retention_days'");
+    $retention_days = (int)($stmt->fetchColumn() ?: 90);
+    if ($retention_days > 0) {
+        $db->prepare("DELETE FROM device_action_events WHERE ocorrido_em < NOW() - INTERVAL ? DAY")
+           ->execute([$retention_days]);
+    }
+
 } catch (Exception $e) {
     error_log('[SMCR cron] mark_offline error: ' . $e->getMessage());
 }

@@ -7,9 +7,10 @@ $db = getDB();
 // Ensure settings table and default values exist
 function ensure_settings(PDO $db): void {
     $defaults = [
-        'register_token'   => bin2hex(random_bytes(16)),
-        'mdns_interval'    => '5',
-        'dashboard_refresh'=> '30',
+        'register_token'      => bin2hex(random_bytes(16)),
+        'mdns_interval'       => '5',
+        'dashboard_refresh'   => '30',
+        'history_retention_days' => '90',
     ];
     foreach ($defaults as $key => $default) {
         $stmt = $db->prepare("SELECT COUNT(*) FROM settings WHERE `key` = ?");
@@ -134,6 +135,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ' . BASE . '/settings.php');
         exit;
     }
+
+    if ($action === 'save_history') {
+        $days = max(0, (int)($_POST['history_retention_days'] ?? 90));
+        $db->prepare("INSERT INTO settings (`key`, value) VALUES ('history_retention_days', ?) ON DUPLICATE KEY UPDATE value = ?")
+           ->execute([$days, $days]);
+        set_flash('success', 'Retenção do histórico salva.');
+        header('Location: ' . BASE . '/settings.php');
+        exit;
+    }
 }
 
 // Load data
@@ -156,6 +166,10 @@ $offline_alert_enabled  = (bool)($offline_settings['offline_alert_enabled'] ?? f
 $offline_alert_minutes  = (int)($offline_settings['offline_alert_minutes']  ?? 10);
 $offline_alert_tg_token = $offline_settings['offline_alert_telegram_token']  ?? '';
 $offline_alert_tg_chat  = $offline_settings['offline_alert_telegram_chatid'] ?? '';
+
+$stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'history_retention_days'");
+$stmt->execute();
+$history_retention_days = (int)($stmt->fetchColumn() ?: 90);
 
 $users = $db->query('SELECT id, username, created_at FROM users ORDER BY id')->fetchAll();
 
@@ -263,6 +277,31 @@ include __DIR__ . '/includes/header.php';
                         </div>
                     </div>
                     <button type="submit" class="btn btn-success mt-3">
+                        <i class="bi bi-check-lg me-1"></i>Salvar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- History retention -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-journal-text text-success fs-5"></i>
+                <h5 class="mb-0">Retenção do Histórico</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+                    <input type="hidden" name="action" value="save_history">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Dias de retenção do histórico de acionamentos</label>
+                        <input type="number" name="history_retention_days" class="form-control"
+                               value="<?= $history_retention_days ?>" min="0" max="3650">
+                        <div class="form-text">0 = manter indefinidamente. Registros mais antigos que o período configurado são removidos automaticamente.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">
                         <i class="bi bi-check-lg me-1"></i>Salvar
                     </button>
                 </form>

@@ -298,6 +298,7 @@ include __DIR__ . '/../includes/header.php';
                 ['url' => '/devices/config_mqtt.php', 'icon' => 'bi-broadcast', 'color' => '#6f42c1', 'title' => 'MQTT', 'desc' => 'Broker, tópicos, Home Assistant'],
                 ['url' => '/devices/config_intermod.php', 'icon' => 'bi-share-fill', 'color' => '#0dcaf0', 'title' => 'Inter-Módulos', 'desc' => 'Comunicação entre dispositivos'],
                 ['url' => '/devices/config_telegram.php', 'icon' => 'bi-telegram', 'color' => '#229ED9', 'title' => 'Telegram', 'desc' => 'Alertas e notificações'],
+                ['url' => '/devices/logs.php', 'icon' => 'bi-journal-text', 'color' => '#20c997', 'title' => 'Logs & Histórico', 'desc' => 'Acionamentos e log serial'],
             ];
             foreach ($config_sections as $sec):
             ?>
@@ -651,13 +652,6 @@ function importBackup() {
 }
 </script>
 
-
-<!-- Logs & Histórico -->
-<div class="container-fluid px-3 pb-4">
-    <a href="<?= BASE ?>/devices/logs.php?device_id=<?= $device_id ?>" class="btn btn-outline-secondary">
-        <i class="bi bi-journal-text me-2"></i>Ver Logs & Histórico de Acionamentos
-    </a>
-</div>
 
 <!-- Modal Push Confirm -->
 <div class="modal fade" id="modalPushConfirm" tabindex="-1">

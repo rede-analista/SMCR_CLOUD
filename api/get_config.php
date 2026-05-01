@@ -111,10 +111,10 @@ try {
         'device_id' => $device_id,
         'unique_id' => $device['unique_id'],
 
-        // Rede
+        // Rede (wifi_ssid e wifi_pass omitidos se vazios — evita sobrescrever config real do ESP)
         'hostname'              => $cfg['hostname'],
-        'wifi_ssid'             => $cfg['wifi_ssid'],
-        'wifi_pass'             => $cfg['wifi_pass'],
+        'wifi_ssid'             => $cfg['wifi_ssid'] ?: null,
+        'wifi_pass'             => $cfg['wifi_pass']  ?: null,
         'wifi_attempts'         => (int)$cfg['wifi_attempts'],
         'wifi_check_interval'   => (int)$cfg['wifi_check_interval'],
         'ap_ssid'               => $cfg['ap_ssid'],
@@ -141,7 +141,6 @@ try {
         'active_log_flags'       => (int)$cfg['log_flags'],
         'watchdog_enabled'       => (bool)$cfg['watchdog_enabled'],
         'tempo_watchdog_us'      => (int)$cfg['tempo_watchdog_us'],
-        'clock_esp32_mhz'        => (int)$cfg['clock_esp32_mhz'],
 
         // Servidor Web
         'web_server_port'         => (int)$cfg['web_server_port'],

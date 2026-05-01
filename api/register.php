@@ -48,10 +48,13 @@ if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $unique_id)) {
 }
 
 // Optional fields
-$hostname = isset($data['hostname']) ? substr(trim((string)$data['hostname']), 0, 64) : '';
-$ip       = isset($data['ip'])       ? substr(trim((string)$data['ip']),       0, 45) : '';
-$port     = isset($data['port'])     ? (int)$data['port']                             : 8080;
-$firmware = isset($data['firmware_version']) ? substr(trim((string)$data['firmware_version']), 0, 20) : '';
+$hostname      = isset($data['hostname'])         ? substr(trim((string)$data['hostname']),         0, 64) : '';
+$ip            = isset($data['ip'])               ? substr(trim((string)$data['ip']),               0, 45) : '';
+$port          = isset($data['port'])             ? (int)$data['port']                                     : 8080;
+$firmware      = isset($data['firmware_version']) ? substr(trim((string)$data['firmware_version']), 0, 20) : '';
+$wifi_ssid     = isset($data['wifi_ssid'])        ? substr(trim((string)$data['wifi_ssid']),        0, 64) : '';
+$wifi_attempts = isset($data['wifi_attempts'])    ? max(1, (int)$data['wifi_attempts'])                    : 4;
+$qtd_pinos     = isset($data['qtd_pinos'])        ? max(1, min(255, (int)$data['qtd_pinos']))              : 25;
 
 try {
     $db = getDB();
@@ -111,12 +114,12 @@ try {
 
     $db->beginTransaction();
 
-    $stmt = $db->prepare('INSERT INTO devices (unique_id, name, api_token, last_seen, online) VALUES (?, ?, ?, NOW(), 1)');
+    $stmt = $db->prepare('INSERT INTO devices (unique_id, name, api_token, last_seen, online, ativo) VALUES (?, ?, ?, NOW(), 1, 0)');
     $stmt->execute([$unique_id, $name, $api_token]);
     $device_id = (int)$db->lastInsertId();
 
-    $stmt = $db->prepare('INSERT INTO device_config (device_id, hostname) VALUES (?, ?)');
-    $stmt->execute([$device_id, $hostname ?: 'esp32modularx']);
+    $stmt = $db->prepare('INSERT INTO device_config (device_id, hostname, wifi_ssid, wifi_attempts, qtd_pinos, web_server_port) VALUES (?, ?, ?, ?, ?, ?)');
+    $stmt->execute([$device_id, $hostname ?: 'esp32modularx', $wifi_ssid, $wifi_attempts, $qtd_pinos, $port]);
 
     $stmt = $db->prepare('INSERT INTO device_status (device_id, ip, hostname, firmware_version) VALUES (?, ?, ?, ?)');
     $stmt->execute([$device_id, $ip, $hostname, $firmware]);

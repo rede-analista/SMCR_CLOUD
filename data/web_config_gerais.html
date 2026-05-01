@@ -284,13 +284,6 @@
                     </td></tr>
                     <tr><td>Watchdog Habilitado:</td><td><select name="watchdog_enabled" id="watchdog_enabled"><option value="1">Habilitado</option><option value="0">Desabilitado</option></select></td></tr>
                     <tr><td>Tempo Watchdog (microseg):</td><td><input type="number" name="tempo_watchdog_us" id="tempo_watchdog_us" min="1000000" max="4294967295" value="8000000"></td></tr>
-                    <tr><td>Clock ESP32 (MHz):</td><td>
-                        <select name="clock_esp32_mhz" id="clock_esp32_mhz">
-                            <option value="80">80 MHz</option>
-                            <option value="160">160 MHz</option>
-                            <option value="240">240 MHz (Padrao)</option>
-                        </select>
-                    </td></tr>
                 </table>
 
                 <div class="section-title">Configuracoes do Servidor Web</div>
@@ -316,7 +309,7 @@
                 <div class="section-title">SMCR Cloud</div>
                 <table class="config-table">
                     <tr><td>URL da Cloud:</td><td><input type="text" name="cloud_url" id="cloud_url" maxlength="128" placeholder="smcr.pensenet.com.br"></td></tr>
-                    <tr><td>Porta da Cloud:</td><td><input type="number" name="cloud_port" id="cloud_port" min="1" max="65535" value="8765" placeholder="8765"></td></tr>
+                    <tr><td>Porta da Cloud:</td><td><input type="number" name="cloud_port" id="cloud_port" min="1" max="65535" value="2082" placeholder="2082"></td></tr>
                     <tr><td>Usar HTTPS:</td><td><select name="cloud_use_https" id="cloud_use_https"><option value="0">Não (HTTP)</option><option value="1">Sim (HTTPS)</option></select></td></tr>
                     <tr><td>Sync com Cloud Habilitado:</td><td><select name="cloud_sync_enabled" id="cloud_sync_enabled"><option value="0">Desabilitado</option><option value="1">Habilitado</option></select></td></tr>
                     <tr><td>Intervalo de Sync (minutos):</td><td><input type="number" name="cloud_sync_interval_min" id="cloud_sync_interval_min" min="1" max="1440" value="5"></td></tr>
@@ -414,7 +407,6 @@
                     
                     document.getElementById('watchdog_enabled').value = data.watchdog_enabled ? '1' : '0';
                     document.getElementById('tempo_watchdog_us').value = data.tempo_watchdog_us || 2000000;
-                    document.getElementById('clock_esp32_mhz').value = data.clock_esp32_mhz || 240;
                     document.getElementById('web_server_port').value = data.web_server_port || 8080;
                     document.getElementById('auth_enabled').value = data.auth_enabled ? '1' : '0';
                     document.getElementById('dashboard_auth_required').value = data.dashboard_auth_required ? '1' : '0';
@@ -425,7 +417,7 @@
 
                     // SMCR Cloud
                     document.getElementById('cloud_url').value = data.cloud_url || 'smcr.pensenet.com.br';
-                    document.getElementById('cloud_port').value = data.cloud_port || 8765;
+                    document.getElementById('cloud_port').value = data.cloud_port || 2082;
                     document.getElementById('cloud_use_https').value = data.cloud_use_https ? '1' : '0';
                     document.getElementById('cloud_sync_enabled').value = data.cloud_sync_enabled ? '1' : '0';
                     document.getElementById('cloud_sync_interval_min').value = data.cloud_sync_interval_min || 5;

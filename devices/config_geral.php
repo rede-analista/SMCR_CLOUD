@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'hostname'               => trim($_POST['hostname'] ?? 'esp32modularx'),
         'wifi_ssid'              => trim($_POST['wifi_ssid'] ?? ''),
         'wifi_pass'              => $_POST['wifi_pass'] ?? '',
-        'wifi_attempts'          => (int)($_POST['wifi_attempts'] ?? 15),
+        'wifi_attempts'          => (int)($_POST['wifi_attempts'] ?? 4),
         'wifi_check_interval'    => (int)($_POST['wifi_check_interval'] ?? 15000),
         'ap_ssid'                => trim($_POST['ap_ssid'] ?? 'SMCR_AP_SETUP'),
         'ap_pass'                => $_POST['ap_pass'] ?? 'senha1234',
@@ -60,8 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'log_flags'              => $log_flags,
         'watchdog_enabled'       => isset($_POST['watchdog_enabled']) ? 1 : 0,
         'tempo_watchdog_us'      => (int)($_POST['tempo_watchdog_us'] ?? 8000000),
-        'clock_esp32_mhz'        => (int)($_POST['clock_esp32_mhz'] ?? 240),
-        'qtd_pinos'              => (int)($_POST['qtd_pinos'] ?? 16),
+        'qtd_pinos'              => (int)($_POST['qtd_pinos'] ?? 25),
         'web_server_port'        => (int)($_POST['web_server_port'] ?? 8080),
         'auth_enabled'           => isset($_POST['auth_enabled']) ? 1 : 0,
         'web_username'           => trim($_POST['web_username'] ?? 'admin'),
@@ -76,8 +75,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'cloud_heartbeat_interval_min' => (int)($_POST['cloud_heartbeat_interval_min'] ?? 5),
         'cloud_register_token'       => trim($_POST['cloud_register_token'] ?? ''),
     ];
-    if (isset($_POST['cloud_api_token'])) {
-        $fields['cloud_api_token'] = trim($_POST['cloud_api_token']);
+    // Token API: campo único que sincroniza devices.api_token e device_config.cloud_api_token
+    $new_api_token = trim($_POST['api_token'] ?? '');
+    if ($new_api_token !== '') {
+        $fields['cloud_api_token'] = $new_api_token;
     }
 
     $set_parts = [];
@@ -91,10 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sql = 'UPDATE device_config SET ' . implode(', ', $set_parts) . ' WHERE device_id = ?';
     $db->prepare($sql)->execute($values);
 
-    if (isset($_POST['device_api_token']) && trim($_POST['device_api_token']) !== '') {
+    if ($new_api_token !== '') {
         $db->prepare('UPDATE devices SET api_token = ? WHERE id = ?')
-           ->execute([trim($_POST['device_api_token']), $device_id]);
-        $device['api_token'] = trim($_POST['device_api_token']);
+           ->execute([$new_api_token, $device_id]);
+        $device['api_token'] = $new_api_token;
     }
 
     set_flash('success', 'Configurações gerais salvas com sucesso.');
@@ -358,14 +359,6 @@ include __DIR__ . '/../includes/header.php';
                                value="<?= h($cfg['qtd_pinos']) ?>" min="1" max="255">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Clock do ESP32 (MHz)</label>
-                        <select class="form-select" name="clock_esp32_mhz">
-                            <option value="80"  <?= $cfg['clock_esp32_mhz'] == 80  ? 'selected' : '' ?>>80 MHz</option>
-                            <option value="160" <?= $cfg['clock_esp32_mhz'] == 160 ? 'selected' : '' ?>>160 MHz</option>
-                            <option value="240" <?= $cfg['clock_esp32_mhz'] == 240 ? 'selected' : '' ?>>240 MHz</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
                         <label class="form-label">Timeout do Watchdog (µs)</label>
                         <input type="number" class="form-control" name="tempo_watchdog_us"
                                value="<?= h($cfg['tempo_watchdog_us']) ?>" min="0">
@@ -529,26 +522,15 @@ include __DIR__ . '/../includes/header.php';
                         <div class="form-text">Copie de Configurações → SMCR Cloud no painel. O ESP32 usa este token para se registrar automaticamente.</div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Token API (ESP32)</label>
+                        <label class="form-label">Token API</label>
                         <div class="input-group">
-                            <input type="password" class="form-control" name="cloud_api_token"
-                                   id="cloud_api_token" value="<?= h($cfg['cloud_api_token'] ?? '') ?>" maxlength="128">
-                            <button class="btn btn-outline-secondary" type="button" onclick="toggleVis('cloud_api_token',this)">
+                            <input type="password" class="form-control" name="api_token"
+                                   id="api_token" value="<?= h($device['api_token'] ?? '') ?>" maxlength="128">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleVis('api_token',this)">
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
-                        <div class="form-text">Token enviado ao ESP32 via sync. Deixe em branco para forçar novo registro no próximo sync.</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Token API (Servidor)</label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" name="device_api_token"
-                                   id="device_api_token" value="<?= h($device['api_token'] ?? '') ?>" maxlength="128">
-                            <button class="btn btn-outline-secondary" type="button" onclick="toggleVis('device_api_token',this)">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-                        <div class="form-text">Token que o servidor usa para autenticar requisições do ESP32. Deixe em branco para não alterar.</div>
+                        <div class="form-text">Token de autenticação do dispositivo. Atualiza simultaneamente o banco e o valor enviado ao ESP32 via sync. Deixe em branco para não alterar.</div>
                     </div>
                 </div>
             </div>

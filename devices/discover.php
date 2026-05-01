@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['quick_register'])) {
         if (!$stmt->fetch()) {
             $api_token = bin2hex(random_bytes(32));
             $db->beginTransaction();
-            $stmt = $db->prepare('INSERT INTO devices (unique_id, name, api_token, last_seen, online) VALUES (?, ?, ?, NOW(), 1)');
+            $stmt = $db->prepare('INSERT INTO devices (unique_id, name, api_token, last_seen, online, ativo) VALUES (?, ?, ?, NOW(), 1, 0)');
             $stmt->execute([$unique_id, $name, $api_token]);
             $device_id = (int)$db->lastInsertId();
             $stmt = $db->prepare('INSERT INTO device_config (device_id, hostname) VALUES (?, ?)');

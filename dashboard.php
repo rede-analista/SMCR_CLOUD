@@ -24,17 +24,16 @@ $stmt = $db->query("
            ds.ip, ds.hostname, ds.firmware_version, ds.free_heap, ds.uptime_ms, ds.wifi_rssi
     FROM devices d
     LEFT JOIN device_status ds ON ds.device_id = d.id
-    ORDER BY d.ativo DESC, d.online DESC, d.name ASC
+    WHERE d.ativo = 1
+    ORDER BY d.online DESC, d.name ASC
 ");
 $devices = $stmt->fetchAll();
 
 $total = count($devices);
 $online_count = 0;
 $offline_count = 0;
-$inactive_count = 0;
 foreach ($devices as $d) {
-    if (!$d['ativo']) $inactive_count++;
-    elseif ($d['online']) $online_count++;
+    if ($d['online']) $online_count++;
     else $offline_count++;
 }
 
@@ -108,19 +107,6 @@ include __DIR__ . '/includes/header.php';
                 <div>
                     <div class="text-muted small">Offline</div>
                     <div class="fs-3 fw-bold text-danger"><?= $offline_count ?></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-sm-3">
-        <div class="card h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div style="width:48px;height:48px;background:linear-gradient(135deg,#6c757d,#495057);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <i class="bi bi-slash-circle text-white fs-5"></i>
-                </div>
-                <div>
-                    <div class="text-muted small">Inativo</div>
-                    <div class="fs-3 fw-bold text-secondary"><?= $inactive_count ?></div>
                 </div>
             </div>
         </div>

@@ -39,6 +39,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    if ($action === 'set_register_token') {
+        $token = trim($_POST['register_token_manual'] ?? '');
+        if ($token === '') {
+            set_flash('danger', 'O token não pode ser vazio.');
+        } else {
+            $stmt = $db->prepare("UPDATE settings SET value = ? WHERE `key` = 'register_token'");
+            $stmt->execute([$token]);
+            set_flash('success', 'Token de auto-registro atualizado.');
+        }
+        header('Location: ' . BASE . '/settings.php');
+        exit;
+    }
+
     if ($action === 'change_password') {
         $current  = $_POST['current_password']  ?? '';
         $new_pass = $_POST['new_password']       ?? '';
@@ -199,6 +212,17 @@ include __DIR__ . '/includes/header.php';
                         <i class="bi bi-clipboard"></i>
                     </button>
                 </div>
+                <form method="POST" class="mb-3">
+                    <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+                    <input type="hidden" name="action" value="set_register_token">
+                    <div class="input-group">
+                        <input type="text" class="form-control font-monospace" name="register_token_manual"
+                               placeholder="Digite o novo token" maxlength="128">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>Salvar
+                        </button>
+                    </div>
+                </form>
                 <form method="POST" onsubmit="return confirm('Regenerar o token vai invalidar todos os ESP32 que usam o token atual. Confirma?')">
                     <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
                     <input type="hidden" name="action" value="regenerate_token">

@@ -91,6 +91,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sql = 'UPDATE device_config SET ' . implode(', ', $set_parts) . ' WHERE device_id = ?';
     $db->prepare($sql)->execute($values);
 
+    if (isset($_POST['device_api_token']) && trim($_POST['device_api_token']) !== '') {
+        $db->prepare('UPDATE devices SET api_token = ? WHERE id = ?')
+           ->execute([trim($_POST['device_api_token']), $device_id]);
+        $device['api_token'] = trim($_POST['device_api_token']);
+    }
+
     set_flash('success', 'Configurações gerais salvas com sucesso.');
 
     // Reload
@@ -523,7 +529,7 @@ include __DIR__ . '/../includes/header.php';
                         <div class="form-text">Copie de Configurações → SMCR Cloud no painel. O ESP32 usa este token para se registrar automaticamente.</div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Token API</label>
+                        <label class="form-label">Token API (ESP32)</label>
                         <div class="input-group">
                             <input type="password" class="form-control" name="cloud_api_token"
                                    id="cloud_api_token" value="<?= h($cfg['cloud_api_token'] ?? '') ?>" maxlength="128">
@@ -531,7 +537,18 @@ include __DIR__ . '/../includes/header.php';
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
-                        <div class="form-text">Gerado automaticamente após o registro. Deixe em branco para forçar novo registro no próximo sync.</div>
+                        <div class="form-text">Token enviado ao ESP32 via sync. Deixe em branco para forçar novo registro no próximo sync.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Token API (Servidor)</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="device_api_token"
+                                   id="device_api_token" value="<?= h($device['api_token'] ?? '') ?>" maxlength="128">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleVis('device_api_token',this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">Token que o servidor usa para autenticar requisições do ESP32. Deixe em branco para não alterar.</div>
                     </div>
                 </div>
             </div>

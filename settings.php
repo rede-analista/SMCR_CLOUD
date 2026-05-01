@@ -8,6 +8,7 @@ $db = getDB();
 function ensure_settings(PDO $db): void {
     $defaults = [
         'register_token'      => '4d8fc75fbfc624e2efce035dfc19595f',
+        'mdns_enabled'        => '1',
         'mdns_interval'       => '5',
         'dashboard_refresh'   => '30',
         'history_retention_days' => '90',
@@ -133,12 +134,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'save_timers') {
+        $mdns_enabled      = isset($_POST['mdns_enabled']) ? '1' : '0';
         $mdns_interval     = (int)($_POST['mdns_interval']     ?? 5);
         $dashboard_refresh = (int)($_POST['dashboard_refresh'] ?? 30);
 
         if ($mdns_interval < 1)      $mdns_interval     = 1;
         if ($dashboard_refresh < 10) $dashboard_refresh = 10;
 
+        $db->prepare("INSERT INTO settings (`key`, value) VALUES ('mdns_enabled', ?) ON DUPLICATE KEY UPDATE value = ?")
+           ->execute([$mdns_enabled, $mdns_enabled]);
         $db->prepare("INSERT INTO settings (`key`, value) VALUES ('mdns_interval', ?) ON DUPLICATE KEY UPDATE value = ?")
            ->execute([$mdns_interval, $mdns_interval]);
         $db->prepare("INSERT INTO settings (`key`, value) VALUES ('dashboard_refresh', ?) ON DUPLICATE KEY UPDATE value = ?")
@@ -163,6 +167,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'register_token'");
 $stmt->execute();
 $register_token = $stmt->fetchColumn() ?: '—';
+
+$stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'mdns_enabled'");
+$stmt->execute();
+$mdns_enabled = (bool)(int)($stmt->fetchColumn() ?? 1);
 
 $stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'mdns_interval'");
 $stmt->execute();
@@ -285,7 +293,17 @@ include __DIR__ . '/includes/header.php';
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">
-                                <i class="bi bi-broadcast me-1"></i>Intervalo de descoberta mDNS (minutos)
+                                <i class="bi bi-broadcast me-1"></i>Descoberta automática mDNS
+                            </label>
+                            <div class="form-check form-switch mt-1">
+                                <input class="form-check-input" type="checkbox" name="mdns_enabled" id="mdns_enabled" value="1" <?= $mdns_enabled ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="mdns_enabled">Habilitada</label>
+                            </div>
+                            <div class="form-text">Quando desativada, o cron de descoberta não executa.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">
+                                <i class="bi bi-clock me-1"></i>Intervalo de descoberta mDNS (minutos)
                             </label>
                             <input type="number" name="mdns_interval" class="form-control"
                                    value="<?= $mdns_interval ?>" min="1" max="60" required>

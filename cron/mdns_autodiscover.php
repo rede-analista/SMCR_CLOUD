@@ -12,6 +12,15 @@ require_once __DIR__ . '/../config/db.php';
 
 $db = getDB();
 
+// ─── Verifica se descoberta mDNS está habilitada ───
+$stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'mdns_enabled'");
+$stmt->execute();
+$mdns_enabled = $stmt->fetchColumn();
+if ($mdns_enabled !== false && (int)$mdns_enabled === 0) {
+    echo '[' . date('Y-m-d H:i:s') . "] Descoberta mDNS desabilitada nas configurações. Saindo." . PHP_EOL;
+    exit(0);
+}
+
 // ─── Throttle por intervalo configurável ───
 $stmt = $db->prepare("SELECT value FROM settings WHERE `key` = 'mdns_interval'");
 $stmt->execute();

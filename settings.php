@@ -409,7 +409,7 @@ include __DIR__ . '/includes/header.php';
             </div>
             <div class="card-body">
                 <form method="post" action="<?= BASE ?>/settings.php">
-                    <?= csrf_field() ?>
+                    <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
                     <input type="hidden" name="action" value="save_offline_alert">
                     <div class="mb-3 form-check form-switch">
                         <input class="form-check-input" type="checkbox" name="offline_alert_enabled" id="offline_alert_enabled" value="1" <?= $offline_alert_enabled ? 'checked' : '' ?>>

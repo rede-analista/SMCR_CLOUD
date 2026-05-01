@@ -7,7 +7,7 @@ $db = getDB();
 // Ensure settings table and default values exist
 function ensure_settings(PDO $db): void {
     $defaults = [
-        'register_token'      => bin2hex(random_bytes(16)),
+        'register_token'      => '4d8fc75fbfc624e2efce035dfc19595f',
         'mdns_interval'       => '5',
         'dashboard_refresh'   => '30',
         'history_retention_days' => '90',

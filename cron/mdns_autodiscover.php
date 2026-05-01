@@ -157,7 +157,7 @@ foreach ($mdns_found as $key => $dev) {
         $json = json_decode($body2, true);
         $unique_id = trim($json['mqtt_unique_id'] ?? '');
     }
-    if ($unique_id === '') $unique_id = $dev['hostname'];
+    if ($unique_id === '') $unique_id = strtolower($dev['hostname']);
 
     if (!$is_live) {
         echo '[' . date('H:i:s') . "] OFFLINE (sem resposta GET /): {$unique_id} [{$dev['ip']}:{$dev['port']}]" . PHP_EOL;

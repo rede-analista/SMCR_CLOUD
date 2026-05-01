@@ -42,7 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'wifi_ssid'              => trim($_POST['wifi_ssid'] ?? ''),
         'wifi_pass'              => $_POST['wifi_pass'] ?? '',
         'wifi_attempts'          => (int)($_POST['wifi_attempts'] ?? 4),
-        'wifi_check_interval'    => (int)($_POST['wifi_check_interval'] ?? 15000),
+        'wifi_check_interval'       => (int)($_POST['wifi_check_interval'] ?? 15000),
+        'wifi_offline_restart_min'  => (int)($_POST['wifi_offline_restart_min'] ?? 30),
         'ap_ssid'                => trim($_POST['ap_ssid'] ?? 'SMCR_AP_SETUP'),
         'ap_pass'                => $_POST['ap_pass'] ?? 'senha1234',
         'ap_fallback_enabled'    => isset($_POST['ap_fallback_enabled']) ? 1 : 0,
@@ -215,6 +216,13 @@ include __DIR__ . '/../includes/header.php';
                         <input type="number" class="form-control" name="wifi_check_interval"
                                value="<?= h($cfg['wifi_check_interval']) ?>" min="1000" step="1000">
                         <div class="form-text">Intervalo em milissegundos para verificar a conexão.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Reiniciar se offline por (minutos)</label>
+                        <input type="number" class="form-control" name="wifi_offline_restart_min"
+                               value="<?= h($cfg['wifi_offline_restart_min'] ?? 30) ?>" min="0" max="1440">
+                        <div class="form-text">0 = desabilitado. Reinicia o ESP após este tempo offline (tenta re-init do WiFi antes de reiniciar).</div>
                     </div>
                 </div>
 

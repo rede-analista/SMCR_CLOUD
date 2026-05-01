@@ -228,6 +228,7 @@
                     <tr><td>Senha WiFi:</td><td><span class="pass-wrap"><input type="password" name="wifi_pass" id="wifi_pass" maxlength="64"><button type="button" class="pass-eye" onclick="togglePass('wifi_pass',this)">👁</button></span></td></tr>
                     <tr><td>Tentativas de Conexao:</td><td><input type="number" name="wifi_attempts" id="wifi_attempts" min="1" max="50" value="4"></td></tr>
                     <tr><td>Intervalo de Checagem (ms):</td><td><input type="number" name="wifi_check_interval" id="wifi_check_interval" min="10000" max="60000" value="15000"></td></tr>
+                    <tr><td>Reiniciar se offline por (min):</td><td><input type="number" name="wifi_offline_restart_min" id="wifi_offline_restart_min" min="0" max="1440" value="30" title="0 = desabilitado. Usa re-init WiFi periodicamente; reinicia o ESP somente após este tempo offline."></td></tr>
                 </table>
 
                 <div class="section-title">Configuracoes de NTP (Sincronizacao de Tempo)</div>
@@ -385,6 +386,7 @@
                     document.getElementById('wifi_pass').value = data.wifi_pass || '';
                     document.getElementById('wifi_attempts').value = data.wifi_attempts || 4;
                     document.getElementById('wifi_check_interval').value = data.wifi_check_interval || 15000;
+                    document.getElementById('wifi_offline_restart_min').value = data.wifi_offline_restart_min !== undefined ? data.wifi_offline_restart_min : 30;
                     document.getElementById('ntp_server1').value = data.ntp_server1 || 'pool.ntp.br';
                     document.getElementById('gmt_offset').value = data.gmt_offset || -10800;
                     document.getElementById('daylight_offset').value = data.daylight_offset || 0;

@@ -9,6 +9,10 @@ $stmt = $db->prepare('SELECT * FROM devices WHERE id = ?');
 $stmt->execute([$device_id]);
 $device = $stmt->fetch();
 
+$stmt = $db->prepare('SELECT ip, port FROM device_status WHERE device_id = ?');
+$stmt->execute([$device_id]);
+$status = $stmt->fetch() ?: ['ip' => '', 'port' => 8080];
+
 if (!$device) {
     set_flash('danger', 'Dispositivo não encontrado.');
     header('Location: ' . BASE . '/devices/index.php');
@@ -22,6 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $name      = trim($_POST['name'] ?? '');
     $unique_id = trim($_POST['unique_id'] ?? '');
+    $ip        = trim($_POST['ip'] ?? '');
+    $port      = max(1, min(65535, (int)($_POST['port'] ?? 8080)));
 
     if ($unique_id === '') {
         $errors[] = 'O ID Único é obrigatório.';
@@ -39,6 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db->prepare('UPDATE devices SET name = ?, unique_id = ? WHERE id = ?')
            ->execute([$name, $unique_id, $device_id]);
 
+        $db->prepare('INSERT INTO device_status (device_id, ip, port)
+                      VALUES (?, ?, ?)
+                      ON DUPLICATE KEY UPDATE ip = VALUES(ip), port = VALUES(port)')
+           ->execute([$device_id, $ip, $port]);
+
         set_flash('success', 'Dispositivo atualizado com sucesso.');
         header('Location: ' . BASE . '/devices/view.php?device_id=' . $device_id);
         exit;
@@ -46,6 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $device['unique_id'] = $unique_id;
     $device['name']      = $name;
+    $status['ip']        = $ip;
+    $status['port']      = $port;
 }
 
 $page_title = 'Editar Dispositivo';
@@ -83,12 +96,32 @@ include __DIR__ . '/../includes/header.php';
                         </div>
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label for="name" class="form-label fw-semibold">Nome do Dispositivo</label>
                         <input type="text" class="form-control" id="name" name="name"
                                value="<?= h($device['name']) ?>"
                                placeholder="ex: ESP32 Sala Principal"
                                maxlength="100">
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label for="ip" class="form-label fw-semibold">IP</label>
+                            <input type="text" class="form-control font-monospace" id="ip" name="ip"
+                                   value="<?= h($status['ip']) ?>"
+                                   placeholder="ex: 192.168.1.200" maxlength="45">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="port" class="form-label fw-semibold">Porta</label>
+                            <input type="number" class="form-control" id="port" name="port"
+                                   value="<?= h($status['port']) ?>"
+                                   min="1" max="65535">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-text text-warning" style="margin-top:-0.5rem;">
+                                <i class="bi bi-exclamation-triangle me-1"></i>O próximo heartbeat do ESP32 sobrescreve IP e porta automaticamente.
+                            </div>
+                        </div>
                     </div>
 
                     <div class="d-flex gap-2">

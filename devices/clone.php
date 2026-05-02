@@ -185,6 +185,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $cloned[] = 'Módulos Inter-módulos (' . count($modules) . ')';
                 }
 
+                if (in_array('wifi_hostname', $sections) && $cfg) {
+                    $db->prepare("UPDATE device_config SET
+                        hostname=:hn, wifi_ssid=:wss, wifi_pass=:wsp,
+                        wifi_offline_restart_min=:worm,
+                        ap_ssid=:apss, ap_pass=:apps
+                        WHERE device_id=:id"
+                    )->execute([
+                        ':hn'   => $cfg['hostname'],                 ':wss'  => $cfg['wifi_ssid'],
+                        ':wsp'  => $cfg['wifi_pass'],                ':worm' => $cfg['wifi_offline_restart_min'],
+                        ':apss' => $cfg['ap_ssid'],                  ':apps' => $cfg['ap_pass'],
+                        ':id'   => $tgt_id,
+                    ]);
+                    $cloned[] = 'WiFi & Hostname';
+                }
+
+                if (in_array('cloud_tokens', $sections) && $cfg) {
+                    $db->prepare("UPDATE device_config SET
+                        web_username=:wu, web_password=:wp,
+                        cloud_url=:curl, cloud_port=:cport,
+                        cloud_sync_enabled=:cse, cloud_sync_interval_min=:csim,
+                        cloud_heartbeat_enabled=:che, cloud_heartbeat_interval_min=:chim,
+                        cloud_use_https=:cuh, cloud_api_token=:cat,
+                        cloud_register_token=:crt,
+                        reboot_on_sync=:ros, ota_update_on_sync=:uos
+                        WHERE device_id=:id"
+                    )->execute([
+                        ':wu'   => $cfg['web_username'],             ':wp'   => $cfg['web_password'],
+                        ':curl' => $cfg['cloud_url'],                ':cport'=> $cfg['cloud_port'],
+                        ':cse'  => $cfg['cloud_sync_enabled'],       ':csim' => $cfg['cloud_sync_interval_min'],
+                        ':che'  => $cfg['cloud_heartbeat_enabled'],  ':chim' => $cfg['cloud_heartbeat_interval_min'],
+                        ':cuh'  => $cfg['cloud_use_https'],          ':cat'  => $cfg['cloud_api_token'],
+                        ':crt'  => $cfg['cloud_register_token'],     ':ros'  => $cfg['reboot_on_sync'],
+                        ':uos'  => $cfg['ota_update_on_sync'],       ':id'   => $tgt_id,
+                    ]);
+                    $cloned[] = 'Cloud & Credenciais';
+                }
+
                 $db->commit();
                 $results[] = ['name' => $tgt_name, 'cloned' => $cloned, 'ok' => true];
 
@@ -301,19 +338,31 @@ include __DIR__ . '/../includes/header.php';
             <div class="card-body">
                 <?php
                 $sections_list = [
-                    'config_geral'  => ['Config Geral',         'bi-gear-fill',      'text-secondary', 'Rede, NTP, display — exceto WiFi/hostname'],
-                    'mqtt'          => ['MQTT',                  'bi-broadcast',      'text-purple',    'Broker, tópicos, Home Assistant'],
-                    'telegram'      => ['Telegram',              'bi-telegram',       'text-info',      'Token, chat ID, intervalo'],
-                    'intermod_cfg'  => ['Inter-módulos Config',  'bi-share-fill',     'text-primary',   'Habilitado, healthcheck, falhas'],
-                    'pinos'         => ['Pinos',                 'bi-diagram-3-fill', 'text-success',   'Todos os pinos (substitui destino)'],
-                    'acoes'         => ['Ações',                 'bi-lightning-fill', 'text-warning',   'Todas as ações (substitui destino)'],
-                    'intermod_mods' => ['Módulos Inter-módulos', 'bi-hdd-network',    'text-info',      'Lista de módulos cadastrados'],
+                    'config_geral'  => ['Config Geral',         'bi-gear-fill',       'text-secondary', 'NTP, display, watchdog, rede — sem credenciais', false],
+                    'mqtt'          => ['MQTT',                  'bi-broadcast',       'text-purple',    'Broker, tópicos, Home Assistant',                false],
+                    'telegram'      => ['Telegram',              'bi-telegram',        'text-info',      'Token, chat ID, intervalo',                      false],
+                    'intermod_cfg'  => ['Inter-módulos Config',  'bi-share-fill',      'text-primary',   'Habilitado, healthcheck, falhas',                false],
+                    'pinos'         => ['Pinos',                 'bi-diagram-3-fill',  'text-success',   'Todos os pinos (substitui destino)',              false],
+                    'acoes'         => ['Ações',                 'bi-lightning-fill',  'text-warning',   'Todas as ações (substitui destino)',              false],
+                    'intermod_mods' => ['Módulos Inter-módulos', 'bi-hdd-network',     'text-info',      'Lista de módulos cadastrados',                   false],
+                    'wifi_hostname' => ['WiFi & Hostname',       'bi-wifi',            'text-danger',    'SSID, senha, hostname, AP',                      true],
+                    'cloud_tokens'  => ['Cloud & Credenciais',   'bi-shield-lock-fill','text-danger',    'Tokens, usuário/senha web, URL cloud',            true],
                 ];
                 ?>
-                <?php foreach ($sections_list as $key => [$label, $icon, $color, $desc]): ?>
+                <?php
+                $prev_sensitive = false;
+                foreach ($sections_list as $key => [$label, $icon, $color, $desc, $sensitive]):
+                    if ($sensitive && !$prev_sensitive):
+                ?>
+                <hr class="my-2">
+                <div class="text-danger small mb-2"><i class="bi bi-exclamation-triangle me-1"></i>Dados sensíveis — marque apenas se necessário</div>
+                <?php
+                    endif;
+                    $prev_sensitive = $sensitive;
+                ?>
                 <div class="form-check mb-2">
                     <input class="form-check-input section-check" type="checkbox" name="sections[]"
-                           value="<?= $key ?>" id="sec_<?= $key ?>" checked>
+                           value="<?= $key ?>" id="sec_<?= $key ?>" <?= $sensitive ? '' : 'checked' ?>>
                     <label class="form-check-label" for="sec_<?= $key ?>">
                         <i class="bi <?= $icon ?> <?= $color ?> me-1"></i>
                         <span class="fw-semibold"><?= $label ?></span>

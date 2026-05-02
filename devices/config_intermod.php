@@ -121,6 +121,21 @@ if (isset($_GET['edit_mod'])) {
 }
 $show_mod_form = isset($_GET['add_mod']) || $edit_module !== null;
 
+// Devices available to import into the module form
+$stmt = $db->prepare("
+    SELECT d.unique_id, COALESCE(d.name,'') AS name,
+           COALESCE(dc.hostname,'') AS hostname,
+           COALESCE(ds.ip,'') AS ip,
+           COALESCE(dc.web_server_port, 8080) AS porta
+    FROM devices d
+    LEFT JOIN device_config dc ON dc.device_id = d.id
+    LEFT JOIN device_status ds ON ds.device_id = d.id
+    WHERE d.id != ?
+    ORDER BY d.name, d.unique_id
+");
+$stmt->execute([$device_id]);
+$importable_devices = $stmt->fetchAll();
+
 $page_title = 'Inter-Módulos';
 $breadcrumb = [
     ['label' => 'Dispositivos', 'url' => '/devices/index.php'],
@@ -199,6 +214,26 @@ include __DIR__ . '/../includes/header.php';
             <input type="hidden" name="action" value="save_module">
             <input type="hidden" name="mod_id" value="<?= $edit_module ? $edit_module['id'] : 0 ?>">
 
+            <?php if ($importable_devices): ?>
+            <div class="mb-3">
+                <label class="form-label fw-semibold text-info">
+                    <i class="bi bi-box-arrow-in-down me-1"></i>Importar de dispositivo cadastrado
+                </label>
+                <select class="form-select" id="device_import_select" onchange="importFromDevice(this)">
+                    <option value="">Selecione para preencher automaticamente...</option>
+                    <?php foreach ($importable_devices as $d): ?>
+                    <option value="<?= h($d['unique_id']) ?>"
+                            data-hostname="<?= h($d['hostname']) ?>"
+                            data-ip="<?= h($d['ip']) ?>"
+                            data-porta="<?= h($d['porta']) ?>">
+                        <?= h($d['name'] ?: $d['unique_id']) ?> — <span class="font-monospace"><?= h($d['unique_id']) ?></span>
+                        <?= $d['ip'] ? ' (' . h($d['ip']) . ')' : '' ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <hr class="mt-0 mb-3">
+            <?php endif; ?>
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">ID do Módulo <span class="text-danger">*</span></label>
@@ -389,5 +424,17 @@ include __DIR__ . '/../includes/header.php';
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+function importFromDevice(sel) {
+    if (!sel.value) return;
+    var opt = sel.options[sel.selectedIndex];
+    document.querySelector('[name="module_id"]').value = sel.value;
+    document.querySelector('[name="hostname"]').value  = opt.dataset.hostname || '';
+    document.querySelector('[name="ip"]').value        = opt.dataset.ip       || '';
+    document.querySelector('[name="porta"]').value     = opt.dataset.porta    || 8080;
+    sel.value = '';
+}
+</script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

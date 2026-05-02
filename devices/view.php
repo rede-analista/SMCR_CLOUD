@@ -131,13 +131,11 @@ include __DIR__ . '/../includes/header.php';
                 <h6 class="mb-0 fw-bold"><i class="bi bi-activity me-2"></i>Status em Tempo Real</h6>
                 <div class="d-flex gap-2 flex-wrap">
                     <button id="btn_pull" class="btn btn-sm btn-success"
-                            onclick="pullDevice(<?= $device_id ?>)"
-                            <?= $device['online'] ? '' : 'disabled title="Dispositivo offline"' ?>>
+                            onclick="pullDevice(<?= $device_id ?>)">
                         <i class="bi bi-cloud-download me-1"></i>ESP32 → Cloud
                     </button>
                     <button id="btn_push" class="btn btn-sm btn-primary"
-                            onclick="pushDevice(<?= $device_id ?>)"
-                            <?= $device['online'] ? '' : 'disabled title="Dispositivo offline"' ?>>
+                            onclick="pushDevice(<?= $device_id ?>)">
                         <i class="bi bi-cloud-upload me-1"></i>Cloud → ESP32
                     </button>
                     <button id="btn_reboot" class="btn btn-sm btn-outline-danger"
@@ -318,29 +316,6 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
-<?php if (!empty($events)): ?>
-<div class="container-fluid px-3 pb-4">
-    <div class="card shadow-sm">
-        <div class="card-header bg-white fw-semibold">
-            <i class="bi bi-clock-history me-2"></i>Histórico de Conexões
-        </div>
-        <div class="card-body p-0">
-            <div class="list-group list-group-flush" style="max-height:240px;overflow-y:auto">
-                <?php foreach ($events as $ev): ?>
-                <div class="list-group-item d-flex align-items-center gap-2 py-2">
-                    <?php if ($ev['event'] === 'online'): ?>
-                        <span class="badge bg-success">Online</span>
-                    <?php else: ?>
-                        <span class="badge bg-danger">Offline</span>
-                    <?php endif; ?>
-                    <span class="text-muted small"><?= date('d/m/Y H:i:s', strtotime($ev['created_at'])) ?></span>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
 
 <script>
 const ACTION_NAMES = {1:'LIGA', 2:'LIGA_DELAY', 3:'PISCA', 4:'PULSO', 5:'PULSO_DELAY'};

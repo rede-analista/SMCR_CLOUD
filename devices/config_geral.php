@@ -27,6 +27,14 @@ if (!$cfg) {
     $cfg = $stmt->fetch();
 }
 
+// Pré-popula cloud_register_token com o token global de registro quando vazio
+if (empty($cfg['cloud_register_token'])) {
+    $stmtReg = $db->prepare("SELECT value FROM settings WHERE `key` = 'register_token'");
+    $stmtReg->execute();
+    $globalToken = $stmtReg->fetchColumn();
+    if ($globalToken) $cfg['cloud_register_token'] = $globalToken;
+}
+
 $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

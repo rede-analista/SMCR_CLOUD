@@ -30,7 +30,7 @@ $db = getDB();
 // Busca IP e porta do dispositivo
 $stmt = $db->prepare('
     SELECT d.id, d.unique_id, d.ativo, ds.ip, ds.hostname,
-           COALESCE(dc.web_server_port, 8080) AS port,
+           COALESCE(ds.port, dc.web_server_port, 8080) AS port,
            COALESCE(dc.auth_enabled, 0) AS auth_enabled,
            COALESCE(dc.web_username, \'\') AS web_username,
            COALESCE(dc.web_password, \'\') AS web_password

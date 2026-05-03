@@ -80,11 +80,12 @@ try {
     $wifi_rssi        = isset($data['wifi_rssi'])        ? (int)$data['wifi_rssi']                         : 0;
     $sketch_size      = isset($data['sketch_size'])      ? (int)$data['sketch_size']                       : 0;
     $sketch_free      = isset($data['sketch_free'])      ? (int)$data['sketch_free']                       : 0;
+    $port             = isset($data['port'])             ? max(1, min(65535, (int)$data['port']))           : null;
 
     // UPSERT device_status
     $stmt = $db->prepare('
-        INSERT INTO device_status (device_id, ip, hostname, firmware_version, free_heap, uptime_ms, wifi_rssi, sketch_size, sketch_free)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO device_status (device_id, ip, hostname, firmware_version, free_heap, uptime_ms, wifi_rssi, sketch_size, sketch_free, port)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, 8080))
         ON DUPLICATE KEY UPDATE
             ip               = VALUES(ip),
             hostname         = VALUES(hostname),
@@ -94,9 +95,10 @@ try {
             wifi_rssi        = VALUES(wifi_rssi),
             sketch_size      = VALUES(sketch_size),
             sketch_free      = VALUES(sketch_free),
+            port             = COALESCE(?, port),
             updated_at       = CURRENT_TIMESTAMP
     ');
-    $stmt->execute([$device_id, $ip, $hostname, $firmware_version, $free_heap, $uptime_ms, $wifi_rssi, $sketch_size, $sketch_free]);
+    $stmt->execute([$device_id, $ip, $hostname, $firmware_version, $free_heap, $uptime_ms, $wifi_rssi, $sketch_size, $sketch_free, $port, $port]);
 
     // Check previous online state to detect offline→online transition
     $stmt = $db->prepare('SELECT online FROM devices WHERE id = ?');

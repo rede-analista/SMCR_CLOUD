@@ -17,8 +17,11 @@ CREATE TABLE IF NOT EXISTS device_action_events (
     gpio_origem SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     gpio_destino SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     tipo TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    valor_pino SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     ocorrido_em DATETIME NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uk_event (device_id, gpio_origem, gpio_destino, tipo, ocorrido_em),
     KEY idx_device_time (device_id, ocorrido_em)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE device_action_events ADD COLUMN IF NOT EXISTS valor_pino SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER tipo;

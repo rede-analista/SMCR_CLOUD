@@ -179,6 +179,7 @@ CREATE TABLE IF NOT EXISTS device_action_events (
     gpio_origem SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     gpio_destino SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     tipo TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    valor_pino SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     ocorrido_em DATETIME NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uk_event (device_id, gpio_origem, gpio_destino, tipo, ocorrido_em),

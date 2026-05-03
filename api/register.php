@@ -78,10 +78,8 @@ try {
         $device_id = (int)$device['id'];
 
         // Update name if provided and empty
-        if ($hostname !== '') {
-            $stmt = $db->prepare("UPDATE devices SET last_seen = NOW(), online = 1 WHERE id = ?");
-            $stmt->execute([$device_id]);
-        }
+        $stmt = $db->prepare("UPDATE devices SET last_seen = NOW(), online = 1, ativo = 1 WHERE id = ?");
+        $stmt->execute([$device_id]);
 
         // UPSERT status
         $stmt = $db->prepare('
@@ -94,9 +92,6 @@ try {
                 updated_at       = CURRENT_TIMESTAMP
         ');
         $stmt->execute([$device_id, $ip, $hostname, $firmware]);
-
-        $stmt = $db->prepare('UPDATE devices SET last_seen = NOW(), online = 1 WHERE id = ?');
-        $stmt->execute([$device_id]);
 
         echo json_encode([
             'ok'        => true,
@@ -114,7 +109,7 @@ try {
 
     $db->beginTransaction();
 
-    $stmt = $db->prepare('INSERT INTO devices (unique_id, name, api_token, last_seen, online, ativo) VALUES (?, ?, ?, NOW(), 1, 0)');
+    $stmt = $db->prepare('INSERT INTO devices (unique_id, name, api_token, last_seen, online, ativo) VALUES (?, ?, ?, NOW(), 1, 1)');
     $stmt->execute([$unique_id, $name, $api_token]);
     $device_id = (int)$db->lastInsertId();
 

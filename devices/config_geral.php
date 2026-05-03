@@ -86,9 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
     // Token API: campo único que sincroniza devices.api_token e device_config.cloud_api_token
     $new_api_token = trim($_POST['api_token'] ?? '');
-    if ($new_api_token !== '') {
-        $fields['cloud_api_token'] = $new_api_token;
-    }
+    $fields['cloud_api_token'] = $new_api_token;
 
     $set_parts = [];
     $values = [];
@@ -101,11 +99,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sql = 'UPDATE device_config SET ' . implode(', ', $set_parts) . ' WHERE device_id = ?';
     $db->prepare($sql)->execute($values);
 
-    if ($new_api_token !== '') {
-        $db->prepare('UPDATE devices SET api_token = ? WHERE id = ?')
-           ->execute([$new_api_token, $device_id]);
-        $device['api_token'] = $new_api_token;
-    }
+    $db->prepare('UPDATE devices SET api_token = ? WHERE id = ?')
+       ->execute([$new_api_token, $device_id]);
+    $device['api_token'] = $new_api_token;
 
     set_flash('success', 'Configurações gerais salvas com sucesso.');
 
@@ -546,7 +542,7 @@ include __DIR__ . '/../includes/header.php';
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
-                        <div class="form-text">Token de autenticação do dispositivo. Atualiza simultaneamente o banco e o valor enviado ao ESP32 via sync. Deixe em branco para não alterar.</div>
+                        <div class="form-text">Token de autenticação do dispositivo. Atualiza simultaneamente o banco e o valor enviado ao ESP32 via sync. Deixe em branco para apagar o token (o ESP poderá se auto-registrar novamente).</div>
                     </div>
                 </div>
             </div>

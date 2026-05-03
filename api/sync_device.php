@@ -47,11 +47,6 @@ if (!$device) {
     exit;
 }
 
-if (!(bool)$device['ativo']) {
-    echo json_encode(['ok' => false, 'error' => 'Dispositivo inativo — sincronização bloqueada']);
-    exit;
-}
-
 if (empty($device['ip'])) {
     echo json_encode(['ok' => false, 'error' => 'IP do dispositivo desconhecido']);
     exit;

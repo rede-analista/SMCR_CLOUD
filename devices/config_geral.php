@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'web_password'           => $_POST['web_password'] ?? 'admin1234',
         'dashboard_auth_required'=> isset($_POST['dashboard_auth_required']) ? 1 : 0,
         'cloud_url'                  => trim($_POST['cloud_url'] ?? 'smcr.pensenet.com.br'),
-        'cloud_port'                 => (int)($_POST['cloud_port'] ?? 8765),
+        'cloud_port'                 => (int)($_POST['cloud_port'] ?? 443),
         'cloud_use_https'            => isset($_POST['cloud_use_https']) ? 1 : 0,
         'cloud_sync_enabled'         => isset($_POST['cloud_sync_enabled']) ? 1 : 0,
         'cloud_sync_interval_min'    => (int)($_POST['cloud_sync_interval_min'] ?? 5),
@@ -482,7 +482,7 @@ include __DIR__ . '/../includes/header.php';
                     <div class="col-md-2">
                         <label class="form-label">Porta</label>
                         <input type="number" class="form-control" name="cloud_port"
-                               value="<?= h($cfg['cloud_port'] ?? 8765) ?>" min="1" max="65535">
+                               value="<?= h($cfg['cloud_port'] ?? 443) ?>" min="1" max="65535">
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">HTTPS</label>

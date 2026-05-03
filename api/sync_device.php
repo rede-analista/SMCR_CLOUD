@@ -105,6 +105,15 @@ foreach ($handles as $key => $ch) {
 }
 curl_multi_close($mh);
 
+// Se nenhum endpoint respondeu, o ESP está inacessível na porta armazenada
+if (array_filter($raw) === []) {
+    echo json_encode([
+        'ok'    => false,
+        'error' => "ESP não respondeu em http://{$device['ip']}:{$device['port']} — verifique se o IP e a porta do dispositivo estão corretos no cadastro.",
+    ]);
+    exit;
+}
+
 // ─── Importação para o banco ───
 $imported = [];
 $errors   = [];

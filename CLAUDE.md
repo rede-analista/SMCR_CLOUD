@@ -9,16 +9,21 @@
 
 ## Decisões arquiteturais — NÃO REVERTER
 
-### `api/get_config.php` — campos cloud omitidos intencionalmente
-`cloud_url`, `cloud_port` e `cloud_use_https` foram **removidos da resposta**.
+### `api/get_config.php` — campos cloud via flag pending_cloud_migration
+`cloud_url`, `cloud_port` e `cloud_use_https` são **omitidos por padrão** da resposta.
 
 **Por quê:** Se o cloud retornar esses campos com os defaults do banco (ex: cloud_port=443),
 o ESP aplica esses valores e pode perder conexão com o servidor — exigindo deslocamento físico
 ao local para corrigir via cabo serial. O ESP já usa esses valores para se conectar; reenviar
 os do banco sobrescreveria os corretos do ESP.
 
-**Como fica:** O ESP é a fonte de verdade para cloud_url/port/https. O cloud só recebe
-esses valores (via heartbeat, sync e registro) — nunca os envia de volta.
+**Exceção — migração automática:** Quando o usuário altera cloud_url/port/https na UI
+(`devices/config_geral.php`), a flag `device_config.pending_cloud_migration` é ativada.
+O get_config.php inclui os três campos **somente** quando a flag está ativa, depois a reseta
+para 0. Assim o próximo sync automático do ESP propaga a migração sem risco de enviar defaults.
+
+**Como fica:** O ESP é a fonte de verdade para cloud_url/port/https em operação normal.
+A flag é o único gatilho para enviar esses campos via get_config.
 
 ---
 
@@ -87,11 +92,16 @@ o ESP não vê falha — o heartbeat simplesmente não é salvo no banco enquant
 
 ## Fluxo de migração entre servidores
 
-1. Alterar `cloud_url` (e `cloud_port`, `cloud_use_https`) no servidor antigo via push
-2. ESP recebe nova URL → tenta novo servidor com token antigo → HTTP 401
-3. Firmware apaga token local, dispara auto-registro
+**Via sync automático (recomendado):**
+1. Alterar `cloud_url/port/https` na UI do servidor antigo (config_geral.php) — ativa `pending_cloud_migration=1`
+2. ESP detecta alteração no próximo sync automático → recebe nova URL → salva → no próximo sync vai ao novo servidor
+3. ESP tenta novo servidor com token antigo → HTTP 401 → firmware apaga token → auto-registro
 4. ESP se registra no novo servidor com config completa
 5. Device nasce inativo no novo servidor — ativar após revisão
+
+**Via push manual (alternativa):**
+1. Alterar `cloud_url` e usar sync_device.php (Cloud→ESP)
+2. Mesmo fluxo a partir do passo 3 acima
 
 **Gatilho do auto-registro:** SOMENTE HTTP 401. HTTP 403, -1 (DNS fail) ou outros erros
 NÃO disparam re-registro — o ESP continua tentando com o token atual.

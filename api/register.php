@@ -53,8 +53,59 @@ $ip            = isset($data['ip'])               ? substr(trim((string)$data['i
 $port          = isset($data['port'])             ? (int)$data['port']                                     : 8080;
 $firmware      = isset($data['firmware_version']) ? substr(trim((string)$data['firmware_version']), 0, 20) : '';
 $wifi_ssid     = isset($data['wifi_ssid'])        ? substr(trim((string)$data['wifi_ssid']),        0, 64) : '';
+$wifi_pass     = isset($data['wifi_pass'])        ? substr(trim((string)$data['wifi_pass']),        0, 128): '';
 $wifi_attempts = isset($data['wifi_attempts'])    ? max(1, (int)$data['wifi_attempts'])                    : 4;
+$wifi_check_interval      = isset($data['wifi_check_interval'])       ? max(1000, (int)$data['wifi_check_interval'])       : 15000;
+$wifi_offline_restart_min = isset($data['wifi_offline_restart_min'])  ? max(0, (int)$data['wifi_offline_restart_min'])     : 30;
+$ap_ssid            = isset($data['ap_ssid'])            ? substr(trim((string)$data['ap_ssid']),  0, 64)  : '';
+$ap_pass            = isset($data['ap_pass'])            ? substr(trim((string)$data['ap_pass']),  0, 128) : '';
+$ap_fallback_enabled= isset($data['ap_fallback_enabled'])? (int)(bool)$data['ap_fallback_enabled']         : 1;
 $qtd_pinos     = isset($data['qtd_pinos'])        ? max(1, min(255, (int)$data['qtd_pinos']))              : 25;
+
+// NTP
+$ntp_server1      = isset($data['ntp_server1'])     ? substr(trim((string)$data['ntp_server1']), 0, 64) : 'pool.ntp.br';
+$gmt_offset_sec   = isset($data['gmt_offset'])      ? (int)$data['gmt_offset']                          : -10800;
+$daylight_offset_sec = isset($data['daylight_offset']) ? (int)$data['daylight_offset']                  : 0;
+
+// Interface Web
+$status_pinos_enabled  = isset($data['status_pinos_enabled'])  ? (int)(bool)$data['status_pinos_enabled']  : 1;
+$inter_modulos_enabled = isset($data['inter_modulos_enabled']) ? (int)(bool)$data['inter_modulos_enabled'] : 0;
+$cor_com_alerta        = isset($data['cor_com_alerta'])        ? substr(trim((string)$data['cor_com_alerta']),  0, 10) : '#ff0000';
+$cor_sem_alerta        = isset($data['cor_sem_alerta'])        ? substr(trim((string)$data['cor_sem_alerta']),  0, 10) : '#00ff00';
+$tempo_refresh         = isset($data['tempo_refresh'])         ? max(1, (int)$data['tempo_refresh'])           : 15;
+$show_analog_history   = isset($data['show_analog_history'])   ? (int)(bool)$data['show_analog_history']       : 1;
+$show_digital_history  = isset($data['show_digital_history'])  ? (int)(bool)$data['show_digital_history']      : 1;
+
+// Sistema
+$serial_debug_enabled = isset($data['serial_debug_enabled']) ? (int)(bool)$data['serial_debug_enabled'] : 0;
+$log_flags            = isset($data['active_log_flags'])      ? (int)$data['active_log_flags']           : 0;
+$watchdog_enabled     = isset($data['watchdog_enabled'])      ? (int)(bool)$data['watchdog_enabled']     : 0;
+$tempo_watchdog_us    = isset($data['tempo_watchdog_us'])     ? max(1, (int)$data['tempo_watchdog_us'])  : 8000000;
+
+// Servidor Web
+$auth_enabled            = isset($data['auth_enabled'])            ? (int)(bool)$data['auth_enabled']            : 0;
+$web_username            = isset($data['web_username'])            ? substr(trim((string)$data['web_username']),  0, 64)  : 'admin';
+$web_password            = isset($data['web_password'])            ? substr(trim((string)$data['web_password']),  0, 128) : '';
+$dashboard_auth_required = isset($data['dashboard_auth_required']) ? (int)(bool)$data['dashboard_auth_required'] : 0;
+
+// MQTT
+$mqtt_enabled          = isset($data['mqtt_enabled'])          ? (int)(bool)$data['mqtt_enabled']                    : 0;
+$mqtt_server           = isset($data['mqtt_server'])           ? substr(trim((string)$data['mqtt_server']),   0, 128) : '';
+$mqtt_port             = isset($data['mqtt_port'])             ? max(1, min(65535, (int)$data['mqtt_port']))          : 1883;
+$mqtt_user             = isset($data['mqtt_user'])             ? substr(trim((string)$data['mqtt_user']),     0, 64)  : '';
+$mqtt_password         = isset($data['mqtt_password'])         ? substr(trim((string)$data['mqtt_password']), 0, 128) : '';
+$mqtt_topic_base       = isset($data['mqtt_topic_base'])       ? substr(trim((string)$data['mqtt_topic_base']),0, 64) : 'smcr';
+$mqtt_publish_interval = isset($data['mqtt_publish_interval']) ? max(1, (int)$data['mqtt_publish_interval'])         : 60;
+$mqtt_ha_discovery     = isset($data['mqtt_ha_discovery'])     ? (int)(bool)$data['mqtt_ha_discovery']               : 1;
+$mqtt_ha_batch         = isset($data['mqtt_ha_batch'])         ? max(1, (int)$data['mqtt_ha_batch'])                  : 4;
+$mqtt_ha_interval_ms   = isset($data['mqtt_ha_interval_ms'])   ? max(1, (int)$data['mqtt_ha_interval_ms'])            : 100;
+$mqtt_ha_repeat_sec    = isset($data['mqtt_ha_repeat_sec'])    ? max(1, (int)$data['mqtt_ha_repeat_sec'])             : 900;
+
+// Telegram
+$telegram_enabled  = isset($data['telegram_enabled'])  ? (int)(bool)$data['telegram_enabled']                    : 0;
+$telegram_token    = isset($data['telegram_token'])    ? substr(trim((string)$data['telegram_token']),    0, 128) : '';
+$telegram_chatid   = isset($data['telegram_chatid'])   ? substr(trim((string)$data['telegram_chatid']),   0, 64)  : '';
+$telegram_interval = isset($data['telegram_interval']) ? max(1, (int)$data['telegram_interval'])                  : 30;
 
 // Cloud connection fields (ESP is source of truth for these)
 $cloud_port                   = isset($data['cloud_port'])                   ? max(1, min(65535, (int)$data['cloud_port'])) : 443;
@@ -63,6 +114,12 @@ $cloud_sync_enabled           = isset($data['cloud_sync_enabled'])           ? (
 $cloud_sync_interval_min      = isset($data['cloud_sync_interval_min'])      ? max(1, (int)$data['cloud_sync_interval_min']) : 5;
 $cloud_heartbeat_enabled      = isset($data['cloud_heartbeat_enabled'])      ? (int)(bool)$data['cloud_heartbeat_enabled']  : 1;
 $cloud_heartbeat_interval_min = isset($data['cloud_heartbeat_interval_min']) ? max(1, (int)$data['cloud_heartbeat_interval_min']) : 5;
+
+// Inter-module fields (ESP is source of truth)
+$intermod_enabled        = isset($data['intermod_enabled'])        ? (int)(bool)$data['intermod_enabled']       : 1;
+$intermod_auto_discovery = isset($data['intermod_auto_discovery']) ? (int)(bool)$data['intermod_auto_discovery'] : 0;
+$intermod_healthcheck    = isset($data['intermod_healthcheck'])    ? max(1, (int)$data['intermod_healthcheck'])   : 60;
+$intermod_max_failures   = isset($data['intermod_max_failures'])   ? max(1, (int)$data['intermod_max_failures'])  : 3;
 
 // Config arrays from ESP
 $pins             = isset($data['pins'])             && is_array($data['pins'])             ? $data['pins']             : [];
@@ -113,10 +170,57 @@ try {
                 updated_at       = CURRENT_TIMESTAMP
         ')->execute([$device_id, $ip, $hostname, $firmware]);
 
-        // Atualiza campos de configuração cloud no device_config
+        // Atualiza config completa do ESP no device_config
         $db->prepare("
             UPDATE device_config SET
+                hostname                     = ?,
+                wifi_ssid                    = ?,
+                wifi_pass                    = ?,
+                wifi_attempts                = ?,
+                wifi_check_interval          = ?,
+                wifi_offline_restart_min     = ?,
+                ap_ssid                      = ?,
+                ap_pass                      = ?,
+                ap_fallback_enabled          = ?,
+                ntp_server1                  = ?,
+                gmt_offset_sec               = ?,
+                daylight_offset_sec          = ?,
+                status_pinos_enabled         = ?,
+                inter_modulos_enabled        = ?,
+                cor_com_alerta               = ?,
+                cor_sem_alerta               = ?,
+                tempo_refresh                = ?,
+                show_analog_history          = ?,
+                show_digital_history         = ?,
+                serial_debug_enabled         = ?,
+                log_flags                    = ?,
+                watchdog_enabled             = ?,
+                tempo_watchdog_us            = ?,
+                qtd_pinos                    = ?,
                 web_server_port              = ?,
+                auth_enabled                 = ?,
+                web_username                 = ?,
+                web_password                 = ?,
+                dashboard_auth_required      = ?,
+                mqtt_enabled                 = ?,
+                mqtt_server                  = ?,
+                mqtt_port                    = ?,
+                mqtt_user                    = ?,
+                mqtt_password                = ?,
+                mqtt_topic_base              = ?,
+                mqtt_publish_interval        = ?,
+                mqtt_ha_discovery            = ?,
+                mqtt_ha_batch                = ?,
+                mqtt_ha_interval_ms          = ?,
+                mqtt_ha_repeat_sec           = ?,
+                intermod_enabled             = ?,
+                intermod_auto_discovery      = ?,
+                intermod_healthcheck         = ?,
+                intermod_max_failures        = ?,
+                telegram_enabled             = ?,
+                telegram_token               = ?,
+                telegram_chatid              = ?,
+                telegram_interval            = ?,
                 cloud_port                   = ?,
                 cloud_use_https              = ?,
                 cloud_sync_enabled           = ?,
@@ -125,7 +229,23 @@ try {
                 cloud_heartbeat_interval_min = ?
             WHERE device_id = ?
         ")->execute([
-            $port, $cloud_port, $cloud_use_https,
+            $hostname, $wifi_ssid, $wifi_pass, $wifi_attempts,
+            $wifi_check_interval, $wifi_offline_restart_min,
+            $ap_ssid, $ap_pass, $ap_fallback_enabled,
+            $ntp_server1, $gmt_offset_sec, $daylight_offset_sec,
+            $status_pinos_enabled, $inter_modulos_enabled,
+            $cor_com_alerta, $cor_sem_alerta, $tempo_refresh,
+            $show_analog_history, $show_digital_history,
+            $serial_debug_enabled, $log_flags, $watchdog_enabled, $tempo_watchdog_us,
+            $qtd_pinos, $port,
+            $auth_enabled, $web_username, $web_password, $dashboard_auth_required,
+            $mqtt_enabled, $mqtt_server, $mqtt_port, $mqtt_user, $mqtt_password,
+            $mqtt_topic_base, $mqtt_publish_interval, $mqtt_ha_discovery,
+            $mqtt_ha_batch, $mqtt_ha_interval_ms, $mqtt_ha_repeat_sec,
+            $intermod_enabled, $intermod_auto_discovery,
+            $intermod_healthcheck, $intermod_max_failures,
+            $telegram_enabled, $telegram_token, $telegram_chatid, $telegram_interval,
+            $cloud_port, $cloud_use_https,
             $cloud_sync_enabled, $cloud_sync_interval_min,
             $cloud_heartbeat_enabled, $cloud_heartbeat_interval_min,
             $device_id,
@@ -144,12 +264,39 @@ try {
 
         $db->prepare('
             INSERT INTO device_config
-                (device_id, hostname, wifi_ssid, wifi_attempts, qtd_pinos, web_server_port,
+                (device_id, hostname, wifi_ssid, wifi_pass, wifi_attempts, wifi_check_interval,
+                 wifi_offline_restart_min, ap_ssid, ap_pass, ap_fallback_enabled,
+                 ntp_server1, gmt_offset_sec, daylight_offset_sec,
+                 status_pinos_enabled, inter_modulos_enabled, cor_com_alerta, cor_sem_alerta,
+                 tempo_refresh, show_analog_history, show_digital_history,
+                 serial_debug_enabled, log_flags, watchdog_enabled, tempo_watchdog_us,
+                 qtd_pinos, web_server_port, auth_enabled, web_username, web_password,
+                 dashboard_auth_required,
+                 mqtt_enabled, mqtt_server, mqtt_port, mqtt_user, mqtt_password,
+                 mqtt_topic_base, mqtt_publish_interval, mqtt_ha_discovery,
+                 mqtt_ha_batch, mqtt_ha_interval_ms, mqtt_ha_repeat_sec,
+                 intermod_enabled, intermod_auto_discovery, intermod_healthcheck, intermod_max_failures,
+                 telegram_enabled, telegram_token, telegram_chatid, telegram_interval,
                  cloud_port, cloud_use_https, cloud_sync_enabled, cloud_sync_interval_min,
                  cloud_heartbeat_enabled, cloud_heartbeat_interval_min)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ')->execute([
-            $device_id, $hostname ?: 'esp32modularx', $wifi_ssid, $wifi_attempts, $qtd_pinos, $port,
+            $device_id, $hostname ?: 'esp32modularx', $wifi_ssid, $wifi_pass,
+            $wifi_attempts, $wifi_check_interval, $wifi_offline_restart_min,
+            $ap_ssid, $ap_pass, $ap_fallback_enabled,
+            $ntp_server1, $gmt_offset_sec, $daylight_offset_sec,
+            $status_pinos_enabled, $inter_modulos_enabled,
+            $cor_com_alerta, $cor_sem_alerta, $tempo_refresh,
+            $show_analog_history, $show_digital_history,
+            $serial_debug_enabled, $log_flags, $watchdog_enabled, $tempo_watchdog_us,
+            $qtd_pinos, $port,
+            $auth_enabled, $web_username, $web_password, $dashboard_auth_required,
+            $mqtt_enabled, $mqtt_server, $mqtt_port, $mqtt_user, $mqtt_password,
+            $mqtt_topic_base, $mqtt_publish_interval, $mqtt_ha_discovery,
+            $mqtt_ha_batch, $mqtt_ha_interval_ms, $mqtt_ha_repeat_sec,
+            $intermod_enabled, $intermod_auto_discovery, $intermod_healthcheck, $intermod_max_failures,
+            $telegram_enabled, $telegram_token, $telegram_chatid, $telegram_interval,
             $cloud_port, $cloud_use_https, $cloud_sync_enabled, $cloud_sync_interval_min,
             $cloud_heartbeat_enabled, $cloud_heartbeat_interval_min,
         ]);

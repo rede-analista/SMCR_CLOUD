@@ -88,6 +88,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_api_token = trim($_POST['api_token'] ?? '');
     $fields['cloud_api_token'] = $new_api_token;
 
+    // Sinaliza migração pendente se cloud_url/port/https mudou — get_config.php enviará ao ESP no próximo sync
+    if (trim($_POST['cloud_url']  ?? '') !== (string)($cfg['cloud_url']      ?? '') ||
+        (int)($_POST['cloud_port'] ?? 0) !== (int)   ($cfg['cloud_port']      ?? 0) ||
+        (isset($_POST['cloud_use_https']) ? 1 : 0) !== (int)($cfg['cloud_use_https'] ?? 0)) {
+        $fields['pending_cloud_migration'] = 1;
+    }
+
     $set_parts = [];
     $values = [];
     foreach ($fields as $col => $val) {

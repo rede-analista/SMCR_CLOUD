@@ -106,7 +106,7 @@ try {
     ], $stmt->fetchAll());
 
     http_response_code(200);
-    echo json_encode([
+    $response = [
         'ok'        => true,
         'device_id' => $device_id,
         'unique_id' => $device['unique_id'],
@@ -189,13 +189,26 @@ try {
         'pins'             => $pins,
         'actions'          => $actions,
         'intermod_modules' => $intermod_modules,
-    ]);
+    ];
+
+    // cloud_url/port/https incluídos apenas quando o usuário alterou explicitamente via UI
+    if (!empty($cfg['pending_cloud_migration'])) {
+        $response['cloud_url']       = $cfg['cloud_url']       ?? '';
+        $response['cloud_port']      = (int)($cfg['cloud_port']      ?? 80);
+        $response['cloud_use_https'] = (bool)($cfg['cloud_use_https'] ?? false);
+    }
+
+    echo json_encode($response);
 
     // Atualiza last_seen e online ao sincronizar
     $db->prepare('UPDATE devices SET last_seen = NOW(), online = 1 WHERE id = ?')
        ->execute([$device_id]);
 
     // Auto-desativa as flags após enviar
+    if (!empty($cfg['pending_cloud_migration'])) {
+        $db->prepare('UPDATE device_config SET pending_cloud_migration = 0 WHERE device_id = ?')
+           ->execute([$device_id]);
+    }
     if (!empty($cfg['reboot_on_sync'])) {
         $db->prepare('UPDATE device_config SET reboot_on_sync = 0 WHERE device_id = ?')
            ->execute([$device_id]);

@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS device_config (
     cloud_heartbeat_enabled TINYINT(1) DEFAULT 0,
     cloud_heartbeat_interval_min SMALLINT UNSIGNED DEFAULT 5,
     cloud_use_https TINYINT(1) DEFAULT 0,
+    pending_cloud_migration TINYINT(1) NOT NULL DEFAULT 0,
     cloud_api_token VARCHAR(128) DEFAULT '',
     cloud_register_token VARCHAR(128) DEFAULT '',
     reboot_on_sync TINYINT(1) DEFAULT 0,

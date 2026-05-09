@@ -46,7 +46,7 @@ try {
     if (!$cfg) json_error('Device config not found', 404);
 
     // Pinos
-    $stmt = $db->prepare('SELECT nome, pino, tipo, modo, xor_logic, tempo_retencao,
+    $stmt = $db->prepare('SELECT nome, pino, tipo, modo, xor_logic, tempo_retencao, tempo_min_pulso_ms,
         nivel_acionamento_min, nivel_acionamento_max, classe_mqtt, icone_mqtt
         FROM device_pins WHERE device_id = ? ORDER BY pino ASC');
     $stmt->execute([$device_id]);
@@ -57,6 +57,7 @@ try {
         'modo'                  => (int)$r['modo'],
         'xor_logic'             => (int)$r['xor_logic'],
         'tempo_retencao'        => (int)$r['tempo_retencao'],
+        'tempo_min_pulso_ms'    => (int)$r['tempo_min_pulso_ms'],
         'nivel_acionamento_min' => (int)$r['nivel_acionamento_min'],
         'nivel_acionamento_max' => (int)$r['nivel_acionamento_max'],
         'classe_mqtt'           => $r['classe_mqtt'],

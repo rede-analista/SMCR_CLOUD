@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS device_pins (
     modo TINYINT UNSIGNED DEFAULT 0,
     xor_logic TINYINT(1) DEFAULT 0,
     tempo_retencao INT UNSIGNED DEFAULT 0,
+    tempo_min_pulso_ms INT UNSIGNED DEFAULT 0,
     nivel_acionamento_min SMALLINT UNSIGNED DEFAULT 0,
     nivel_acionamento_max SMALLINT UNSIGNED DEFAULT 1,
     classe_mqtt VARCHAR(50) DEFAULT '',

@@ -54,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $modo                 = (int)($_POST['modo'] ?? 0);
         $xor_logic            = isset($_POST['xor_logic']) ? (int)$_POST['xor_logic'] : 0;
         $tempo_retencao       = (int)($_POST['tempo_retencao'] ?? 0);
+        $tempo_min_pulso_ms   = (int)($_POST['tempo_min_pulso_ms'] ?? 0);
         $nivel_acionamento_min = (int)($_POST['nivel_acionamento_min'] ?? 0);
         $nivel_acionamento_max = (int)($_POST['nivel_acionamento_max'] ?? 1);
         $classe_mqtt          = trim($_POST['classe_mqtt'] ?? '');
@@ -62,22 +63,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($pin_id > 0) {
             // Update
             $stmt = $db->prepare('UPDATE device_pins SET nome=?, pino=?, tipo=?, modo=?, xor_logic=?,
-                tempo_retencao=?, nivel_acionamento_min=?, nivel_acionamento_max=?,
+                tempo_retencao=?, tempo_min_pulso_ms=?, nivel_acionamento_min=?, nivel_acionamento_max=?,
                 classe_mqtt=?, icone_mqtt=?
                 WHERE id=? AND device_id=?');
             $stmt->execute([$nome, $pino, $tipo, $modo, $xor_logic,
-                $tempo_retencao, $nivel_acionamento_min, $nivel_acionamento_max,
+                $tempo_retencao, $tempo_min_pulso_ms, $nivel_acionamento_min, $nivel_acionamento_max,
                 $classe_mqtt, $icone_mqtt, $pin_id, $device_id]);
             set_flash('success', 'Pino atualizado com sucesso.');
         } else {
             // Insert
             try {
                 $stmt = $db->prepare('INSERT INTO device_pins
-                    (device_id, nome, pino, tipo, modo, xor_logic, tempo_retencao,
+                    (device_id, nome, pino, tipo, modo, xor_logic, tempo_retencao, tempo_min_pulso_ms,
                      nivel_acionamento_min, nivel_acionamento_max, classe_mqtt, icone_mqtt)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
                 $stmt->execute([$device_id, $nome, $pino, $tipo, $modo, $xor_logic,
-                    $tempo_retencao, $nivel_acionamento_min, $nivel_acionamento_max,
+                    $tempo_retencao, $tempo_min_pulso_ms, $nivel_acionamento_min, $nivel_acionamento_max,
                     $classe_mqtt, $icone_mqtt]);
                 set_flash('success', 'Pino adicionado com sucesso.');
             } catch (PDOException $e) {
@@ -184,6 +185,12 @@ include __DIR__ . '/../includes/header.php';
                            value="<?= h($edit_pin['tempo_retencao'] ?? 0) ?>">
                 </div>
                 <div class="col-md-3">
+                    <label class="form-label fw-semibold">Filtro de Pulso ISR (ms)</label>
+                    <input type="number" class="form-control" name="tempo_min_pulso_ms" min="0" max="5000"
+                           value="<?= h($edit_pin['tempo_min_pulso_ms'] ?? 0) ?>">
+                    <div class="form-text">0=desabilitado. Ex: 20ms filtra glitches sem afetar campanhas.</div>
+                </div>
+                <div class="col-md-3">
                     <label class="form-label fw-semibold">Nível Min. Acionamento</label>
                     <input type="number" class="form-control" name="nivel_acionamento_min" min="0" max="4095"
                            value="<?= h($edit_pin['nivel_acionamento_min'] ?? 0) ?>">
@@ -251,6 +258,7 @@ include __DIR__ . '/../includes/header.php';
                         <th>Modo</th>
                         <th>Lógica</th>
                         <th>Retenção</th>
+                        <th>Filtro ISR</th>
                         <th>Níveis</th>
                         <th>MQTT</th>
                         <th class="text-end">Ações</th>
@@ -265,6 +273,7 @@ include __DIR__ . '/../includes/header.php';
                         <td><?= h($modo_labels[$pin['modo']] ?? $pin['modo']) ?></td>
                         <td><?= $pin['xor_logic'] ? '<span class="badge bg-warning text-dark">Invertido</span>' : 'Normal' ?></td>
                         <td><?= $pin['tempo_retencao'] ? $pin['tempo_retencao'] . ' ms' : '—' ?></td>
+                        <td><?= $pin['tempo_min_pulso_ms'] ? $pin['tempo_min_pulso_ms'] . ' ms' : '—' ?></td>
                         <td><?= $pin['nivel_acionamento_min'] . ' – ' . $pin['nivel_acionamento_max'] ?></td>
                         <td>
                             <?php if ($pin['classe_mqtt']): ?>

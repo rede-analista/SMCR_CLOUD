@@ -12,14 +12,26 @@ $stmt->execute([$device_id]);
 $device = $stmt->fetch();
 if (!$device) { http_response_code(404); exit; }
 
-$stmt = $db->prepare('
+$de = trim(str_replace('T', ' ', $_GET['de'] ?? ''));
+if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/', $de)) $de = '';
+
+$ate = trim(str_replace('T', ' ', $_GET['ate'] ?? ''));
+if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/', $ate)) $ate = '';
+if ($ate !== '') $ate = substr($ate, 0, 16) . ':59';
+
+$where  = 'WHERE device_id = ?';
+$params = [$device_id];
+if ($de  !== '') { $where .= ' AND ocorrido_em >= ?'; $params[] = $de; }
+if ($ate !== '') { $where .= ' AND ocorrido_em <= ?'; $params[] = $ate; }
+
+$stmt = $db->prepare("
     SELECT gpio_origem, gpio_destino, tipo, valor_pino, ocorrido_em
     FROM device_action_events
-    WHERE device_id = ?
+    $where
     ORDER BY ocorrido_em DESC
     LIMIT 10000
-');
-$stmt->execute([$device_id]);
+");
+$stmt->execute($params);
 $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $name = preg_replace('/[^A-Za-z0-9_\-]/', '_', $device['name'] ?: $device['unique_id']);

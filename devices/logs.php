@@ -44,6 +44,23 @@ include __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
+<!-- Filtro de data/hora -->
+<div class="container-fluid px-3 pb-2">
+    <div class="card shadow-sm">
+        <div class="card-body py-2">
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                <span class="small fw-semibold text-muted">Filtro:</span>
+                <label class="form-label mb-0 small text-muted">De:</label>
+                <input type="datetime-local" id="filterDe" class="form-control form-control-sm" style="width:auto">
+                <label class="form-label mb-0 small text-muted">Até:</label>
+                <input type="datetime-local" id="filterAte" class="form-control form-control-sm" style="width:auto">
+                <button class="btn btn-sm btn-primary" onclick="loadHistory()"><i class="bi bi-search me-1"></i>Filtrar</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="clearFilter()">Limpar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Histórico de Acionamentos -->
 <div class="container-fluid px-3 pb-3">
     <div class="card shadow-sm">
@@ -51,7 +68,7 @@ include __DIR__ . '/../includes/header.php';
             <span><i class="bi bi-lightning-charge me-2 text-warning"></i>Histórico de Acionamentos</span>
             <div class="d-flex gap-2 align-items-center">
                 <span id="historyCount" class="badge bg-secondary">—</span>
-                <a href="<?= BASE ?>/api/export_history.php?device_id=<?= $device_id ?>" class="btn btn-sm btn-outline-success" title="Exportar CSV">
+                <a id="csvExportLink" href="<?= BASE ?>/api/export_history.php?device_id=<?= $device_id ?>" class="btn btn-sm btn-outline-success" title="Exportar CSV">
                     <i class="bi bi-download me-1"></i>CSV
                 </a>
             </div>
@@ -111,8 +128,28 @@ function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+function filterParams() {
+    const de  = document.getElementById('filterDe').value;
+    const ate = document.getElementById('filterAte').value;
+    let q = 'device_id=<?= $device_id ?>';
+    if (de)  q += '&de='  + encodeURIComponent(de);
+    if (ate) q += '&ate=' + encodeURIComponent(ate);
+    return q;
+}
+
+function clearFilter() {
+    document.getElementById('filterDe').value  = '';
+    document.getElementById('filterAte').value = '';
+    loadHistory();
+}
+
+function updateCsvLink() {
+    document.getElementById('csvExportLink').href = '<?= BASE ?>/api/export_history.php?' + filterParams();
+}
+
 function loadHistory() {
-    fetch('<?= BASE ?>/api/get_action_history.php?device_id=<?= $device_id ?>')
+    updateCsvLink();
+    fetch('<?= BASE ?>/api/get_action_history.php?' + filterParams())
     .then(r => r.json())
     .then(data => {
         const tbody = document.getElementById('historyBody');
@@ -192,6 +229,14 @@ function setAutoRefresh(seconds) {
         autoRefreshTimer = setInterval(loadAll, parseInt(seconds) * 1000);
     }
 }
+
+// Pré-preenche "De" com as últimas 6 horas
+(function() {
+    const pad = n => String(n).padStart(2, '0');
+    const d = new Date(Date.now() - 6 * 3600 * 1000);
+    document.getElementById('filterDe').value =
+        d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+})();
 
 // Carrega ao abrir a página e inicia auto-refresh padrão (10s)
 loadAll();

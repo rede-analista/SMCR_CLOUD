@@ -288,6 +288,7 @@
                         </select>
                     </td></tr>
                     <tr><td>Tempo de Retencao (ms):</td><td><input type="number" id="pin-retention" name="tempo_retencao" min="0" max="60000" value="0"></td></tr>
+                    <tr><td>Filtro de Pulso ISR (ms):</td><td><input type="number" id="pin-min-pulse" name="tempo_min_pulso_ms" min="0" max="5000" value="0"><small style="display:block;color:#666;font-size:11px;">0=desabilitado. Para sensores com interferência: 20-50ms filtra glitches sem afetar campanhas</small></td></tr>
                 </table>
 
                 <div class="section-title" style="font-size: 16px;">Nivel de Acionamento</div>
@@ -486,6 +487,7 @@
                             <table class="config-table" style="margin-top: 10px;">
                                 <tr><td>Logica XOR:</td><td>${pin.xor_logic ? 'Invertida' : 'Normal'}</td></tr>
                                 <tr><td>Tempo Retencao:</td><td>${pin.tempo_retencao}ms</td></tr>
+                                <tr><td>Filtro Pulso ISR:</td><td>${pin.tempo_min_pulso_ms ? pin.tempo_min_pulso_ms + 'ms' : 'Desabilitado'}</td></tr>
                                 <tr><td>Nivel Min/Max:</td><td>${pin.nivel_acionamento_min} / ${pin.nivel_acionamento_max}</td></tr>
                             </table>
                         </div>
@@ -597,6 +599,7 @@
             document.getElementById('pin-number').value = pin.pino || '';
             document.getElementById('pin-xor').value = pin.xor_logic || 0;
             document.getElementById('pin-retention').value = pin.tempo_retencao || 0;
+            document.getElementById('pin-min-pulse').value = pin.tempo_min_pulso_ms || 0;
             document.getElementById('pin-trigger').value = pin.nivel_acionamento_min === 1 ? '1' : '0';
             document.getElementById('pin-min').value = pin.nivel_acionamento_min || 0;
             document.getElementById('pin-max').value = pin.nivel_acionamento_max || 0;
@@ -757,6 +760,7 @@
                     modo: parseInt(document.getElementById('pin-mode').value),
                     xor_logic: parseInt(document.getElementById('pin-xor').value),
                     tempo_retencao: parseInt(document.getElementById('pin-retention').value),
+                    tempo_min_pulso_ms: parseInt(document.getElementById('pin-min-pulse').value),
                     nivel_acionamento_min: parseInt(document.getElementById('pin-min').value),
                     nivel_acionamento_max: parseInt(document.getElementById('pin-max').value),
                     classe_mqtt: document.getElementById('pin-classe-mqtt').value.trim(),

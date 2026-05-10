@@ -355,13 +355,11 @@
             colorSpan.textContent = getColorName(colorInput.value);
         }
 
-        // Sanitização de Hostname: remove acentos, espaços e caracteres especiais; converte para MAIÚSCULO
+        // Sanitização de Hostname: remove acentos e caracteres especiais (permite a-z, A-Z, 0-9, - e _)
         function sanitizeHostname(value) {
             if (!value) return '';
-            // Remove diacríticos (acentos)
             let s = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            // Remove tudo que não for A-Z ou 0-9 e converte para maiúsculas
-            s = s.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            s = s.replace(/[^A-Za-z0-9\-_]/g, '');
             return s;
         }
 

@@ -35,15 +35,16 @@ $stmt = $db->prepare('SELECT COUNT(*) FROM device_intermod WHERE device_id = ?')
 $stmt->execute([$device_id]);
 $intermod_count = (int)$stmt->fetchColumn();
 
-$stmt = $db->prepare('SELECT reboot_on_sync, ota_update_on_sync FROM device_config WHERE device_id = ?');
+$stmt = $db->prepare('SELECT reboot_on_sync, ota_update_on_sync, fetch_html_on_sync FROM device_config WHERE device_id = ?');
 $stmt->execute([$device_id]);
 $sync_flags = $stmt->fetch();
 
 $stmt = $db->prepare('SELECT event, created_at FROM device_events WHERE device_id = ? ORDER BY created_at DESC LIMIT 30');
 $stmt->execute([$device_id]);
 $events = $stmt->fetchAll();
-$reboot_on_sync    = (bool)($sync_flags['reboot_on_sync'] ?? false);
+$reboot_on_sync     = (bool)($sync_flags['reboot_on_sync'] ?? false);
 $ota_update_on_sync = (bool)($sync_flags['ota_update_on_sync'] ?? false);
+$fetch_html_on_sync = (int)($sync_flags['fetch_html_on_sync'] ?? 0);
 
 function format_uptime_full(int $ms): string {
     $s = (int)($ms / 1000);
@@ -153,6 +154,31 @@ include __DIR__ . '/../includes/header.php';
                             title="<?= $ota_update_on_sync ? 'OTA agendado para o próximo sincronismo — clique para cancelar' : 'Instalar firmware mais recente do GitHub no próximo sincronismo do ESP32' ?>">
                         <i class="bi bi-cloud-arrow-down me-1"></i><?= $ota_update_on_sync ? 'OTA agendado' : 'OTA no sync' ?>
                     </button>
+                    <?php
+                    $fh_label = $fetch_html_on_sync == 1 ? 'HTML servidor agendado' : ($fetch_html_on_sync == 2 ? 'HTML GitHub agendado' : 'HTML no sync');
+                    $fh_class = $fetch_html_on_sync ? 'btn-secondary' : 'btn-outline-secondary';
+                    ?>
+                    <div class="btn-group">
+                        <button id="btn_fetch_html_main" class="btn btn-sm <?= $fh_class ?>" disabled>
+                            <i class="bi bi-file-earmark-code me-1"></i><span id="btn_fetch_html_label"><?= $fh_label ?></span>
+                        </button>
+                        <button type="button" class="btn btn-sm <?= $fh_class ?> dropdown-toggle dropdown-toggle-split"
+                                id="btn_fetch_html_sync" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="visually-hidden">Menu</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="setFetchHtmlOnSync(<?= $device_id ?>, 'server'); return false;">
+                                <i class="bi bi-server me-2"></i>Servidor (CLOUD/HA)
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="setFetchHtmlOnSync(<?= $device_id ?>, 'github'); return false;">
+                                <i class="bi bi-github me-2"></i>GitHub
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="setFetchHtmlOnSync(<?= $device_id ?>, 'cancel'); return false;">
+                                <i class="bi bi-x-circle me-2"></i>Cancelar
+                            </a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
@@ -498,6 +524,41 @@ function toggleOtaOnSync(device_id) {
     })
     .catch(err => {
         btn.disabled = false;
+        alert('Erro: ' + err.message);
+    });
+}
+
+function setFetchHtmlOnSync(device_id, source) {
+    const mainBtn  = document.getElementById('btn_fetch_html_main');
+    const dropBtn  = document.getElementById('btn_fetch_html_sync');
+    const label    = document.getElementById('btn_fetch_html_label');
+
+    const messages = {
+        server: 'Agendar download dos HTMLs do servidor no próximo sincronismo?\n\nO ESP32 buscará os arquivos da instância CLOUD/HA configurada.',
+        github: 'Agendar download dos HTMLs do GitHub no próximo sincronismo?\n\nO servidor fará proxy dos arquivos diretamente do repositório GitHub.',
+    };
+    if (source !== 'cancel' && !confirm(messages[source] || 'Confirmar?')) return;
+
+    mainBtn.disabled = dropBtn.disabled = true;
+
+    fetch(BASE_PATH + '/api/set_fetch_html_on_sync.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id, source }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        mainBtn.disabled = dropBtn.disabled = false;
+        if (!data.ok) { alert('Erro:\n' + data.error); return; }
+        const v = data.fetch_html_on_sync;
+        const active = v > 0;
+        const cls = active ? 'btn-secondary' : 'btn-outline-secondary';
+        mainBtn.className = 'btn btn-sm ' + cls;
+        dropBtn.className = 'btn btn-sm ' + cls + ' dropdown-toggle dropdown-toggle-split';
+        label.textContent = v == 1 ? 'HTML servidor agendado' : (v == 2 ? 'HTML GitHub agendado' : 'HTML no sync');
+    })
+    .catch(err => {
+        mainBtn.disabled = dropBtn.disabled = false;
         alert('Erro: ' + err.message);
     });
 }

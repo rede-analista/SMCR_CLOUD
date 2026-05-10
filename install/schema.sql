@@ -107,6 +107,7 @@ CREATE TABLE IF NOT EXISTS device_config (
     cloud_register_token VARCHAR(128) DEFAULT '',
     reboot_on_sync TINYINT(1) DEFAULT 0,
     ota_update_on_sync TINYINT(1) DEFAULT 0,
+    fetch_html_on_sync TINYINT UNSIGNED DEFAULT 0,
     FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
 );
 

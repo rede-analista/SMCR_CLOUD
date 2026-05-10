@@ -59,6 +59,24 @@ include __DIR__ . '/../includes/header.php';
         <button id="btn_reboot_all" class="btn btn-outline-warning" onclick="setAllReboot()" <?= empty($devices) ? 'disabled' : '' ?>>
             <i class="bi bi-arrow-clockwise me-1"></i>Reboot em todos
         </button>
+        <div class="btn-group">
+            <button id="btn_fetch_html_all_main" class="btn btn-outline-success" disabled>
+                <i class="bi bi-file-earmark-code me-1"></i>HTML em todos
+            </button>
+            <button type="button" class="btn btn-outline-success dropdown-toggle dropdown-toggle-split"
+                    id="btn_fetch_html_all_drop" data-bs-toggle="dropdown" aria-expanded="false"
+                    <?= empty($devices) ? 'disabled' : '' ?>>
+                <span class="visually-hidden">Escolher fonte</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#" onclick="setAllFetchHtml('server'); return false;">
+                    <i class="bi bi-server me-1"></i>Servidor (CLOUD/HA)
+                </a></li>
+                <li><a class="dropdown-item" href="#" onclick="setAllFetchHtml('github'); return false;">
+                    <i class="bi bi-github me-1"></i>GitHub
+                </a></li>
+            </ul>
+        </div>
     </div>
 </div>
 
@@ -215,6 +233,31 @@ function setAllReboot() {
             setTimeout(() => { btn.className = 'btn btn-outline-warning'; btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Reboot em todos'; }, 5000);
         })
         .catch(() => { btn.disabled = false; btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Reboot em todos'; alert('Erro de comunicação.'); });
+}
+
+function setAllFetchHtml(source) {
+    const label = source === 'github' ? 'GitHub' : 'Servidor';
+    if (!confirm('Agendar download dos HTMLs (' + label + ') no próximo sincronismo de TODOS os dispositivos?')) return;
+    const mainBtn = document.getElementById('btn_fetch_html_all_main');
+    const dropBtn = document.getElementById('btn_fetch_html_all_drop');
+    mainBtn.disabled = true;
+    dropBtn.disabled = true;
+    mainBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Agendando...';
+    fetch(BASE_PATH + '/api/set_fetch_html_all.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: source })
+    })
+        .then(r => r.json())
+        .then(data => {
+            mainBtn.disabled = false;
+            dropBtn.disabled = false;
+            if (!data.ok) { alert('Erro: ' + data.error); mainBtn.innerHTML = '<i class="bi bi-file-earmark-code me-1"></i>HTML em todos'; return; }
+            mainBtn.className = 'btn btn-success';
+            mainBtn.innerHTML = '<i class="bi bi-file-earmark-code me-1"></i>HTML agendado (' + data.updated + ')';
+            setTimeout(() => { mainBtn.className = 'btn btn-outline-success'; mainBtn.innerHTML = '<i class="bi bi-file-earmark-code me-1"></i>HTML em todos'; }, 5000);
+        })
+        .catch(() => { mainBtn.disabled = false; dropBtn.disabled = false; mainBtn.innerHTML = '<i class="bi bi-file-earmark-code me-1"></i>HTML em todos'; alert('Erro de comunicação.'); });
 }
 </script>
 

@@ -17,8 +17,8 @@ if (!$device) {
 
 $page_title  = 'Logs — ' . h($device['name'] ?: $device['unique_id']);
 $breadcrumb  = [
-    ['label' => 'Dispositivos', 'url' => BASE . '/devices/index.php'],
-    ['label' => h($device['name'] ?: $device['unique_id']), 'url' => BASE . '/devices/view.php?device_id=' . $device_id],
+    ['label' => 'Dispositivos', 'url' => '/devices/index.php'],
+    ['label' => h($device['name'] ?: $device['unique_id']), 'url' => '/devices/view.php?device_id=' . $device_id],
     ['label' => 'Logs & Histórico'],
 ];
 

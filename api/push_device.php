@@ -151,14 +151,14 @@ $cfg = $stmt->fetch() ?: [];
 
 if (!empty($cfg)) {
     $r = esp_post("$base/api/mqtt/save", [
-        'mqtt_enabled'          => (int)($cfg['mqtt_enabled']          ?? 0),
+        'mqtt_enabled'          => ($cfg['mqtt_enabled']          ?? 0) ? 'true' : 'false',
         'mqtt_server'           => $cfg['mqtt_server']                  ?? '',
         'mqtt_port'             => (int)($cfg['mqtt_port']             ?? 1883),
         'mqtt_user'             => $cfg['mqtt_user']                    ?? '',
         'mqtt_password'         => $cfg['mqtt_password']               ?? '',
         'mqtt_topic_base'       => $cfg['mqtt_topic_base']             ?? '',
         'mqtt_publish_interval' => (int)($cfg['mqtt_publish_interval'] ?? 30),
-        'mqtt_ha_discovery'     => (int)($cfg['mqtt_ha_discovery']     ?? 0),
+        'mqtt_ha_discovery'     => ($cfg['mqtt_ha_discovery']     ?? 0) ? 'true' : 'false',
         'mqtt_ha_batch'         => (int)($cfg['mqtt_ha_batch']         ?? 0),
         'mqtt_ha_interval_ms'   => (int)($cfg['mqtt_ha_interval_ms']   ?? 500),
         'mqtt_ha_repeat_sec'    => (int)($cfg['mqtt_ha_repeat_sec']    ?? 60),

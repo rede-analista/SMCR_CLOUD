@@ -59,27 +59,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nivel_acionamento_max = (int)($_POST['nivel_acionamento_max'] ?? 1);
         $classe_mqtt          = trim($_POST['classe_mqtt'] ?? '');
         $icone_mqtt           = trim($_POST['icone_mqtt'] ?? '');
+        $exibir_display       = isset($_POST['exibir_display']) ? 1 : 0;
 
         if ($pin_id > 0) {
             // Update
             $stmt = $db->prepare('UPDATE device_pins SET nome=?, pino=?, tipo=?, modo=?, xor_logic=?,
                 tempo_retencao=?, tempo_min_pulso_ms=?, nivel_acionamento_min=?, nivel_acionamento_max=?,
-                classe_mqtt=?, icone_mqtt=?
+                classe_mqtt=?, icone_mqtt=?, exibir_display=?
                 WHERE id=? AND device_id=?');
             $stmt->execute([$nome, $pino, $tipo, $modo, $xor_logic,
                 $tempo_retencao, $tempo_min_pulso_ms, $nivel_acionamento_min, $nivel_acionamento_max,
-                $classe_mqtt, $icone_mqtt, $pin_id, $device_id]);
+                $classe_mqtt, $icone_mqtt, $exibir_display, $pin_id, $device_id]);
             set_flash('success', 'Pino atualizado com sucesso.');
         } else {
             // Insert
             try {
                 $stmt = $db->prepare('INSERT INTO device_pins
                     (device_id, nome, pino, tipo, modo, xor_logic, tempo_retencao, tempo_min_pulso_ms,
-                     nivel_acionamento_min, nivel_acionamento_max, classe_mqtt, icone_mqtt)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
+                     nivel_acionamento_min, nivel_acionamento_max, classe_mqtt, icone_mqtt, exibir_display)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)');
                 $stmt->execute([$device_id, $nome, $pino, $tipo, $modo, $xor_logic,
                     $tempo_retencao, $tempo_min_pulso_ms, $nivel_acionamento_min, $nivel_acionamento_max,
-                    $classe_mqtt, $icone_mqtt]);
+                    $classe_mqtt, $icone_mqtt, $exibir_display]);
                 set_flash('success', 'Pino adicionado com sucesso.');
             } catch (PDOException $e) {
                 set_flash('danger', 'Erro: pino ' . $pino . ' já está cadastrado para este dispositivo.');
@@ -215,6 +216,14 @@ include __DIR__ . '/../includes/header.php';
                            placeholder="ex: mdi:door-open">
                     <div class="form-text">Ícone Material Design Icons.</div>
                 </div>
+                <div class="col-md-4 d-flex align-items-center">
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" name="exibir_display" id="exibir_display" value="1"
+                               <?= ($edit_pin['exibir_display'] ?? 0) ? 'checked' : '' ?>>
+                        <label class="form-check-label fw-semibold" for="exibir_display">Exibir no Display</label>
+                        <div class="form-text">Mostrar este pino na página /display.</div>
+                    </div>
+                </div>
             </div>
 
             <div class="d-flex gap-2 mt-3">
@@ -261,6 +270,7 @@ include __DIR__ . '/../includes/header.php';
                         <th>Filtro ISR</th>
                         <th>Níveis</th>
                         <th>MQTT</th>
+                        <th>Display</th>
                         <th class="text-end">Ações</th>
                     </tr>
                 </thead>
@@ -278,6 +288,13 @@ include __DIR__ . '/../includes/header.php';
                         <td>
                             <?php if ($pin['classe_mqtt']): ?>
                             <span class="badge bg-purple text-white" style="background:#6f42c1!important"><?= h($pin['classe_mqtt']) ?></span>
+                            <?php else: ?>
+                            <span class="text-muted">—</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if ($pin['exibir_display']): ?>
+                            <span class="badge bg-success">Sim</span>
                             <?php else: ?>
                             <span class="text-muted">—</span>
                             <?php endif; ?>

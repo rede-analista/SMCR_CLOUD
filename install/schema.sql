@@ -125,6 +125,7 @@ CREATE TABLE IF NOT EXISTS device_pins (
     nivel_acionamento_max SMALLINT UNSIGNED DEFAULT 1,
     classe_mqtt VARCHAR(50) DEFAULT '',
     icone_mqtt VARCHAR(50) DEFAULT '',
+    exibir_display TINYINT(1) NOT NULL DEFAULT 0,
     UNIQUE KEY uq_device_pino (device_id, pino),
     FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
 );

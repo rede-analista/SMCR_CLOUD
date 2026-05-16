@@ -314,23 +314,24 @@ try {
         $stmt = $db->prepare("
             INSERT INTO device_pins
                 (device_id, nome, pino, tipo, modo, xor_logic, tempo_retencao,
-                 nivel_acionamento_min, nivel_acionamento_max, classe_mqtt, icone_mqtt)
-            VALUES (:did, :nome, :pino, :tipo, :modo, :xor, :ret, :nmin, :nmax, :cmqtt, :imqtt)
+                 nivel_acionamento_min, nivel_acionamento_max, classe_mqtt, icone_mqtt, exibir_display)
+            VALUES (:did, :nome, :pino, :tipo, :modo, :xor, :ret, :nmin, :nmax, :cmqtt, :imqtt, :exdisp)
         ");
         foreach ($pins as $p) {
             if (!isset($p['pino'])) continue;
             $stmt->execute([
-                ':did'   => $device_id,
-                ':nome'  => substr($p['nome']       ?? '', 0, 64),
-                ':pino'  => (int)$p['pino'],
-                ':tipo'  => (int)($p['tipo']        ?? 0),
-                ':modo'  => (int)($p['modo']        ?? 0),
-                ':xor'   => (int)($p['xor_logic']   ?? 0),
-                ':ret'   => (int)($p['tempo_retencao'] ?? 0),
-                ':nmin'  => (int)($p['nivel_acionamento_min'] ?? 0),
-                ':nmax'  => (int)($p['nivel_acionamento_max'] ?? 1),
-                ':cmqtt' => substr($p['classe_mqtt'] ?? '', 0, 50),
-                ':imqtt' => substr($p['icone_mqtt']  ?? '', 0, 50),
+                ':did'    => $device_id,
+                ':nome'   => substr($p['nome']       ?? '', 0, 64),
+                ':pino'   => (int)$p['pino'],
+                ':tipo'   => (int)($p['tipo']        ?? 0),
+                ':modo'   => (int)($p['modo']        ?? 0),
+                ':xor'    => (int)($p['xor_logic']   ?? 0),
+                ':ret'    => (int)($p['tempo_retencao'] ?? 0),
+                ':nmin'   => (int)($p['nivel_acionamento_min'] ?? 0),
+                ':nmax'   => (int)($p['nivel_acionamento_max'] ?? 1),
+                ':cmqtt'  => substr($p['classe_mqtt'] ?? '', 0, 50),
+                ':imqtt'  => substr($p['icone_mqtt']  ?? '', 0, 50),
+                ':exdisp' => (int)(bool)($p['exibir_display'] ?? false),
             ]);
         }
     }

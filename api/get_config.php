@@ -47,7 +47,7 @@ try {
 
     // Pinos
     $stmt = $db->prepare('SELECT nome, pino, tipo, modo, xor_logic, tempo_retencao, tempo_min_pulso_ms,
-        nivel_acionamento_min, nivel_acionamento_max, classe_mqtt, icone_mqtt
+        nivel_acionamento_min, nivel_acionamento_max, classe_mqtt, icone_mqtt, exibir_display
         FROM device_pins WHERE device_id = ? ORDER BY pino ASC');
     $stmt->execute([$device_id]);
     $pins = array_map(fn($r) => [
@@ -62,6 +62,7 @@ try {
         'nivel_acionamento_max' => (int)$r['nivel_acionamento_max'],
         'classe_mqtt'           => $r['classe_mqtt'],
         'icone_mqtt'            => $r['icone_mqtt'],
+        'exibir_display'        => (bool)$r['exibir_display'],
     ], $stmt->fetchAll());
 
     // Ações

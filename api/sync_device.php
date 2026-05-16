@@ -298,9 +298,9 @@ try {
         $stmt = $db->prepare("
             INSERT INTO device_pins
                 (device_id, nome, pino, tipo, modo, xor_logic, tempo_retencao, tempo_min_pulso_ms,
-                 nivel_acionamento_min, nivel_acionamento_max, classe_mqtt, icone_mqtt)
+                 nivel_acionamento_min, nivel_acionamento_max, classe_mqtt, icone_mqtt, exibir_display)
             VALUES
-                (:device_id, :nome, :pino, :tipo, :modo, :xor, :ret, :minpulse, :nmin, :nmax, :cmqtt, :imqtt)
+                (:device_id, :nome, :pino, :tipo, :modo, :xor, :ret, :minpulse, :nmin, :nmax, :cmqtt, :imqtt, :exdisp)
         ");
         foreach ($raw['pins']['pins'] as $p) {
             if (!isset($p['pino'])) continue;
@@ -317,6 +317,7 @@ try {
                 ':nmax'      => (int)($p['nivel_acionamento_max'] ?? 1),
                 ':cmqtt'     => substr($p['classe_mqtt'] ?? '', 0, 50),
                 ':imqtt'     => substr($p['icone_mqtt']  ?? '', 0, 50),
+                ':exdisp'    => (int)(bool)($p['exibir_display'] ?? false),
             ]);
             $count++;
         }

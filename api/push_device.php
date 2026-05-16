@@ -240,6 +240,7 @@ foreach ($db_pins as $p) {
         'nivel_acionamento_max' => (string)(int)($p['nivel_acionamento_max'] ?? 1),
         'classe_mqtt'           => (string)($p['classe_mqtt']           ?? ''),
         'icone_mqtt'            => (string)($p['icone_mqtt']            ?? ''),
+        'exibir_display'        => ($p['exibir_display'] ?? 0) ? '1' : '0',
     ];
     $r = esp_post("$base/pins/add", $form, $use_auth, $user, $pass);
     if (trim($r['body']) === 'OK' || ($r['code'] >= 200 && $r['code'] < 300)) { $pins_ok++; } else { $pins_err++; }

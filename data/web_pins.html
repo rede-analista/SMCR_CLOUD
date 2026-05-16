@@ -317,6 +317,15 @@
                     • <strong>Faixa Min/Max:</strong> Define quando pino analógico está "acionado"<br>
                     • <strong>Pinos Remotos:</strong> Não possuem nível de acionamento local
 
+                                <div class="section-title" style="font-size: 16px;">Display</div>
+                                <table class="config-table">
+                                    <tr><td>Exibir no Display:</td><td>
+                                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                            <input type="checkbox" id="pin-exibir-display" name="exibir_display" value="1" style="width:16px;height:16px;">
+                                            <span style="font-size:13px;color:#555;">Mostrar este pino na página /display</span>
+                                        </label>
+                                    </td></tr>
+                                </table>
                                 <div class="section-title" style="font-size: 16px;">MQTT / Home Assistant</div>
                                 <table class="config-table">
                                     <tr><td>Classe MQTT:</td><td>
@@ -605,6 +614,7 @@
             document.getElementById('pin-max').value = pin.nivel_acionamento_max || 0;
             document.getElementById('pin-classe-mqtt').value = pin.classe_mqtt || '';
             document.getElementById('pin-icone-mqtt').value = pin.icone_mqtt || '';
+            document.getElementById('pin-exibir-display').checked = pin.exibir_display === true;
             
             // Definir tipo (pode ser migrado)
             document.getElementById('pin-type').value = tipoAtualizado;
@@ -764,7 +774,8 @@
                     nivel_acionamento_min: parseInt(document.getElementById('pin-min').value),
                     nivel_acionamento_max: parseInt(document.getElementById('pin-max').value),
                     classe_mqtt: document.getElementById('pin-classe-mqtt').value.trim(),
-                    icone_mqtt: document.getElementById('pin-icone-mqtt').value.trim()
+                    icone_mqtt: document.getElementById('pin-icone-mqtt').value.trim(),
+                    exibir_display: document.getElementById('pin-exibir-display').checked
                 };
                 fetch(`/api/pins/${originalPin}`, {
                     method: 'PUT',

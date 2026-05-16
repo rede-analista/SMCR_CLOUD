@@ -52,45 +52,25 @@ try {
     $binUrl  = "https://raw.githubusercontent.com/rede-analista/SMCR/{$tag}"
              . "/firmware/v{$version}/SMCR_v{$version}_firmware.bin";
 
-    $binCtx = stream_context_create(['http' => [
-        'timeout' => 60,
+    set_time_limit(0);
+
+    $binCtx  = stream_context_create(['http' => [
+        'timeout' => 120,
         'header'  => "User-Agent: SMCR-Cloud-Proxy\r\n",
     ]]);
-
-    $stream = @fopen($binUrl, 'rb', false, $binCtx);
-    if (!$stream) send_error('Falha ao abrir stream do firmware do GitHub', 502);
-
-    $meta     = stream_get_meta_data($stream);
-    $fileSize = 0;
-    foreach (($meta['wrapper_data'] ?? []) as $h) {
-        if (stripos($h, 'Content-Length:') === 0) {
-            $fileSize = (int)trim(substr($h, 15));
-            break;
-        }
-    }
-
-    if ($fileSize < 65536) {
-        fclose($stream);
-        send_error('Firmware invalido ou indisponivel no GitHub', 502);
-    }
-
-    set_time_limit(0);
-    header('Content-Type: application/octet-stream');
-    header('Content-Disposition: attachment; filename="SMCR_' . $version . '_firmware.bin"');
-    header('X-Firmware-Version: ' . $tag);
-    header('Content-Length: ' . $fileSize);
-    http_response_code(200);
+    $firmware = @file_get_contents($binUrl, false, $binCtx);
+    if (!$firmware || strlen($firmware) < 65536) send_error('Falha ao baixar firmware do GitHub', 502);
 
     while (ob_get_level() > 0) ob_end_flush();
     ob_implicit_flush(true);
 
-    while (!feof($stream)) {
-        $chunk = fread($stream, 8192);
-        if ($chunk === false || $chunk === '') break;
-        echo $chunk;
-        flush();
-    }
-    fclose($stream);
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename="SMCR_' . $version . '_firmware.bin"');
+    header('X-Firmware-Version: ' . $tag);
+    header('Content-Length: ' . strlen($firmware));
+    http_response_code(200);
+    echo $firmware;
+    flush();
 
 } catch (PDOException $e) {
     error_log('[SMCR API] DB error in get_firmware: ' . $e->getMessage());

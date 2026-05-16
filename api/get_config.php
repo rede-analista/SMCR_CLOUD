@@ -186,6 +186,7 @@ try {
         'cloud_heartbeat_interval_min' => (int)($cfg['cloud_heartbeat_interval_min'] ?? 5),
         'reboot_on_sync'             => (bool)($cfg['reboot_on_sync'] ?? 0),
         'ota_update_on_sync'         => (bool)($cfg['ota_update_on_sync'] ?? 0),
+        'ota_nonce'                  => !empty($cfg['ota_update_on_sync']) ? random_int(100000, 999999) : 0,
         'fetch_html_on_sync'         => (bool)($cfg['fetch_html_on_sync'] ?? 0),
         'fetch_html_github'          => (int)($cfg['fetch_html_on_sync'] ?? 0) === 2,
 

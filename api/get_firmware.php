@@ -55,7 +55,7 @@ try {
     set_time_limit(0);
 
     $binCtx  = stream_context_create(['http' => [
-        'timeout' => 120,
+        'timeout' => 240,
         'header'  => "User-Agent: SMCR-Cloud-Proxy\r\n",
     ]]);
     $firmware = @file_get_contents($binUrl, false, $binCtx);

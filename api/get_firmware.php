@@ -54,23 +54,47 @@ try {
 
     set_time_limit(0);
 
-    $binCtx  = stream_context_create(['http' => [
-        'timeout' => 240,
-        'header'  => "User-Agent: SMCR-Cloud-Proxy\r\n",
+    $binCtx = stream_context_create(['http' => [
+        'timeout'         => 60,
+        'header'          => "User-Agent: SMCR-Cloud-Proxy\r\n",
+        'follow_location' => 1,
     ]]);
-    $firmware = @file_get_contents($binUrl, false, $binCtx);
-    if (!$firmware || strlen($firmware) < 65536) send_error('Falha ao baixar firmware do GitHub', 502);
 
-    while (ob_get_level() > 0) ob_end_flush();
-    ob_implicit_flush(true);
+    error_log('[SMCR OTA] Abrindo stream: ' . $binUrl);
+    $stream = @fopen($binUrl, 'rb', false, $binCtx);
+    if (!$stream) send_error('Falha ao abrir stream do firmware no GitHub', 502);
 
+    // Obtém Content-Length do cabeçalho HTTP do GitHub
+    $meta = stream_get_meta_data($stream);
+    $contentLength = 0;
+    foreach ($meta['wrapper_data'] ?? [] as $h) {
+        if (stripos($h, 'Content-Length:') === 0) {
+            $contentLength = (int) trim(substr($h, 15));
+            break;
+        }
+    }
+
+    // Envia headers imediatamente — ESP começa a receber antes do download completo
+    while (ob_get_level() > 0) ob_end_clean();
     header('Content-Type: application/octet-stream');
     header('Content-Disposition: attachment; filename="SMCR_' . $version . '_firmware.bin"');
     header('X-Firmware-Version: ' . $tag);
-    header('Content-Length: ' . strlen($firmware));
+    if ($contentLength > 0) {
+        header('Content-Length: ' . $contentLength);
+    }
     http_response_code(200);
-    echo $firmware;
-    flush();
+
+    $t0 = microtime(true);
+    $totalSent = 0;
+    while (!feof($stream)) {
+        $chunk = fread($stream, 4096);
+        if ($chunk === false || $chunk === '') break;
+        echo $chunk;
+        flush();
+        $totalSent += strlen($chunk);
+    }
+    fclose($stream);
+    error_log('[SMCR OTA] Streaming concluido: ' . $totalSent . ' bytes em ' . round(microtime(true) - $t0, 2) . 's');
 
 } catch (PDOException $e) {
     error_log('[SMCR API] DB error in get_firmware: ' . $e->getMessage());
